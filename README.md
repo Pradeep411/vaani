@@ -41,11 +41,7 @@ A free, open-source alternative to paid note-takers and dictation apps like Gran
 | Press the red button (or <kbd>⌘J</kbd> / <kbd>Ctrl J</kbd>) | Talk normally. Your words appear line by line | Summary, action items, decisions | WhatsApp, email, copy or download |
 
 <div align="center">
-<img src="docs/phone-home.png" alt="Vaani on a phone: one red record button" width="260">
-&nbsp;&nbsp;
-<img src="docs/phone-listening.png" alt="Vaani listening on a phone" width="260">
-&nbsp;&nbsp;
-<img src="docs/phone-notes.png" alt="Vaani notes on a phone" width="260">
+<img src="docs/phone-screens.png" alt="Vaani on a phone: tap the red button, your words appear as you talk, then notes arrive with action items you can tick off" width="860">
 </div>
 
 <sub>Screens show a sample meeting. The notes were written by an AI engine; the free basic engine gives simpler notes (see below).</sub>
