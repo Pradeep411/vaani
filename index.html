@@ -690,13 +690,13 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
   function lmAvail(){try{if(!("LanguageModel" in window))return Promise.resolve("unavailable");return LanguageModel.availability(LMOPTS).catch(function(){return "unavailable";});}catch(e){return Promise.resolve("unavailable");}}
   function smAvail(){try{if(!("Summarizer" in window))return Promise.resolve("unavailable");return Summarizer.availability().catch(function(){return "unavailable";});}catch(e){return Promise.resolve("unavailable");}}
   function onDevice(system,prompt){
-    return lmAvail().then(function(a){if(a==="unavailable")throw new Error("no-lm");
+    return lmAvail().then(function(a){if(a!=="available")throw new Error("no-lm");
       return LanguageModel.create(Object.assign({initialPrompts:[{role:"system",content:system}]},LMOPTS)).then(function(s){return s.prompt(prompt).then(function(r){try{s.destroy();}catch(e){}r=String(r||"").trim();if(!r||r.indexOf(system.slice(0,40))>=0||r.indexOf(prompt.slice(0,40))>=0||/not available/i.test(r.slice(0,80)))throw new Error("bad-lm");return r;});});});
   }
   /* engine chain: your key, then on-device AI in this browser, then Vaani's basic engine */
-  function generate(system,prompt,basic){
-    if(remoteReady())return callRemote(system,prompt).then(function(t){return {text:t,engine:PNAME[provider()]};});
-    return onDevice(system,prompt).then(function(t){return {text:t,engine:"on-device AI"};}).catch(function(){
+  function tmo(p,ms){return Promise.race([p,new Promise(function(_,j){setTimeout(function(){j(new Error("timeout"));},ms);})]);}function generate(system,prompt,basic){
+    if(remoteReady())return tmo(callRemote(system,prompt),60000).then(function(t){return {text:t,engine:PNAME[provider()]};});
+    return tmo(onDevice(system,prompt),25000).then(function(t){return {text:t,engine:"on-device AI"};}).catch(function(){
       return Promise.resolve(basic()).then(function(t){return {text:t,engine:"Vaani's basic engine"};});});
   }
 
@@ -720,7 +720,7 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
     return "# "+n.title+"\n## Summary\n"+sum+sec("Action items",act)+sec("Decided",dec)+sec("Open questions",qs);
   }
   function summarizerNotes(n){
-    return smAvail().then(function(a){if(a==="unavailable")throw new Error("no-sm");
+    return smAvail().then(function(a){if(a!=="available")throw new Error("no-sm");
       return Summarizer.create({type:"key-points",format:"markdown",length:"medium",sharedContext:"A transcript of a conversation. It may mix English with Indian languages."}).then(function(s){
         return s.summarize(stamped(n)).then(function(sum){try{s.destroy();}catch(e){}
           var b=basicNotes(n).split("\n## ").slice(2).map(function(x){return "## "+x;}).join("\n");
@@ -730,7 +730,7 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
     view("making");
     $("#makingSub").textContent=remoteReady()?"Using "+PNAME[provider()]+".":"Using the AI built into this browser when it's available.";
     var sys,prompt,basic;
-    if(n.kind==="meeting"){sys="You are an expert meeting note-taker. Write in "+outLang.value+". "+TMPL[n.tmpl||"general"].sys+" "+FMT;prompt="Transcript:\n"+stamped(n);basic=function(){return summarizerNotes(n).catch(function(){return basicNotes(n);});};}
+    if(n.kind==="meeting"){sys="You are an expert meeting note-taker. Write in "+outLang.value+". "+TMPL[n.tmpl||"general"].sys+" "+FMT;prompt="Transcript:\n"+stamped(n);basic=function(){return tmo(summarizerNotes(n),12000).catch(function(){return basicNotes(n);});};}
     else{sys=NOTE_SYS+" Write in "+outLang.value+".";prompt=plain(n);basic=function(){return basicClean(n);};}
     var t0=Date.now();
     generate(sys,prompt,basic).catch(function(err){toast((PNAME[provider()]||"AI")+" didn't respond. Used the basic engine.");return {text:n.kind==="meeting"?basicNotes(n):basicClean(n),engine:"Vaani's basic engine"};})
@@ -790,7 +790,7 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
     $("#noteTitle").textContent=n.title||"Untitled";
     var langName=(LANGS.filter(function(l){return l[0]===n.lang;})[0]||[0,""])[1];
     $("#noteMeta").textContent=(n.kind==="meeting"?(TMPL[n.tmpl]?TMPL[n.tmpl].label:"Meeting"):"Quick note")+", "+(n.dur?fmt(n.dur):"")+(langName?", "+langName:"");
-    renderNoteBody(n);renderTranscript(n);setTab("notes");
+    if(!n.md){n.md=n.kind==="meeting"?basicNotes(n):basicClean(n);n.engine="Vaani's basic engine";upsert(n);}renderNoteBody(n);renderTranscript(n);setTab("notes");
     $("#askList").innerHTML="";$("#askRow").hidden=true;
     $("#engineNote").innerHTML=n.engine?'Written by '+esc(n.engine)+'. '+(n.engine==="Vaani's basic engine"?'<button data-open="settings">Get smarter notes</button>':''):'';
     view("note");$("#noteScroll").scrollTop=0;renderList();
