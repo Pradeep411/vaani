@@ -55,7 +55,7 @@ A free, open-source alternative to paid note-takers and dictation apps like Gran
 - 🌐 **Translate notes** into 18 languages
 - 📤 **Share anywhere**: WhatsApp, email, your phone's share sheet, copy, or download
 - 🗂️ **Your notes, searchable**, grouped by day
-- 🧠 **Notes styles**: client call, sales call, daily team call, interview, one-on-one, lecture
+- 🧠 **Knows what kind of meeting it was**: management, sales, client, developer, founders, customer support and more. Each gets its own format, with owners on every action item
 - 🌙 **Light and dark mode**, phone and laptop layouts
 - 📲 **Install it like an app** on your phone or computer (Add to Home Screen / Install)
 - ⏱️ **Time saved counter**: see how much typing you skipped
