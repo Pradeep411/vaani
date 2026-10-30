@@ -139,7 +139,7 @@ kbd{font-family:var(--font);font-size:12px;padding:2px 6px;border-radius:6px;bac
 .rec-meta{margin-top:18px;font-size:13px;font-weight:600;color:var(--label3);align-self:stretch;max-width:760px;margin-inline:auto;width:100%}
 .lyrics{flex:1;min-height:0;width:100%;max-width:760px;display:flex;flex-direction:column;justify-content:flex-end;gap:18px;overflow:hidden;padding-bottom:12px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 24%,#000 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 24%,#000 100%)}
 .ly{margin:0;font-family:var(--font-d);font-size:27px;line-height:1.22;font-weight:700;letter-spacing:-0.02em;color:var(--past);transition:color .55s var(--spring);animation:rise .5s var(--spring) both}
-.ly.now{color:var(--label)}
+.ly.now{color:var(--label)}.call-chip{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 6px 0 12px;border-radius:999px;border:0;background:var(--fill);color:var(--label2);font:600 13px/1 var(--font);cursor:pointer;transition:background .2s,color .2s}.call-chip svg{width:16px;height:16px}.call-chip i{width:30px;height:18px;border-radius:999px;background:var(--label3);position:relative;transition:background .25s}.call-chip i:after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .3s var(--spring)}.call-chip[aria-pressed=true]{color:var(--label)}.call-chip[aria-pressed=true] i{background:#34C759}.call-chip[aria-pressed=true] i:after{transform:translateX(12px)}.ext-link{font-size:13px;font-weight:500;color:var(--tint);text-decoration:none}.ext-link:hover{text-decoration:underline}
 .ly.interim{color:var(--label2);animation:none}
 .ly time{display:block;font-family:var(--font);font-size:13px;font-weight:600;letter-spacing:0;color:var(--label3);margin-bottom:2px;font-variant-numeric:tabular-nums}
 .empty-ly{font-family:var(--font-d);font-size:27px;font-weight:700;letter-spacing:-0.02em;color:var(--past)}
@@ -355,7 +355,7 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
           <label class="pill-select"><span id="langText">English (India)</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9l5-5 5 5M7 15l5 5 5-5"/></svg><select id="langSel" aria-label="Speaking language"></select></label>
           <label class="pill-select" id="tmplWrap"><span id="tmplText">General meeting</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9l5-5 5 5M7 15l5 5 5-5"/></svg><select id="tmplSel" aria-label="Notes style"></select></label>
         </div>
-        <span class="kbd-hint">or press <kbd id="kbdHint">Ctrl J</kbd></span>
+        <button class="call-chip" id="callChip" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1v-6h3zM3 19a2 2 0 0 0 2 2h1v-6H3z"/></svg><span>Hear everyone on a call</span><i aria-hidden="true"></i></button><span class="kbd-hint">or press <kbd id="kbdHint">Ctrl J</kbd></span><a class="ext-link" id="extLink" href="https://github.com/Pradeep411/vaani#chrome-extension" target="_blank" rel="noopener">Add Vaani to Chrome. It pops up when a call starts.</a>
       </div>
       <div class="how" aria-label="How it works">
         <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>Tap once</div>
@@ -551,7 +551,7 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
 
   /* ---------- segmented mode ---------- */
   var mode=load("vaani.mode","meeting")==="note"?"note":"meeting";
-  function setMode(m){mode=m;save("vaani.mode",m);var on=m==="note"?1:0;$("#modeSeg").setAttribute("data-on",on);
+  function setMode(m){mode=m;save("vaani.mode",m);var cc=document.getElementById("callChip");if(cc)cc.hidden=m!=="meeting"||!(navigator.mediaDevices&&navigator.mediaDevices.getDisplayMedia);var on=m==="note"?1:0;$("#modeSeg").setAttribute("data-on",on);
     $$("#modeSeg button").forEach(function(b){b.setAttribute("aria-pressed",b.getAttribute("data-mode")===m?"true":"false");});
     $("#tmplWrap").hidden=m!=="meeting";$("#heroSub").textContent=m==="meeting"?"Meetings, calls and classes, in 22 languages.":"Speak a thought. Get clean, ready-to-send text.";}
   $("#modeSeg").addEventListener("click",function(e){var b=e.target.closest("[data-mode]");if(b)setMode(b.getAttribute("data-mode"));});
@@ -603,7 +603,7 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
   function elapsed(){return Math.floor((Date.now()-startedAt)/1000);}
   if(!SR){$("#recBtn").disabled=true;$("#recLabel").textContent="Open Vaani in Chrome, Edge or Safari to record. Your saved notes still work here.";}
 
-  function startRec(){
+  var callOn=load("vaani.call","0")==="1",callTrack=null,callStreams=[],callAc=null;var Q=new URLSearchParams(location.search),SRC=Q.get("src");if(SRC&&SRC!=="installed")callOn=true;function syncCall(){$("#callChip").setAttribute("aria-pressed",callOn?"true":"false");}$("#callChip").addEventListener("click",function(){callOn=!callOn;save("vaani.call",callOn?"1":"0");syncCall();if(callOn)toast("When you start, pick your call tab and turn on Share tab audio");});syncCall();if(SRC||!window.chrome)$("#extLink").hidden=true;if(SRC==="installed"){$("#heroSub").textContent="Vaani is in Chrome now. Join a Meet, Teams or Zoom call and it will offer to take notes.";}else if(SRC){setMode("meeting");var nm={meet:"Google Meet",teams:"Teams",zoom:"Zoom"}[SRC];$("#heroSub").textContent=(nm?"Ready for your "+nm+" call. ":"")+"Tap the red button, pick the call tab and turn on Share tab audio.";}function stopCall(){callStreams.forEach(function(st){st.getTracks().forEach(function(t){t.stop();});});callStreams=[];if(callAc){try{callAc.close();}catch(e){}callAc=null;}callTrack=null;}function getCall(){return navigator.mediaDevices.getDisplayMedia({video:true,audio:{suppressLocalAudioPlayback:false},systemAudio:"include",selfBrowserSurface:"exclude",preferCurrentTab:false}).then(function(ds){callStreams.push(ds);if(!ds.getAudioTracks().length){stopCall();toast("No call sound was shared, so Vaani hears only you. Next time turn on Share tab audio.");return;}return navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}}).then(function(mic){callStreams.push(mic);callAc=new (window.AudioContext||window.webkitAudioContext)();var d=callAc.createMediaStreamDestination();callAc.createMediaStreamSource(ds).connect(d);callAc.createMediaStreamSource(mic).connect(d);callTrack=d.stream.getAudioTracks()[0];ds.getVideoTracks().forEach(function(v){v.addEventListener("ended",function(){if(listening)toast("Call sharing stopped. Vaani keeps listening to you.");});});});}).catch(function(){stopCall();toast("Recording just your microphone");});}function startRec(){if(mode==="meeting"&&callOn&&!callTrack&&!listening&&navigator.mediaDevices&&navigator.mediaDevices.getDisplayMedia){getCall().then(startRec0);return;}startRec0();}function startRec0(){
     if(!SR){toast("This browser can't turn speech into text");return;}
     if(listening)return;
     segs=[];interim="";lyShown=0;lyInterim=null;$("#lyrics").innerHTML="";
@@ -611,12 +611,12 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
       rec=new SR();rec.lang=langSel.value;rec.continuous=true;rec.interimResults=true;
       rec.onresult=onResult;
       rec.onerror=function(e){if(e.error==="not-allowed"||e.error==="service-not-allowed"){want=false;cleanup();view("idle");toast("Allow the microphone in the address bar, then try again");}};
-      rec.onend=function(){if(want){try{rec.start();}catch(e){}}};
-      want=true;rec.start();listening=true;
+      rec.onend=function(){if(want){try{if(callTrack&&callTrack.readyState==="live")rec.start(callTrack);else rec.start();}catch(e){}}};
+      want=true;if(callTrack)rec.start(callTrack);else rec.start();listening=true;
     }catch(e){toast("Couldn't start the microphone");return;}
     startedAt=Date.now();$("#timer").textContent="00:00";
     timerInt=setInterval(function(){$("#timer").textContent=fmt(elapsed());},1000);
-    $("#recMeta").textContent=(mode==="meeting"?TMPL[tmplSel.value].label:"Quick note")+" in "+langSel.options[langSel.selectedIndex].text;
+    $("#recMeta").textContent=(mode==="meeting"?(tmplSel.value==="auto"?"Meeting":TMPL[tmplSel.value].label):"Quick note")+" in "+langSel.options[langSel.selectedIndex].text+(callTrack?", whole call":"");
     renderLyrics();view("rec");startViz();
     try{if(navigator.vibrate)navigator.vibrate(10);}catch(e){}
   }
@@ -638,7 +638,7 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
     if(interim){if(!lyInterim){lyInterim=document.createElement("p");lyInterim.className="ly interim";el.appendChild(lyInterim);}lyInterim.textContent=interim;}
     else if(lyInterim){lyInterim.remove();lyInterim=null;}
   }
-  function cleanup(){want=false;listening=false;if(rec){try{rec.stop();}catch(e){}}clearInterval(timerInt);stopViz();}
+  function cleanup(){want=false;listening=false;if(rec){try{rec.stop();}catch(e){}}clearInterval(timerInt);stopViz();stopCall();}
   function stopRec(){
     if(!listening)return;
     var dur=elapsed();cleanup();
