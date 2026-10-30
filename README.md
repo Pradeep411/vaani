@@ -60,6 +60,18 @@ A free, open-source alternative to paid note-takers and dictation apps like Gran
 - 📲 **Install it like an app** on your phone or computer (Add to Home Screen / Install)
 - ⏱️ **Time saved counter**: see how much typing you skipped
 
+## Chrome extension
+
+**Vaani pops up when your call starts.** Join a Google Meet, Microsoft Teams or Zoom call in Chrome, and Vaani offers to take notes. One click opens Vaani beside the call.
+
+- **Hears everyone, even with headphones.** Turn on *Hear everyone on a call*, pick the call's tab and switch on *Share tab audio*. Vaani mixes the call's sound with your mic.
+- **Notes in the right format.** Vaani works out whether it was a sales call, a management review, a tech sync or a founders' meeting, and writes the notes to match.
+- **No bot joins your call.** Nobody sees a "Vaani is recording" guest.
+
+**Install:** Chrome Web Store listing is in review. Until then, [download the latest extension](https://github.com/Pradeep411/vaani/releases?q=extension), unzip it, open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked** and pick the folder.
+
+The extension is a thin shell around the live app, so app improvements reach you instantly. Read the [privacy page](https://pradeep411.github.io/vaani/privacy.html).
+
 ## The notes engine: free by default, smarter with a key
 
 Vaani never needs an API key. It picks the best engine available, in this order:
@@ -106,7 +118,7 @@ Speech recognition comes from your browser. **Chrome supports all 22**; support 
 | Safari (Mac and iPhone) | ✅ |
 | Firefox | ❌ No built-in speech engine yet. Your saved notes still open. |
 
-**Online calls:** a browser tab hears your microphone, so for a Zoom or Meet call, keep the call on your laptop speakers so Vaani can hear everyone. A desktop app that captures both sides of a call is on the roadmap.
+**Online calls:** turn on **Hear everyone on a call** (or use the [Chrome extension](#chrome-extension)), then pick the call's tab and switch on *Share tab audio*. Vaani hears both sides, even with headphones. For the Zoom or Teams desktop apps, keep the call on your speakers for now.
 
 ## Run it yourself in 30 seconds
 
@@ -118,7 +130,8 @@ Vaani is one HTML file. No build step, no dependencies.
 
 ## Roadmap
 
-- [ ] Desktop app that captures both sides of an online call, without a bot
+- [x] Chrome extension that pops up when a Meet, Teams or Zoom call starts
+- [ ] Mac and Windows app for the Zoom and Teams desktop apps
 - [ ] Speaker names ("Priya", "Arjun") in the transcript
 - [ ] Sarvam speech-to-text for higher accuracy in Indian languages (with your key)
 - [ ] Export to Notion, Google Docs and Slack

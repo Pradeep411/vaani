@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vaani Privacy</title>
+<meta name="description" content="What the Vaani app and Chrome extension do with your data: no account, no server, no tracking.">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<style>
+:root{--bg:#fff;--fg:#1d1d1f;--fg2:#6e6e73;--line:#d2d2d7;--tint:#0A66D8;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#000;--fg:#f5f5f7;--fg2:#a1a1a6;--line:#38383a;--tint:#3B8BFF;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#000;--fg:#f5f5f7;--fg2:#a1a1a6;--line:#38383a;--tint:#3B8BFF;color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 17px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
+main{max-width:680px;margin:0 auto;padding:56px max(20px,env(safe-area-inset-right,0px)) 80px max(20px,env(safe-area-inset-left,0px))}
+h1{font-size:40px;line-height:1.1;letter-spacing:-.02em;margin:0 0 8px;text-wrap:balance}
+h2{font-size:21px;letter-spacing:-.01em;margin:36px 0 8px}
+p,li{color:var(--fg)}.sub{color:var(--fg2);margin:0 0 28px}
+ul{padding-left:20px}li{margin:6px 0}
+a{color:var(--tint);text-decoration:none}a:hover{text-decoration:underline}
+footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);color:var(--fg2);font-size:14px}
+</style>
+</head>
+<body>
+<main>
+<h1>Privacy</h1>
+<p class="sub">Vaani web app and Vaani Chrome extension. Last updated 31 October 2026.</p>
+
+<p><b>Short version:</b> Vaani has no account, no server and no tracking. Your notes stay in your browser.</p>
+
+<h2>The Chrome extension</h2>
+<ul>
+<li>On Google Meet, Microsoft Teams and Zoom web pages, it checks whether a "Leave call" button is showing, so it knows a call has started. It does not read your messages, names, video or anything else on the page.</li>
+<li>When you click <b>Start notes</b>, it opens the Vaani app in a small window. Nothing is sent anywhere by the extension.</li>
+<li>It stores one setting in Chrome: whether to ask you when a call starts.</li>
+<li>It does not record audio by itself. Recording happens in the Vaani app, only after you press the record button.</li>
+</ul>
+
+<h2>The Vaani app</h2>
+<ul>
+<li><b>Speech to text</b> uses your browser's speech engine. In Chrome and Edge the browser sends the audio to Google or Microsoft to do this. Safari uses Apple's engine. Vaani never receives your audio.</li>
+<li><b>Hear everyone on a call:</b> if you turn this on and share a call's tab, its sound is mixed with your microphone inside your browser and passed to the same speech engine. Nothing is saved as audio.</li>
+<li><b>Notes</b> are written on your device by default. If you add your own AI key (Sarvam AI, OpenAI, Anthropic or Google), the transcript text, never the audio, goes to that provider. Your key is stored only in your browser.</li>
+<li><b>Saved notes</b> live only in your browser's local storage. Clearing your browser data deletes them.</li>
+<li>No accounts, cookies for tracking, analytics or ads.</li>
+</ul>
+
+<h2>Your choices</h2>
+<ul>
+<li>Turn off the call prompt in the extension's menu, or remove the extension at any time.</li>
+<li>Delete any note from inside Vaani.</li>
+</ul>
+
+<h2>Contact</h2>
+<p>Questions or concerns: <a href="https://github.com/Pradeep411/vaani/issues" target="_blank" rel="noopener">open an issue on GitHub</a>.</p>
+
+<footer><a href="./">Open Vaani</a> · <a href="https://github.com/Pradeep411/vaani" target="_blank" rel="noopener">Source code</a></footer>
+</main>
+</body>
+</html>
