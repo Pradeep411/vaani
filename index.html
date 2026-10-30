@@ -1,0 +1,889 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vaani</title>
+<meta name="description" content="Just talk. Vaani takes the notes. Free meeting notes and dictation in 22 languages, right in your browser. No sign-up, no bot in your call.">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta property="og:title" content="Vaani: just talk, Vaani takes the notes">
+<meta property="og:description" content="Free meeting notes and dictation in 22 languages. No sign-up, no bot in your call.">
+<meta property="og:image" content="https://pradeep411.github.io/vaani/icons/og.png">
+<meta property="og:url" content="https://pradeep411.github.io/vaani/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Vaani">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon.svg">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+
+:root{
+  color-scheme:light;
+  --bg:#FFFFFF;--bg2:#F2F2F7;--card:#FFFFFF;--side:rgba(242,242,247,0.86);
+  --label:#000000;--label2:#6C6C70;--label3:#8A8A8E;--sep:rgba(60,60,67,0.18);
+  --fill:rgba(118,118,128,0.12);--fill2:rgba(118,118,128,0.2);
+  --tint:#0A66D8;--tint-soft:rgba(10,102,216,0.12);--on-tint:#FFFFFF;
+  --red:#FF3B30;--red-soft:rgba(255,59,48,0.12);--ring:#D1D1D6;--past:#BDBDC2;
+  --glass:rgba(255,255,255,0.74);--glass-edge:rgba(0,0,0,0.08);--glass-hi:rgba(255,255,255,0.85);
+  --island:#000000;--on-island:#FFFFFF;--amber:#FF9F0A;--sheet:#F2F2F7;--card2:#FFFFFF;
+  --shadow-s:0 1px 2px rgba(0,0,0,0.06),0 4px 14px rgba(0,0,0,0.06);
+  --shadow-l:0 10px 30px rgba(0,0,0,0.12);
+  --scrim:rgba(0,0,0,0.28);
+  --spring:cubic-bezier(.32,.72,0,1);
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+  --font-d:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter","Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#000000;--bg2:#000000;--card:#1C1C1E;--side:rgba(28,28,30,0.86);
+  --label:#FFFFFF;--label2:#AEAEB2;--label3:#8E8E93;--sep:rgba(84,84,88,0.6);
+  --fill:rgba(118,118,128,0.24);--fill2:rgba(118,118,128,0.32);
+  --tint:#3E8EFF;--tint-soft:rgba(62,142,255,0.2);--on-tint:#FFFFFF;
+  --red:#FF453A;--red-soft:rgba(255,69,58,0.18);--ring:#3A3A3C;--past:#55555A;
+  --glass:rgba(44,44,46,0.74);--glass-edge:rgba(255,255,255,0.1);--glass-hi:rgba(255,255,255,0.08);
+  --island:#000000;--on-island:#FFFFFF;--sheet:#1C1C1E;--card2:#2C2C2E;
+  --shadow-s:0 1px 2px rgba(0,0,0,0.5),0 4px 14px rgba(0,0,0,0.4);
+  --shadow-l:0 10px 30px rgba(0,0,0,0.6);
+  --scrim:rgba(0,0,0,0.55);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#000000;--bg2:#000000;--card:#1C1C1E;--side:rgba(28,28,30,0.86);
+    --label:#FFFFFF;--label2:#AEAEB2;--label3:#8E8E93;--sep:rgba(84,84,88,0.6);
+    --fill:rgba(118,118,128,0.24);--fill2:rgba(118,118,128,0.32);
+    --tint:#3E8EFF;--tint-soft:rgba(62,142,255,0.2);--on-tint:#FFFFFF;
+    --red:#FF453A;--red-soft:rgba(255,69,58,0.18);--ring:#3A3A3C;--past:#55555A;
+    --glass:rgba(44,44,46,0.74);--glass-edge:rgba(255,255,255,0.1);--glass-hi:rgba(255,255,255,0.08);--sheet:#1C1C1E;--card2:#2C2C2E;
+    --shadow-s:0 1px 2px rgba(0,0,0,0.5),0 4px 14px rgba(0,0,0,0.4);
+    --shadow-l:0 10px 30px rgba(0,0,0,0.6);
+    --scrim:rgba(0,0,0,0.55);
+  }
+}
+
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;overflow-x:clip}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--label);font-family:var(--font);font-size:17px;line-height:1.45;letter-spacing:-0.01em;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
+button{cursor:pointer;border:0;background:none;padding:0;-webkit-tap-highlight-color:transparent}
+button:disabled{cursor:not-allowed;opacity:.4}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--tint) 55%,transparent);outline-offset:2px;border-radius:8px}
+h1,h2,h3{font-family:var(--font-d);margin:0;letter-spacing:-0.025em;text-wrap:balance;overflow-wrap:break-word;min-width:0}
+svg{flex:none}
+.glass{background:var(--glass);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);box-shadow:0 0 0 .5px var(--glass-edge),var(--shadow-l),inset 0 1px 0 var(--glass-hi)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- shell ---------- */
+.app{display:grid;grid-template-columns:minmax(0,1fr);min-height:100vh;min-height:100dvh}
+.main{position:relative;display:flex;flex-direction:column;min-height:100vh;min-height:100dvh;min-width:0}
+.side{display:none;flex-direction:column;min-height:0}
+.bar{display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 6px;min-height:56px}
+.brand{font-family:var(--font-d);font-size:17px;font-weight:600;letter-spacing:-0.02em}
+.bar .brand{margin-right:auto}
+.icon-btn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--tint);transition:background-color .2s var(--spring)}
+.icon-btn:hover{background:var(--fill)}
+.icon-btn svg{width:22px;height:22px}
+
+/* ---------- idle ---------- */
+.view{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;width:100%}
+.v-idle{justify-content:space-between;padding:12px 20px calc(env(safe-area-inset-bottom,0px) + 28px);animation:fadeIn .5s var(--spring) both}
+.hero{text-align:center;margin-top:min(6vh,48px)}
+.hero h1{font-size:clamp(34px,7.4vw,58px);line-height:1.06;font-weight:700;letter-spacing:-0.035em}
+.hero p{margin:12px auto 0;max-width:40ch;text-wrap:balance;font-size:17px;color:var(--label2)}
+.stage{display:flex;flex-direction:column;align-items:center;gap:16px;padding:24px 0}
+.rec{position:relative;width:136px;height:136px;border-radius:50%;display:grid;place-items:center;box-shadow:inset 0 0 0 5px var(--ring);transition:transform .3s var(--spring)}
+.rec .dot{width:112px;height:112px;border-radius:56px;background:var(--red);box-shadow:0 8px 24px color-mix(in srgb,var(--red) 30%,transparent);transition:transform .55s var(--spring),border-radius .55s var(--spring)}
+.rec:hover .dot{transform:scale(1.02)}
+.rec:active .dot{transform:scale(.93)}
+.rec.on .dot{transform:scale(.4);border-radius:24px}
+.rec.on:active .dot{transform:scale(.36)}
+.rec.sm{width:84px;height:84px;box-shadow:inset 0 0 0 4px var(--ring)}
+.rec.sm .dot{width:68px;height:68px;border-radius:34px}
+.rec.sm.on .dot{transform:scale(.45);border-radius:15px}
+.rec:disabled{opacity:.35}
+.rec-label{font-size:15px;font-weight:500;color:var(--label2);text-align:center;max-width:32ch}
+.seg{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:2px;border-radius:9px;background:var(--fill);width:240px}
+.seg button{position:relative;z-index:1;min-height:32px;border-radius:7px;font-size:13px;font-weight:600}
+.seg .thumb{position:absolute;top:2px;bottom:2px;left:2px;width:calc(50% - 2px);border-radius:7px;background:var(--card);box-shadow:0 3px 8px rgba(0,0,0,.12),0 3px 1px rgba(0,0,0,.04),0 0 0 .5px rgba(0,0,0,.04);transition:transform .45s var(--spring)}
+.seg[data-on="1"] .thumb{transform:translateX(100%)}
+:root[data-theme="dark"] .seg .thumb{background:#636366}
+:root[data-theme="dark"] .island,:root[data-theme="dark"] .toast{box-shadow:0 0 0 1px rgba(255,255,255,.16),0 8px 24px rgba(0,0,0,.5)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .island,:root:not([data-theme="light"]) .toast{box-shadow:0 0 0 1px rgba(255,255,255,.16),0 8px 24px rgba(0,0,0,.5)}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .seg .thumb{background:#636366}}
+.pills{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.pill-select{position:relative;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:999px;background:var(--fill);font-size:15px;font-weight:500;transition:background-color .2s var(--spring)}
+.pill-select:hover{background:var(--fill2)}
+.pill-select select{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;font-size:16px}
+.pill-select:focus-within{outline:3px solid color-mix(in srgb,var(--tint) 55%,transparent);outline-offset:2px}
+.pill-select svg{width:11px;height:11px;color:var(--label2)}
+.how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;width:100%;max-width:420px}
+.how div{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;font-size:13px;color:var(--label2)}
+.how svg{width:24px;height:24px;color:var(--tint)}
+.kbd-hint{display:none;font-size:13px;color:var(--label3)}
+kbd{font-family:var(--font);font-size:12px;padding:2px 6px;border-radius:6px;background:var(--fill);color:var(--label2)}
+
+/* ---------- recording ---------- */
+.v-rec{padding:4px 24px calc(env(safe-area-inset-bottom,0px) + 28px);animation:fadeIn .4s var(--spring) both}
+.island{display:inline-flex;align-items:center;gap:10px;height:36px;padding:0 14px 0 12px;border-radius:999px;background:var(--island);color:var(--on-island);box-shadow:0 8px 24px rgba(0,0,0,.18);animation:drop .55s var(--spring) both}
+.island .r{width:8px;height:8px;border-radius:50%;background:#FF3B30;animation:pulse 1.4s ease-in-out infinite}
+.island .t{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.wv{display:flex;align-items:center;gap:2px;height:16px}
+.wv i{width:2.5px;height:16px;border-radius:2px;background:var(--amber);transform:scaleY(.3);transition:transform .09s linear}
+.wv.css i{animation:wv .9s ease-in-out infinite}
+.wv.css i:nth-child(2){animation-delay:.12s}.wv.css i:nth-child(3){animation-delay:.24s}.wv.css i:nth-child(4){animation-delay:.36s}.wv.css i:nth-child(5){animation-delay:.18s}
+.rec-meta{margin-top:18px;font-size:13px;font-weight:600;color:var(--label3);align-self:stretch;max-width:760px;margin-inline:auto;width:100%}
+.lyrics{flex:1;min-height:0;width:100%;max-width:760px;display:flex;flex-direction:column;justify-content:flex-end;gap:18px;overflow:hidden;padding-bottom:12px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 24%,#000 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 24%,#000 100%)}
+.ly{margin:0;font-family:var(--font-d);font-size:27px;line-height:1.22;font-weight:700;letter-spacing:-0.02em;color:var(--past);transition:color .55s var(--spring);animation:rise .5s var(--spring) both}
+.ly.now{color:var(--label)}
+.ly.interim{color:var(--label2);animation:none}
+.ly time{display:block;font-family:var(--font);font-size:13px;font-weight:600;letter-spacing:0;color:var(--label3);margin-bottom:2px;font-variant-numeric:tabular-nums}
+.empty-ly{font-family:var(--font-d);font-size:27px;font-weight:700;letter-spacing:-0.02em;color:var(--past)}
+.rec-foot{display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:16px}
+
+/* ---------- making ---------- */
+.v-making{justify-content:center;gap:18px;animation:fadeIn .4s var(--spring) both}
+.think i{display:inline-block;width:9px;height:9px;margin:0 4px;border-radius:50%;background:var(--label);animation:think 1.2s ease-in-out infinite}
+.think i:nth-child(2){animation-delay:.15s}.think i:nth-child(3){animation-delay:.3s}
+.v-making h2{font-size:22px;font-weight:600}
+.v-making p{margin:0;font-size:15px;color:var(--label2);text-align:center;max-width:32ch}
+
+/* ---------- note ---------- */
+.v-note{background:var(--bg2);align-items:stretch;position:relative;animation:sheet .65s var(--spring) both}
+.note-scroll{flex:1;min-height:0;overflow-y:auto;padding:12px 16px calc(env(safe-area-inset-bottom,0px) + 120px)}
+.note-inner{max-width:720px;margin:0 auto}
+.grabber{width:36px;height:5px;border-radius:3px;background:var(--ring);margin:0 auto 16px}
+.kicker{font-size:13px;font-weight:600;color:var(--tint)}
+.note-title{margin-top:4px;font-size:30px;line-height:1.1;font-weight:700}
+.note-meta{display:block;margin-top:6px;font-size:15px;color:var(--label2)}
+.note-tabs{margin-top:18px}
+.sec-h{display:block;margin:22px 0 8px 16px;font-size:13px;color:var(--label2)}
+.card{background:var(--card);border-radius:14px;overflow:hidden}
+.row{display:flex;gap:12px;align-items:flex-start;width:100%;padding:11px 16px;font-size:16px;line-height:1.42;text-align:left}
+.row + .row{box-shadow:inset 16px .5px 0 var(--card),inset 0 .5px 0 var(--sep)}
+.row b{font-weight:600}
+.ck{flex:none;width:22px;height:22px;margin-top:1px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--ring);display:grid;place-items:center;color:#fff;transition:background-color .3s var(--spring),box-shadow .3s var(--spring),transform .3s var(--spring)}
+.ck svg{width:12px;height:12px;opacity:0;transition:opacity .2s}
+.row.done .ck{background:var(--tint);box-shadow:none}
+.row.done .ck svg{opacity:1}
+.row.done .rt{color:var(--label3);text-decoration:line-through;text-decoration-color:var(--label3)}
+button.row:active .ck{transform:scale(.88)}
+.qtext{min-height:200px;padding:16px;font-size:18px;line-height:1.55;outline:none;white-space:pre-wrap}
+.qtext:focus-visible{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--tint) 55%,transparent)}
+.tr-row{display:flex;gap:14px;padding:10px 16px;font-size:16px;line-height:1.42}
+.tr-row + .tr-row{box-shadow:inset 16px .5px 0 var(--card),inset 0 .5px 0 var(--sep)}
+.tr-row time{flex:none;min-width:42px;font-size:13px;color:var(--label3);font-variant-numeric:tabular-nums;padding-top:2px}
+.engine-note{display:block;margin:18px 16px 0;font-size:13px;color:var(--label3)}
+.engine-note button{color:var(--tint);font-size:13px}
+.ask-list{display:flex;flex-direction:column;gap:10px;margin-top:22px}
+.qa{display:flex;flex-direction:column;gap:6px;animation:rise .45s var(--spring) both}
+.qa .q{align-self:flex-end;max-width:80%;padding:9px 14px;border-radius:19px;border-bottom-right-radius:6px;background:var(--tint);color:var(--on-tint);font-size:16px}
+.qa .a{align-self:flex-start;max-width:86%;padding:9px 14px;border-radius:19px;border-bottom-left-radius:6px;background:var(--card);font-size:16px}
+.ask-row{display:flex;gap:8px;margin-top:12px}
+.ask-row input{flex:1;min-width:0;min-height:44px;padding:0 16px;border-radius:999px;border:0;background:var(--card);font-size:16px;box-shadow:inset 0 0 0 1px var(--sep)}
+.ask-row input:focus{outline:none;box-shadow:inset 0 0 0 2px var(--tint)}
+.send{width:44px;height:44px;border-radius:50%;background:var(--tint);color:#fff;display:grid;place-items:center}
+.send svg{width:18px;height:18px}
+.toolbar{position:absolute;left:16px;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);z-index:5;display:flex;justify-content:space-around;align-items:center;max-width:520px;margin:0 auto;border-radius:999px;padding:4px 6px}
+.tb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:58px;min-height:50px;border-radius:999px;font-size:11px;font-weight:500;color:var(--tint);transition:background-color .2s var(--spring),transform .2s var(--spring)}
+.tb:hover{background:var(--fill)}
+.tb:active{transform:scale(.94)}
+.tb svg{width:22px;height:22px}
+.tb.red{color:var(--red)}
+
+/* ---------- side / list ---------- */
+.side-head{display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 8px}
+.side-head .brand{font-size:20px;margin-right:auto}
+.side-title{font-family:var(--font-d);font-size:34px;font-weight:700;letter-spacing:-0.03em;padding:0 16px 8px}
+.new-btn{display:flex;align-items:center;gap:10px;margin:4px 12px 10px;min-height:44px;padding:0 14px;border-radius:12px;background:var(--card);box-shadow:var(--shadow-s);font-size:15px;font-weight:600;transition:transform .2s var(--spring)}
+.new-btn:active{transform:scale(.98)}
+.new-btn i{width:14px;height:14px;border-radius:50%;background:var(--red);box-shadow:0 0 0 3px var(--red-soft)}
+.search{display:flex;align-items:center;gap:6px;margin:0 12px 8px;height:36px;padding:0 10px;border-radius:10px;background:var(--fill);color:var(--label2)}
+.search svg{width:15px;height:15px}
+.search input{flex:1;min-width:0;border:0;background:transparent;outline:none;font-size:15px;color:var(--label)}
+.search:focus-within{box-shadow:0 0 0 2px var(--tint)}
+.list{flex:1;min-height:0;overflow-y:auto;padding:0 10px 12px}
+.list-h{display:block;padding:14px 8px 4px;font-size:13px;font-weight:600;color:var(--label2)}
+.item{display:flex;flex-direction:column;gap:1px;width:100%;padding:9px 10px;border-radius:10px;text-align:left;transition:background-color .15s}
+.item:hover{background:var(--fill)}
+.item.on{background:var(--tint);color:#fff}
+.item.on .it-m,.item.on .it-p{color:rgba(255,255,255,.85)}
+.it-t{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.it-m{font-size:13px;color:var(--label2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.it-p{color:var(--label3)}
+.list-empty{padding:18px 10px;font-size:15px;line-height:1.45;color:var(--label2)}
+.side-foot{display:flex;align-items:center;gap:4px;padding:10px 12px calc(env(safe-area-inset-bottom,0px) + 12px);box-shadow:inset 0 .5px 0 var(--sep)}
+.saved{margin-right:auto;font-size:13px;color:var(--label2);padding-left:6px}
+.saved b{color:var(--label);font-weight:600;display:inline-block}
+.saved.bump b{animation:bump .7s var(--spring)}
+.side-foot .icon-btn{width:40px;height:40px}
+.side-foot .icon-btn svg{width:20px;height:20px}
+
+/* ---------- sheets ---------- */
+.scrim{position:fixed;inset:0;z-index:50;background:var(--scrim);display:flex;align-items:flex-end;justify-content:center;padding:8px;animation:fadeIn .3s var(--spring) both}
+.panel{width:100%;max-width:440px;max-height:88vh;overflow-y:auto;background:var(--sheet);border-radius:22px;padding:18px 16px calc(env(safe-area-inset-bottom,0px) + 16px);box-shadow:var(--shadow-l);animation:sheetUp .55s var(--spring) both}
+.panel h2{font-size:20px;font-weight:700;text-align:center}
+.panel .sub{margin:6px auto 14px;max-width:34ch;font-size:15px;line-height:1.45;color:var(--label2);text-align:center}
+.opts{display:flex;flex-direction:column;background:var(--card2);border-radius:14px;overflow:hidden}
+.opt{display:flex;align-items:center;gap:14px;min-height:52px;padding:0 16px;font-size:17px;text-align:left;transition:background-color .15s}
+.opt:hover{background:var(--fill)}
+.opt + .opt{box-shadow:inset 50px .5px 0 var(--card2),inset 0 .5px 0 var(--sep)}
+.opt .oi{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:#fff;flex:none}
+.opt .oi svg{width:18px;height:18px}
+.opt.danger{color:var(--red)}
+.cancel{display:block;width:100%;min-height:52px;margin-top:10px;border-radius:14px;background:var(--card2);font-size:17px;font-weight:600;color:var(--tint)}
+.form-l{display:block;margin:16px 4px 6px;font-size:13px;color:var(--label2)}
+.field{width:100%;min-height:46px;padding:0 14px;border-radius:12px;border:0;background:var(--card2);font-size:16px;box-shadow:inset 0 0 0 1px var(--sep);appearance:none}
+.field:focus{outline:none;box-shadow:inset 0 0 0 2px var(--tint)}
+select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2) 50%),linear-gradient(135deg,var(--label2) 50%,transparent 50%);background-position:calc(100% - 20px) 50%,calc(100% - 15px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:36px}
+.hint{margin:8px 4px 0;font-size:13px;line-height:1.5;color:var(--label2)}
+.hint a{color:var(--tint)}
+.status{margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--card2);font-size:14px;line-height:1.45;color:var(--label2)}
+.status b{color:var(--label)}
+.done-btn{display:block;width:100%;min-height:50px;margin-top:18px;border-radius:14px;background:var(--tint);color:#fff;font-size:17px;font-weight:600}
+.facts{display:flex;flex-direction:column;gap:10px}
+.fact{display:flex;gap:12px;padding:14px;border-radius:14px;background:var(--card2);font-size:15px;line-height:1.45;color:var(--label2)}
+.fact b{color:var(--label)}
+.fact svg{width:22px;height:22px;color:var(--tint);margin-top:1px}
+.seg3{grid-template-columns:repeat(3,minmax(0,1fr));width:100%}
+.seg3 .thumb{width:calc(33.333% - 1.4px)}
+.seg3[data-on="1"] .thumb{transform:translateX(100%)}
+.seg3[data-on="2"] .thumb{transform:translateX(200%)}
+
+.toast{position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);left:50%;z-index:80;transform:translate(-50%,-30px) scale(.9);opacity:0;pointer-events:none;display:flex;align-items:center;gap:8px;max-width:calc(100vw - 32px);padding:10px 18px;border-radius:999px;background:var(--island);color:var(--on-island);font-size:14px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.25);transition:transform .5s var(--spring),opacity .3s var(--spring)}
+.toast.show{opacity:1;transform:translate(-50%,0) scale(1)}
+
+/* ---------- motion ---------- */
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes drop{from{transform:translateY(-14px) scale(.92);opacity:0}to{transform:none;opacity:1}}
+@keyframes pulse{50%{opacity:.35}}
+@keyframes wv{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+@keyframes rise{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
+@keyframes sheet{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+@keyframes sheetUp{from{transform:translateY(60px);opacity:0}to{transform:none;opacity:1}}
+@keyframes think{0%,100%{opacity:.15;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+@keyframes bump{30%{transform:scale(1.25)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:1ms!important;animation-iteration-count:1!important;transition-duration:1ms!important}}
+
+/* ---------- phone list sheet ---------- */
+@media (max-width:899px){
+  .desk-only{display:none!important}
+  .app.list-open .side{display:flex;position:fixed;inset:0;z-index:40;background:var(--bg2);animation:sheetUp .5s var(--spring) both}
+  .app.list-open .side .list{padding-bottom:24px}
+  .side .item.on{background:var(--card);color:var(--label)}
+  .side .item.on .it-m{color:var(--label2)}
+  .side .item{background:var(--card);border-radius:12px;padding:12px 14px;margin-bottom:6px}
+}
+
+/* ---------- laptop ---------- */
+@media (min-width:900px){
+  .phone-only{display:none!important}
+  .app{grid-template-columns:300px minmax(0,1fr);height:100vh;height:100dvh;overflow:hidden}
+  .side{display:flex;background:var(--side);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);box-shadow:inset -.5px 0 0 var(--sep);height:100vh;height:100dvh}
+  .side-title{display:none}
+  .main{height:100vh;height:100dvh;overflow:hidden}
+  .bar{position:absolute;top:0;right:0;z-index:6;padding:14px 18px;min-height:0}
+  .v-idle{justify-content:center;gap:28px;padding:48px 40px}
+  .hero{margin-top:0}
+  .stage{padding:8px 0}
+  .rec{width:156px;height:156px}
+  .rec .dot{width:130px;height:130px;border-radius:65px}
+  .rec.on .dot{border-radius:26px}
+  .kbd-hint{display:block}
+  .v-rec{padding:22px 48px 36px}
+  .ly{font-size:40px;line-height:1.16}
+  .empty-ly{font-size:40px}
+  .note-scroll{padding:28px 40px 60px}
+  .grabber{display:none}
+  .note-title{font-size:36px}
+  .toolbar{position:absolute;top:14px;right:76px;left:auto;bottom:auto;margin:0;padding:3px 4px;gap:2px;box-shadow:0 0 0 .5px var(--glass-edge),var(--shadow-s),inset 0 1px 0 var(--glass-hi)}
+  .tb{flex-direction:row;gap:6px;min-width:0;min-height:36px;padding:0 12px;font-size:13px}
+  .tb svg{width:17px;height:17px}
+  .v-note{animation:fadeIn .45s var(--spring) both}
+  .note-scroll{padding-top:76px}
+  .scrim{align-items:center}
+  .panel{border-radius:18px}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <aside class="side" id="side" aria-label="Your notes">
+    <div class="side-head">
+      <span class="brand desk-only">Vaani</span>
+      <span class="brand phone-only" style="color:var(--tint)">Vaani</span>
+      <button class="icon-btn phone-only" id="listClose" aria-label="Close your notes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="side-title">Your notes</div>
+    <button class="new-btn" id="newBtn"><i aria-hidden="true"></i>New recording</button>
+    <label class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span class="sr">Search notes</span><input id="search" type="search" placeholder="Search" autocomplete="off"></label>
+    <div class="list" id="list"></div>
+    <div class="side-foot">
+      <span class="saved" id="saved">Saved <b id="savedVal">0 min</b> of typing</span>
+      <button class="icon-btn" data-open="privacy" aria-label="Privacy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></button>
+      <button class="icon-btn" data-open="settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+    </div>
+  </aside>
+
+  <main class="main" id="main">
+    <header class="bar" id="bar">
+      <button class="icon-btn phone-only" id="listBtn" aria-label="Your notes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></svg></button>
+      <span class="brand phone-only">Vaani</span>
+      <button class="icon-btn phone-only" data-open="settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+      <button class="icon-btn desk-only" data-open="privacy" aria-label="Where your words go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button>
+    </header>
+
+    <section class="view v-idle" id="vIdle">
+      <div class="hero">
+        <h1>Just talk.<br>Vaani takes the notes.</h1>
+        <p id="heroSub">Meetings, calls and ideas, in 22 languages.</p>
+      </div>
+      <div class="stage">
+        <div class="seg" id="modeSeg" role="group" aria-label="What are you recording" data-on="0">
+          <span class="thumb" aria-hidden="true"></span>
+          <button data-mode="meeting" aria-pressed="true">Meeting</button>
+          <button data-mode="note" aria-pressed="false">Quick note</button>
+        </div>
+        <button class="rec" id="recBtn" aria-label="Start recording"><span class="dot"></span></button>
+        <span class="rec-label" id="recLabel">Tap to start</span>
+        <div class="pills">
+          <label class="pill-select"><span id="langText">English (India)</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9l5-5 5 5M7 15l5 5 5-5"/></svg><select id="langSel" aria-label="Speaking language"></select></label>
+          <label class="pill-select" id="tmplWrap"><span id="tmplText">General meeting</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9l5-5 5 5M7 15l5 5 5-5"/></svg><select id="tmplSel" aria-label="Notes style"></select></label>
+        </div>
+        <span class="kbd-hint">or press <kbd id="kbdHint">Ctrl J</kbd></span>
+      </div>
+      <div class="how" aria-label="How it works">
+        <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>Tap once</div>
+        <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></svg>Talk normally</div>
+        <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg>Get clean notes</div>
+      </div>
+    </section>
+
+    <section class="view v-rec" id="vRec" hidden>
+      <div class="island" role="status" aria-live="off">
+        <span class="r" aria-hidden="true"></span>
+        <span class="t" id="timer">00:00</span>
+        <span class="wv css" id="wv" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+      </div>
+      <span class="rec-meta" id="recMeta">Meeting in English (India)</span>
+      <div class="lyrics" id="lyrics" aria-live="polite"></div>
+      <div class="rec-foot">
+        <button class="rec sm on" id="stopBtn" aria-label="Stop and make notes"><span class="dot"></span></button>
+        <span class="rec-label">Tap when you are done</span>
+      </div>
+    </section>
+
+    <section class="view v-making" id="vMaking" hidden>
+      <span class="think" aria-hidden="true"><i></i><i></i><i></i></span>
+      <h2>Writing your notes</h2>
+      <p id="makingSub"></p>
+    </section>
+
+    <section class="view v-note" id="vNote" hidden>
+      <div class="note-scroll" id="noteScroll">
+        <div class="note-inner">
+          <div class="grabber" aria-hidden="true"></div>
+          <span class="kicker" id="noteKicker">Notes ready</span>
+          <h2 class="note-title" id="noteTitle">Untitled</h2>
+          <span class="note-meta" id="noteMeta"></span>
+          <div class="seg note-tabs" id="noteSeg" role="group" aria-label="Show" data-on="0">
+            <span class="thumb" aria-hidden="true"></span>
+            <button data-tab="notes" aria-pressed="true">Notes</button>
+            <button data-tab="transcript" aria-pressed="false">Transcript</button>
+          </div>
+          <div id="noteBody"></div>
+          <div id="trBody" hidden></div>
+          <div class="ask-list" id="askList"></div>
+          <div class="ask-row" id="askRow" hidden>
+            <input id="askInp" placeholder="Ask about this conversation" autocomplete="off" aria-label="Ask a question about this conversation">
+            <button class="send" id="askSend" aria-label="Ask"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+          </div>
+          <span class="engine-note" id="engineNote"></span>
+        </div>
+      </div>
+      <nav class="toolbar glass" aria-label="Note actions">
+        <button class="tb" id="tbShare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>Share</button>
+        <button class="tb" id="tbCopy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>Copy</button>
+        <button class="tb" id="tbAsk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>Ask</button>
+        <button class="tb" id="tbTranslate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h9M8.5 3v2M6 5c.6 3 2.6 5.5 5 7M11 5c-.6 3.4-3 6.4-6 8"/><path d="M13 21l4-9 4 9M14.4 18h5.2"/></svg>Translate</button>
+        <button class="tb red" id="tbNew"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="5.5" fill="currentColor"/></svg>New</button>
+      </nav>
+    </section>
+  </main>
+</div>
+
+<!-- Share sheet -->
+<div class="scrim" id="shareSheet" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="shareH">
+    <h2 id="shareH">Share notes</h2>
+    <p class="sub" id="shareSub">Send them anywhere, or keep a copy.</p>
+    <div class="opts">
+      <button class="opt" id="shNative" hidden><span class="oi" style="background:#0A66D8"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M6 11H5v10h14V11h-1"/></svg></span>Share with an app</button>
+      <button class="opt" id="shWa"><span class="oi" style="background:#25A244"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.5L3 21l2-5.4A8.5 8.5 0 1 1 21 11.5z"/></svg></span>WhatsApp</button>
+      <button class="opt" id="shMail"><span class="oi" style="background:#1E88E5"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span>Email</button>
+      <button class="opt" id="shCopy"><span class="oi" style="background:#8E8E93"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></span>Copy text</button>
+      <button class="opt" id="shDl"><span class="oi" style="background:#5E5CE6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></span>Download as a file</button>
+    </div>
+    <div class="opts" style="margin-top:12px">
+      <button class="opt danger" id="shDel"><span class="oi" style="background:#FF3B30"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></span>Delete this note</button>
+    </div>
+    <button class="cancel" data-close>Cancel</button>
+  </div>
+</div>
+
+<!-- Translate sheet -->
+<div class="scrim" id="trSheet" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="trH">
+    <h2 id="trH">Translate notes</h2>
+    <p class="sub">Pick a language. The original stays saved.</p>
+    <label class="form-l" for="trLang">Translate to</label>
+    <select class="field" id="trLang"></select>
+    <p class="hint" id="trHint"></p>
+    <button class="done-btn" id="trGo">Translate</button>
+    <button class="cancel" data-close>Cancel</button>
+  </div>
+</div>
+
+<!-- Settings -->
+<div class="scrim" id="setSheet" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="setH">
+    <h2 id="setH">Settings</h2>
+    <label class="form-l" for="provSel">Notes engine</label>
+    <select class="field" id="provSel">
+      <option value="auto">Built in (free, no key)</option>
+      <option value="sarvam">Sarvam AI (best for Indian languages)</option>
+      <option value="openai">OpenAI</option>
+      <option value="anthropic">Anthropic Claude</option>
+      <option value="gemini">Google Gemini</option>
+    </select>
+    <div id="keyWrap">
+      <label class="form-l" for="keyInp">Your API key</label>
+      <input class="field" id="keyInp" type="password" placeholder="Paste your key" autocomplete="off" spellcheck="false">
+    </div>
+    <p class="hint" id="keyHint"></p>
+    <div class="status" id="aiStatus">Checking this browser…</div>
+    <label class="form-l" for="outLang">Write notes in</label>
+    <select class="field" id="outLang"></select>
+    <span class="form-l">Appearance</span>
+    <div class="seg seg3" id="themeSeg" role="group" aria-label="Appearance" data-on="0">
+      <span class="thumb" aria-hidden="true"></span>
+      <button data-theme-set="system" aria-pressed="true">Automatic</button>
+      <button data-theme-set="light" aria-pressed="false">Light</button>
+      <button data-theme-set="dark" aria-pressed="false">Dark</button>
+    </div>
+    <button class="done-btn" id="setDone">Done</button>
+  </div>
+</div>
+
+<!-- Privacy -->
+<div class="scrim" id="privSheet" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="privH">
+    <h2 id="privH">Where your words go</h2>
+    <p class="sub">Vaani has no server and no account. Here is every stop, plainly.</p>
+    <div class="facts">
+      <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg><span><b>Your browser turns speech into text.</b> Chrome and Edge send the audio to Google or Microsoft to do this; Safari uses Apple's engine. Vaani itself never receives your audio.</span></div>
+      <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span><b>Notes stay on this device.</b> Everything you save lives in this browser only. Clearing browser data deletes it.</span></div>
+      <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg><span><b>The built-in notes engine runs on your device.</b> If you add your own AI key in Settings, the text (never audio) goes to that provider when notes are made.</span></div>
+      <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M17 11a3 3 0 1 0 0-6M21.5 20a5.5 5.5 0 0 0-4.5-5.4"/></svg><span><b>Tell people you are taking notes.</b> It's polite, and in many places it's the law.</span></div>
+    </div>
+    <button class="done-btn" data-close>Got it</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  "use strict";
+  var $=function(s,r){return (r||document).querySelector(s);},$$=function(s,r){return [].slice.call((r||document).querySelectorAll(s));};
+  function load(k,d){try{var v=localStorage.getItem(k);return v===null?d:v;}catch(e){return d;}}
+  function save(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+  function loadJSON(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
+  function saveJSON(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+  function il(s){return esc(s).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");}
+  var APP_URL=location.origin+location.pathname.replace(/index\.html$/,"");
+
+  /* ---------- data ---------- */
+  var LANGS=[["en-IN","English (India)"],["en-US","English (US)"],["en-GB","English (UK)"],["hi-IN","Hindi (हिन्दी)"],["kn-IN","Kannada (ಕನ್ನಡ)"],["ta-IN","Tamil (தமிழ்)"],["te-IN","Telugu (తెలుగు)"],["mr-IN","Marathi (मराठी)"],["bn-IN","Bengali (বাংলা)"],["gu-IN","Gujarati (ગુજરાતી)"],["ml-IN","Malayalam (മലയാളം)"],["pa-IN","Punjabi (ਪੰਜਾਬੀ)"],["ur-PK","Urdu (اردو)"],["es-ES","Spanish"],["fr-FR","French"],["de-DE","German"],["ar-SA","Arabic"],["pt-BR","Portuguese"],["ru-RU","Russian"],["zh-CN","Chinese"],["ja-JP","Japanese"],["id-ID","Indonesian"]];
+  var OUT=[["English","en"],["Hindi","hi"],["Kannada","kn"],["Tamil","ta"],["Telugu","te"],["Marathi","mr"],["Bengali","bn"],["Gujarati","gu"],["Malayalam","ml"],["Punjabi","pa"],["Urdu","ur"],["Spanish","es"],["French","fr"],["German","de"],["Arabic","ar"],["Portuguese","pt"],["Chinese","zh"],["Japanese","ja"]];
+  var FMT="Format in markdown. First line: '# ' and a short title of at most 6 words. Then these sections in order, leaving out any that are genuinely empty: '## Summary' (2 short sentences), '## Action items' (one bullet each, written as 'Owner: task, due date if said'), '## Decided' (bullets), '## Open questions' (bullets). Be faithful to the transcript, which may mix languages; never invent owners, dates or facts.";
+  var TMPL={
+    general:{label:"General meeting",sys:"Write clear, action-oriented meeting notes."},
+    client:{label:"Client call",sys:"This is a client call. Put the client's needs and pain points in the Summary; make Action items the next steps with owners."},
+    sales:{label:"Sales or deal call",sys:"This is a deal call. Say where the deal stands and what each side committed to in the Summary; make Action items the concrete steps to close."},
+    daily:{label:"Daily team call",sys:"This is a daily team call. Make sure everyone leaves knowing their next move."},
+    interview:{label:"Interview",sys:"These are interview notes. Put strengths and concerns under Decided and Open questions; end the Summary with a clear hire or no-hire lean."},
+    oneonone:{label:"One-on-one",sys:"These are one-on-one notes. Capture feedback and agreements."},
+    lecture:{label:"Lecture or class",sys:"These are study notes. Summary is the big idea; Action items are what to study or do; Decided holds the key concepts briefly explained."}
+  };
+  var NOTE_SYS="You are a careful dictation editor. Fix punctuation, capitalisation and obvious speech-to-text slips. Keep the speaker's words and meaning; do not add or translate. First line: '# ' and a title of at most 6 words. Then the cleaned text.";
+
+  var app=$("#app"),root=document.documentElement;
+  var langSel=$("#langSel"),tmplSel=$("#tmplSel"),outLang=$("#outLang"),trLang=$("#trLang");
+  LANGS.forEach(function(l){var o=document.createElement("option");o.value=l[0];o.textContent=l[1];langSel.appendChild(o);});
+  Object.keys(TMPL).forEach(function(k){var o=document.createElement("option");o.value=k;o.textContent=TMPL[k].label;tmplSel.appendChild(o);});
+  OUT.forEach(function(l){[outLang,trLang].forEach(function(s){var o=document.createElement("option");o.value=l[0];o.textContent=l[0];s.appendChild(o);});});
+  langSel.value=load("vaani.lang","en-IN");if(!langSel.value)langSel.value="en-IN";
+  tmplSel.value=load("vaani.tmpl","general");if(!tmplSel.value)tmplSel.value="general";
+  outLang.value=load("vaani.outLang","English");
+  function syncPills(){$("#langText").textContent=langSel.options[langSel.selectedIndex].text;$("#tmplText").textContent=TMPL[tmplSel.value].label;}
+  langSel.addEventListener("change",function(){save("vaani.lang",langSel.value);syncPills();});
+  tmplSel.addEventListener("change",function(){save("vaani.tmpl",tmplSel.value);syncPills();});
+  syncPills();
+  var isMac=/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent);
+  $("#kbdHint").textContent=isMac?"⌘ J":"Ctrl J";
+
+  /* ---------- toast ---------- */
+  var tT;function toast(m){var t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(tT);tT=setTimeout(function(){t.classList.remove("show");},2200);}
+
+  /* ---------- theme ---------- */
+  function applyTheme(t){if(t==="light"||t==="dark")root.setAttribute("data-theme",t);else root.removeAttribute("data-theme");save("vaani.theme",t);
+    var i=["system","light","dark"].indexOf(t);if(i<0)i=0;$("#themeSeg").setAttribute("data-on",i);
+    $$("#themeSeg button").forEach(function(b){b.setAttribute("aria-pressed",b.getAttribute("data-theme-set")===t?"true":"false");});}
+  applyTheme(load("vaani.theme","system")||"system");
+  $("#themeSeg").addEventListener("click",function(e){var b=e.target.closest("[data-theme-set]");if(b)applyTheme(b.getAttribute("data-theme-set"));});
+
+  /* ---------- segmented mode ---------- */
+  var mode=load("vaani.mode","meeting")==="note"?"note":"meeting";
+  function setMode(m){mode=m;save("vaani.mode",m);var on=m==="note"?1:0;$("#modeSeg").setAttribute("data-on",on);
+    $$("#modeSeg button").forEach(function(b){b.setAttribute("aria-pressed",b.getAttribute("data-mode")===m?"true":"false");});
+    $("#tmplWrap").hidden=m!=="meeting";$("#heroSub").textContent=m==="meeting"?"Meetings, calls and classes, in 22 languages.":"Speak a thought. Get clean, ready-to-send text.";}
+  $("#modeSeg").addEventListener("click",function(e){var b=e.target.closest("[data-mode]");if(b)setMode(b.getAttribute("data-mode"));});
+  setMode(mode);
+
+  /* ---------- history ---------- */
+  function notes(){var a=loadJSON("vaani.history",[]);return a.map(function(n){ if(!n.segs){ n.segs=String(n.text||"").split(/\n/).filter(Boolean).map(function(l){var m=l.match(/^\[(\d+:\d+)\]\s*(.*)$/);return m?{t:m[1],x:m[2]}:{t:"",x:l};}); n.kind=n.kind==="meeting"?"meeting":"note"; } return n; });}
+  function setNotes(a){saveJSON("vaani.history",a.slice(0,200));renderList();}
+  function getNote(id){return notes().filter(function(n){return n.id===id;})[0];}
+  function upsert(n){var a=notes(),i=-1;a.forEach(function(x,j){if(x.id===n.id)i=j;});if(i>=0)a[i]=n;else a.unshift(n);setNotes(a);}
+  function plain(n){return n.segs.map(function(s){return s.x;}).join(" ");}
+  function stamped(n){return n.segs.map(function(s){return (s.t?"["+s.t+"] ":"")+s.x;}).join("\n");}
+  function words(s){s=String(s||"").trim();return s?s.split(/\s+/).length:0;}
+  function dayLabel(d){var now=new Date(),y=new Date(now);y.setDate(now.getDate()-1);
+    if(d.toDateString()===now.toDateString())return "Today";if(d.toDateString()===y.toDateString())return "Yesterday";
+    return d.toLocaleDateString(undefined,{day:"numeric",month:"long"});}
+  function timeLabel(d){return d.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"});}
+  var currentId=null;
+  function previewOf(n){var md=n.md||"";var m=md.split(/\n/).filter(function(l){return l.trim()&&!/^#/.test(l);})[0]||plain(n);return m.replace(/^[-*•]\s*/,"").replace(/\*\*/g,"");}
+  function renderList(){
+    var q=($("#search").value||"").toLowerCase().trim(),a=notes(),el=$("#list");
+    if(q)a=a.filter(function(n){return (n.title+" "+(n.md||"")+" "+plain(n)).toLowerCase().indexOf(q)>=0;});
+    if(!a.length){el.innerHTML='<p class="list-empty">'+(q?"No notes match that search.":"Your notes will appear here. Everything stays in this browser.")+'</p>';return;}
+    var h="",last="";
+    a.forEach(function(n){var d=new Date(n.date),g=dayLabel(d);if(g!==last){h+='<span class="list-h">'+esc(g)+'</span>';last=g;}
+      h+='<button class="item'+(n.id===currentId?' on':'')+'" data-id="'+n.id+'"><span class="it-t">'+esc(n.title||"Untitled")+'</span><span class="it-m">'+esc(timeLabel(d))+'&nbsp;&nbsp;'+esc(previewOf(n))+'</span></button>';});
+    el.innerHTML=h;
+  }
+  $("#search").addEventListener("input",renderList);
+  $("#list").addEventListener("click",function(e){var b=e.target.closest("[data-id]");if(!b)return;var n=getNote(+b.getAttribute("data-id"));if(n){app.classList.remove("list-open");showNote(n,false);}});
+  $("#listBtn").addEventListener("click",function(){renderList();app.classList.add("list-open");});
+  $("#listClose").addEventListener("click",function(){app.classList.remove("list-open");});
+
+  /* ---------- time saved ---------- */
+  function renderSaved(bump){var w=parseInt(load("vaani.words","0"),10)||0,m=Math.round(w/40);
+    $("#savedVal").textContent=m<60?m+" min":Math.floor(m/60)+" h "+(m%60)+" min";
+    if(bump){var s=$("#saved");s.classList.remove("bump");void s.offsetWidth;s.classList.add("bump");}}
+  function addWords(n){save("vaani.words",String((parseInt(load("vaani.words","0"),10)||0)+n));}
+  renderSaved(false);
+
+  /* ---------- views ---------- */
+  function view(v){["Idle","Rec","Making","Note"].forEach(function(k){$("#v"+k).hidden=k.toLowerCase()!==v;});app.setAttribute("data-view",v);}
+
+  /* ---------- recording ---------- */
+  var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  var rec=null,listening=false,want=false,segs=[],interim="",startedAt=0,timerInt=null;
+  function two(n){return (n<10?"0":"")+n;}
+  function fmt(s){return two(Math.floor(s/60))+":"+two(s%60);}
+  function elapsed(){return Math.floor((Date.now()-startedAt)/1000);}
+  if(!SR){$("#recBtn").disabled=true;$("#recLabel").textContent="Open Vaani in Chrome, Edge or Safari to record. Your saved notes still work here.";}
+
+  function startRec(){
+    if(!SR){toast("This browser can't turn speech into text");return;}
+    if(listening)return;
+    segs=[];interim="";lyShown=0;lyInterim=null;$("#lyrics").innerHTML="";
+    try{
+      rec=new SR();rec.lang=langSel.value;rec.continuous=true;rec.interimResults=true;
+      rec.onresult=onResult;
+      rec.onerror=function(e){if(e.error==="not-allowed"||e.error==="service-not-allowed"){want=false;cleanup();view("idle");toast("Allow the microphone in the address bar, then try again");}};
+      rec.onend=function(){if(want){try{rec.start();}catch(e){}}};
+      want=true;rec.start();listening=true;
+    }catch(e){toast("Couldn't start the microphone");return;}
+    startedAt=Date.now();$("#timer").textContent="00:00";
+    timerInt=setInterval(function(){$("#timer").textContent=fmt(elapsed());},1000);
+    $("#recMeta").textContent=(mode==="meeting"?TMPL[tmplSel.value].label:"Quick note")+" in "+langSel.options[langSel.selectedIndex].text;
+    renderLyrics();view("rec");startViz();
+    try{if(navigator.vibrate)navigator.vibrate(10);}catch(e){}
+  }
+  function onResult(ev){
+    var fin="",tmp="";
+    for(var i=ev.resultIndex;i<ev.results.length;i++){var r=ev.results[i];if(r.isFinal)fin+=r[0].transcript;else tmp+=r[0].transcript;}
+    if(fin.trim()){segs.push({t:fmt(elapsed()),x:fin.trim()});}
+    interim=tmp.trim();renderLyrics();
+  }
+  var lyShown=0,lyInterim=null;
+  function renderLyrics(){
+    var el=$("#lyrics");
+    if(!segs.length&&!interim){el.innerHTML='<p class="empty-ly">Listening. Start talking whenever you are ready.</p>';lyShown=0;lyInterim=null;return;}
+    var em=el.querySelector(".empty-ly");if(em)em.remove();
+    while(lyShown<segs.length){var s=segs[lyShown],p=document.createElement("p");p.className="ly";p.innerHTML='<time>'+esc(s.t)+'</time>'+esc(s.x);
+      if(lyInterim)el.insertBefore(p,lyInterim);else el.appendChild(p);lyShown++;}
+    var ps=$$("p.ly:not(.interim)",el);while(ps.length>8){ps.shift().remove();}
+    ps.forEach(function(x,i){x.classList.toggle("now",i===ps.length-1&&!interim);});
+    if(interim){if(!lyInterim){lyInterim=document.createElement("p");lyInterim.className="ly interim";el.appendChild(lyInterim);}lyInterim.textContent=interim;}
+    else if(lyInterim){lyInterim.remove();lyInterim=null;}
+  }
+  function cleanup(){want=false;listening=false;if(rec){try{rec.stop();}catch(e){}}clearInterval(timerInt);stopViz();}
+  function stopRec(){
+    if(!listening)return;
+    var dur=elapsed();cleanup();
+    if(interim){segs.push({t:fmt(dur),x:interim});interim="";}
+    var w=words(segs.map(function(s){return s.x;}).join(" "));
+    if(!w){view("idle");toast("Vaani didn't catch any words. Check your microphone and try again.");return;}
+    addWords(w);
+    var n={id:Date.now(),kind:mode,date:new Date().toISOString(),dur:dur,lang:langSel.value,tmpl:tmplSel.value,segs:segs.slice(),title:titleFrom(segs[0].x),md:"",done:{},words:w};
+    upsert(n);currentId=n.id;
+    makeNotes(n);
+  }
+  $("#recBtn").addEventListener("click",startRec);
+  $("#stopBtn").addEventListener("click",stopRec);
+  $("#newBtn").addEventListener("click",function(){app.classList.remove("list-open");if(listening)return;currentId=null;renderList();view("idle");});
+  $("#tbNew").addEventListener("click",function(){currentId=null;renderList();view("idle");});
+  document.addEventListener("keydown",function(e){
+    if((e.metaKey||e.ctrlKey)&&(e.key==="j"||e.key==="J")){e.preventDefault();if(listening)stopRec();else if(!$("#vIdle").hidden||!$("#vNote").hidden){view("idle");startRec();}}
+    if(e.key==="Escape"){closeSheets();app.classList.remove("list-open");}
+  });
+
+  /* live level meter in the pill */
+  var ac=null,an=null,ms=null,raf=0;
+  function startViz(){
+    var wv=$("#wv");wv.classList.add("css");
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)return;
+    navigator.mediaDevices.getUserMedia({audio:true}).then(function(st){
+      if(!listening){st.getTracks().forEach(function(t){t.stop();});return;}
+      ms=st;ac=new (window.AudioContext||window.webkitAudioContext)();var src=ac.createMediaStreamSource(st);an=ac.createAnalyser();an.fftSize=64;src.connect(an);
+      wv.classList.remove("css");var bars=$$("i",wv),buf=new Uint8Array(an.frequencyBinCount);
+      (function f(){raf=requestAnimationFrame(f);an.getByteFrequencyData(buf);bars.forEach(function(b,i){var v=buf[2+i*3]/255;b.style.transform="scaleY("+Math.max(.18,Math.min(1,v*1.4)).toFixed(2)+")";});})();
+    }).catch(function(){});
+  }
+  function stopViz(){cancelAnimationFrame(raf);if(ms){ms.getTracks().forEach(function(t){t.stop();});ms=null;}if(ac){try{ac.close();}catch(e){}ac=null;}an=null;}
+
+  /* ---------- engines ---------- */
+  function provider(){return load("vaani.provider","auto");}
+  function keyFor(p){return load("vaani.key."+p,"");}
+  function remoteReady(){var p=provider();return p!=="auto"&&!!keyFor(p);}
+  var PNAME={sarvam:"Sarvam AI",openai:"OpenAI",anthropic:"Claude",gemini:"Gemini"};
+  function pj(r){return r.json().then(function(d){if(!r.ok){var m=(d&&d.error&&(d.error.message||d.error))||("HTTP "+r.status);throw new Error(typeof m==="string"?m:JSON.stringify(m));}return d;});}
+  function callRemote(system,prompt){
+    var p=provider(),key=keyFor(p);
+    if(p==="openai")return fetch("https://api.openai.com/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({model:"gpt-4o-mini",temperature:.3,messages:[{role:"system",content:system},{role:"user",content:prompt}]})}).then(pj).then(function(d){return d.choices[0].message.content;});
+    if(p==="anthropic")return fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-haiku-4-5",max_tokens:1800,system:system,messages:[{role:"user",content:prompt}]})}).then(pj).then(function(d){return d.content[0].text;});
+    if(p==="sarvam")return fetch("https://api.sarvam.ai/v2/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","api-subscription-key":key},body:JSON.stringify({model:"sarvam-105b",temperature:.3,messages:[{role:"system",content:system},{role:"user",content:prompt}]})}).then(pj).then(function(d){return d.choices[0].message.content;});
+    return fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{temperature:.3}})}).then(pj).then(function(d){return d.candidates[0].content.parts[0].text;});
+  }
+  var LMOPTS={expectedInputs:[{type:"text",languages:["en"]}],expectedOutputs:[{type:"text",languages:["en"]}]};
+  function lmAvail(){try{if(!("LanguageModel" in window))return Promise.resolve("unavailable");return LanguageModel.availability(LMOPTS).catch(function(){return "unavailable";});}catch(e){return Promise.resolve("unavailable");}}
+  function smAvail(){try{if(!("Summarizer" in window))return Promise.resolve("unavailable");return Summarizer.availability().catch(function(){return "unavailable";});}catch(e){return Promise.resolve("unavailable");}}
+  function onDevice(system,prompt){
+    return lmAvail().then(function(a){if(a==="unavailable")throw new Error("no-lm");
+      return LanguageModel.create(Object.assign({initialPrompts:[{role:"system",content:system}]},LMOPTS)).then(function(s){return s.prompt(prompt).then(function(r){try{s.destroy();}catch(e){}r=String(r||"").trim();if(!r||r.indexOf(system.slice(0,40))>=0||r.indexOf(prompt.slice(0,40))>=0||/not available/i.test(r.slice(0,80)))throw new Error("bad-lm");return r;});});});
+  }
+  /* engine chain: your key, then on-device AI in this browser, then Vaani's basic engine */
+  function generate(system,prompt,basic){
+    if(remoteReady())return callRemote(system,prompt).then(function(t){return {text:t,engine:PNAME[provider()]};});
+    return onDevice(system,prompt).then(function(t){return {text:t,engine:"on-device AI"};}).catch(function(){
+      return Promise.resolve(basic()).then(function(t){return {text:t,engine:"Vaani's basic engine"};});});
+  }
+
+  /* basic engine (always available, works offline) */
+  var FILLER=/^(?:okay|ok|so|um+|uh+|hmm+|hi|hello|hey|great|and|also|but|then|alright|right|well|guys|team|quick|sync|haan|accha|achha|toh|to|ki|yes|yeah|basically|actually|like|the)\b[\s,]*/i;
+  function strip(s){s=String(s||"").trim();var prev;do{prev=s;s=s.replace(FILLER,"");}while(s!==prev&&s.length);return s||String(prev||"");}
+  function cap(s){s=strip(s);if(!s)return s;s=s.replace(/\bi\b/g,"I");s=s.charAt(0).toUpperCase()+s.slice(1);if(!/[.!?।]$/.test(s))s+=".";return s;}
+  function titleFrom(t){t=strip(String(t||"").replace(/\s+/g," ").trim()).split(/[.!?।]\s/)[0];var w=t.split(" ").slice(0,6).join(" ").replace(/[.,!?।]+$/,"");return w?w.charAt(0).toUpperCase()+w.slice(1):"Untitled";}
+  function basicClean(n){var t=n.segs.map(function(s){return s.x;}).join(" ").replace(/\s+/g," ").trim();
+    t=t.replace(/(^|[.!?]\s+)([a-z])/g,function(m,p,c){return p+c.toUpperCase();});return "# "+titleFrom(t)+"\n"+cap(t);}
+  function basicNotes(n){
+    var lines=n.segs.map(function(s){return s.x;}).join(". ").split(/(?<=[.!?।])\s+|\.\s+/).map(function(s){return s.trim();}).filter(function(s){return s.length>2;});
+    if(!lines.length)return "# "+n.title+"\n## Summary\nNothing captured yet.";
+    var actRe=/\b(i'?ll|we'?ll|will|need to|needs to|have to|should|must|let'?s|by (noon|tomorrow|today|tonight|monday|tuesday|wednesday|thursday|friday|saturday|sunday|eod|end of day|next week|\d)|send|share|fix|follow ?up|call|email|schedule|review|prepare|update|confirm|get|deliver|karega|karegi|karenge|bhej|kar dena|kar dunga)\b/i;
+    var decRe=/\b(decided|agreed|final|confirmed|go with|let'?s go|done deal|fixed for|locked|tay)\b/i;
+    var qRe=/\?|\b(not sure|unclear|open question|what about|kya|kaise|kab)\b/i;
+    var act=[],dec=[],qs=[],rest=[];
+    lines.forEach(function(s){if(qRe.test(s))qs.push(cap(s));else if(actRe.test(s))act.push(cap(s));else if(decRe.test(s))dec.push(cap(s));else rest.push(cap(s));});
+    var sum=(rest.length?rest:lines.map(cap)).slice(0,2).join(" ");
+    function sec(h,a){return a.length?"\n## "+h+"\n"+a.slice(0,8).map(function(s){return "- "+s;}).join("\n"):"";}
+    return "# "+n.title+"\n## Summary\n"+sum+sec("Action items",act)+sec("Decided",dec)+sec("Open questions",qs);
+  }
+  function summarizerNotes(n){
+    return smAvail().then(function(a){if(a==="unavailable")throw new Error("no-sm");
+      return Summarizer.create({type:"key-points",format:"markdown",length:"medium",sharedContext:"A transcript of a conversation. It may mix English with Indian languages."}).then(function(s){
+        return s.summarize(stamped(n)).then(function(sum){try{s.destroy();}catch(e){}
+          var b=basicNotes(n).split("\n## ").slice(2).map(function(x){return "## "+x;}).join("\n");
+          if(!sum||sum.indexOf(stamped(n).slice(0,40))>=0||/not available/i.test(String(sum).slice(0,80)))throw new Error("bad-sm");return "# "+n.title+"\n## Summary\n"+sum+(b?"\n"+b:"");});});});
+  }
+  function makeNotes(n){
+    view("making");
+    $("#makingSub").textContent=remoteReady()?"Using "+PNAME[provider()]+".":"Using the AI built into this browser when it's available.";
+    var sys,prompt,basic;
+    if(n.kind==="meeting"){sys="You are an expert meeting note-taker. Write in "+outLang.value+". "+TMPL[n.tmpl||"general"].sys+" "+FMT;prompt="Transcript:\n"+stamped(n);basic=function(){return summarizerNotes(n).catch(function(){return basicNotes(n);});};}
+    else{sys=NOTE_SYS+" Write in "+outLang.value+".";prompt=plain(n);basic=function(){return basicClean(n);};}
+    var t0=Date.now();
+    generate(sys,prompt,basic).catch(function(err){toast((PNAME[provider()]||"AI")+" didn't respond. Used the basic engine.");return {text:n.kind==="meeting"?basicNotes(n):basicClean(n),engine:"Vaani's basic engine"};})
+    .then(function(r){
+      var md=String(r.text||"").trim(),m=md.match(/^#\s+(.+)$/m);
+      if(m){n.title=m[1].replace(/\*\*/g,"").trim();}
+      n.md=md;n.engine=r.engine;upsert(n);
+      setTimeout(function(){showNote(n,true);renderSaved(true);},Math.max(0,700-(Date.now()-t0)));
+    });
+  }
+
+  /* ---------- note view ---------- */
+  var tab="notes";
+  function parseMd(md){
+    var secs=[],cur=null;
+    String(md||"").split(/\r?\n/).forEach(function(l){var m;
+      if(/^#\s+/.test(l))return;
+      if((m=l.match(/^#{2,6}\s+(.*)/))){cur={h:m[1].replace(/\*\*/g,"").trim(),items:[],paras:[]};secs.push(cur);return;}
+      if(!l.trim())return;
+      if(!cur){cur={h:"",items:[],paras:[]};secs.push(cur);}
+      if((m=l.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)/)))cur.items.push(m[1].trim());else cur.paras.push(l.trim());
+    });return secs;}
+  function renderNoteBody(n){
+    var el=$("#noteBody");
+    if(n.kind==="note"){
+      var body=String(n.md||"").replace(/^#\s+.*\n?/,"").trim();
+      el.innerHTML='<span class="sec-h">Your note</span><div class="card"><div class="qtext" id="qtext" contenteditable="true" spellcheck="true" aria-label="Your note, editable"></div></div>';
+      $("#qtext").textContent=body;
+      $("#qtext").addEventListener("input",function(){var x=getNote(n.id);if(!x)return;x.md="# "+x.title+"\n"+this.innerText;upsert(x);});
+      return;
+    }
+    var secs=parseMd(n.md),h="",k=0;
+    secs.forEach(function(s,si){
+      var isAct=/action|to.?do|task|next step|kaam/i.test(s.h);
+      if(s.h)h+='<span class="sec-h">'+il(s.h)+'</span>';
+      h+='<div class="card">';
+      s.paras.forEach(function(p){h+='<div class="row"><span>'+il(p)+'</span></div>';});
+      s.items.forEach(function(it,ii){
+        if(isAct){var key=si+"."+ii,done=n.done&&n.done[key];
+          var mm=it.match(/^\*?\*?([^:*]{1,40}?)\*?\*?\s*:\s*(.+)$/),txt=mm?'<b>'+esc(mm[1])+':</b> '+il(mm[2]):il(it);
+          h+='<button class="row'+(done?' done':'')+'" data-ck="'+key+'" aria-pressed="'+(done?"true":"false")+'"><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg></span><span class="rt">'+txt+'</span></button>';
+        }else h+='<div class="row"><span>'+il(it)+'</span></div>';
+        k++;});
+      h+='</div>';});
+    el.innerHTML=h||'<div class="card"><div class="row">No notes yet.</div></div>';
+  }
+  $("#noteBody").addEventListener("click",function(e){var b=e.target.closest("[data-ck]");if(!b||!currentId)return;var n=getNote(currentId);if(!n)return;n.done=n.done||{};var k=b.getAttribute("data-ck");n.done[k]=!n.done[k];upsert(n);
+    b.classList.toggle("done",!!n.done[k]);b.setAttribute("aria-pressed",n.done[k]?"true":"false");try{if(navigator.vibrate)navigator.vibrate(8);}catch(x){}});
+  function renderTranscript(n){$("#trBody").innerHTML='<span class="sec-h">Transcript</span><div class="card">'+n.segs.map(function(s){return '<div class="tr-row"><time>'+esc(s.t)+'</time><span>'+esc(s.x)+'</span></div>';}).join("")+'</div>';}
+  function setTab(t){tab=t;$("#noteSeg").setAttribute("data-on",t==="transcript"?1:0);$$("#noteSeg button").forEach(function(b){b.setAttribute("aria-pressed",b.getAttribute("data-tab")===t?"true":"false");});
+    $("#noteBody").hidden=t!=="notes";$("#trBody").hidden=t!=="transcript";}
+  $("#noteSeg").addEventListener("click",function(e){var b=e.target.closest("[data-tab]");if(b)setTab(b.getAttribute("data-tab"));});
+  function showNote(n,fresh){
+    currentId=n.id;var d=new Date(n.date);
+    var saved=Math.max(1,Math.round((n.words||words(plain(n)))/40));
+    $("#noteKicker").textContent=fresh?(n.kind==="meeting"?"Notes ready. You saved about "+saved+" min of typing.":"Note ready. You saved about "+saved+" min of typing."):dayLabel(d)+", "+timeLabel(d);
+    $("#noteTitle").textContent=n.title||"Untitled";
+    var langName=(LANGS.filter(function(l){return l[0]===n.lang;})[0]||[0,""])[1];
+    $("#noteMeta").textContent=(n.kind==="meeting"?(TMPL[n.tmpl]?TMPL[n.tmpl].label:"Meeting"):"Quick note")+", "+(n.dur?fmt(n.dur):"")+(langName?", "+langName:"");
+    renderNoteBody(n);renderTranscript(n);setTab("notes");
+    $("#askList").innerHTML="";$("#askRow").hidden=true;
+    $("#engineNote").innerHTML=n.engine?'Written by '+esc(n.engine)+'. '+(n.engine==="Vaani's basic engine"?'<button data-open="settings">Get smarter notes</button>':''):'';
+    view("note");$("#noteScroll").scrollTop=0;renderList();
+  }
+
+  /* ---------- share ---------- */
+  function shareText(n){
+    var body;
+    if(n.kind==="note")body=String(n.md||"").replace(/^#\s+.*\n?/,"").trim();
+    else body=parseMd(n.md).map(function(s){return (s.h?s.h.toUpperCase()+"\n":"")+s.paras.join("\n")+(s.paras.length&&s.items.length?"\n":"")+s.items.map(function(i){return "- "+i.replace(/\*\*/g,"");}).join("\n");}).join("\n\n");
+    return (n.title||"Notes")+"\n"+dayLabel(new Date(n.date))+"\n\n"+body.replace(/\*\*/g,"")+"\n\nMade with Vaani: "+APP_URL;
+  }
+  function copyText(t,msg){function ok(){toast(msg||"Copied");}
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,function(){fb(t,ok);});else fb(t,ok);}
+  function fb(t,ok){var ta=document.createElement("textarea");ta.value=t;ta.setAttribute("readonly","");ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();try{document.execCommand("copy");ok();}catch(e){toast("Copy didn't work here");}document.body.removeChild(ta);}
+  function cur(){return currentId&&getNote(currentId);}
+  function openSheet(id){closeSheets();$(id).hidden=false;var f=$(id).querySelector("button,select,input");if(f)setTimeout(function(){f.focus();},60);}
+  function closeSheets(){$$(".scrim").forEach(function(s){s.hidden=true;});}
+  $$(".scrim").forEach(function(s){s.addEventListener("click",function(e){if(e.target===s||e.target.closest("[data-close]"))closeSheets();});});
+  document.addEventListener("click",function(e){var b=e.target.closest("[data-open]");if(!b)return;app.classList.remove("list-open");if(b.getAttribute("data-open")==="settings")openSettings();else openSheet("#privSheet");});
+  $("#shNative").hidden=!navigator.share;
+  $("#tbShare").addEventListener("click",function(){if(cur())openSheet("#shareSheet");});
+  $("#tbCopy").addEventListener("click",function(){var n=cur();if(n)copyText(shareText(n),"Copied. Paste it anywhere.");});
+  $("#shNative").addEventListener("click",function(){var n=cur();closeSheets();if(n&&navigator.share)navigator.share({title:n.title,text:shareText(n)}).catch(function(){});});
+  $("#shWa").addEventListener("click",function(){var n=cur();closeSheets();if(n)window.open("https://wa.me/?text="+encodeURIComponent(shareText(n)),"_blank","noopener");});
+  $("#shMail").addEventListener("click",function(){var n=cur();closeSheets();if(n)location.href="mailto:?subject="+encodeURIComponent(n.title||"Notes")+"&body="+encodeURIComponent(shareText(n));});
+  $("#shCopy").addEventListener("click",function(){var n=cur();closeSheets();if(n)copyText(shareText(n),"Copied. Paste it anywhere.");});
+  $("#shDl").addEventListener("click",function(){var n=cur();closeSheets();if(!n)return;var b=new Blob([shareText(n)+"\n\nTRANSCRIPT\n"+stamped(n)],{type:"text/plain;charset=utf-8"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=(n.title||"vaani-notes").replace(/[^\w\- ]+/g,"").trim().replace(/\s+/g,"-").toLowerCase()+".txt";document.body.appendChild(a);a.click();setTimeout(function(){a.remove();URL.revokeObjectURL(u);},200);toast("Downloaded");});
+  $("#shDel").addEventListener("click",function(){var n=cur();closeSheets();if(!n)return;setNotes(notes().filter(function(x){return x.id!==n.id;}));currentId=null;view("idle");toast("Note deleted");});
+
+  /* ---------- ask ---------- */
+  $("#tbAsk").addEventListener("click",function(){if(!cur())return;setTab("notes");$("#askRow").hidden=false;$("#askInp").focus();$("#askRow").scrollIntoView({behavior:"smooth",block:"center"});});
+  function ask(){
+    var q=$("#askInp").value.trim(),n=cur();if(!q||!n)return;$("#askInp").value="";
+    var box=document.createElement("div");box.className="qa";box.innerHTML='<div class="q">'+esc(q)+'</div><div class="a"><span class="think" aria-label="Thinking"><i></i><i></i><i></i></span></div>';
+    $("#askList").appendChild(box);box.scrollIntoView({behavior:"smooth",block:"end"});
+    var sys="Answer questions about a conversation using only its transcript. Be short and specific. If the answer is not in the transcript, say so. Answer in "+outLang.value+".";
+    var pr="Transcript:\n"+stamped(n)+"\n\nQuestion: "+q;
+    var p=remoteReady()?callRemote(sys,pr):onDevice(sys,pr);
+    p.then(function(a){$(".a",box).innerHTML=il(a).replace(/\n/g,"<br>");}).catch(function(){
+      $(".a",box).innerHTML='Asking questions needs the AI built into Chrome on a computer, or your own AI key. <button data-open="settings" style="color:var(--tint)">Open Settings</button>';});
+  }
+  $("#askSend").addEventListener("click",ask);
+  $("#askInp").addEventListener("keydown",function(e){if(e.key==="Enter")ask();});
+
+  /* ---------- translate ---------- */
+  $("#tbTranslate").addEventListener("click",function(){if(!cur())return;trLang.value=outLang.value==="English"?"Hindi":"English";
+    $("#trHint").textContent=remoteReady()?"Uses "+PNAME[provider()]+".":"Uses the translator built into Chrome on a computer. Other browsers need your own AI key in Settings.";openSheet("#trSheet");});
+  function code(name){return (OUT.filter(function(o){return o[0]===name;})[0]||[0,"en"])[1];}
+  function translateLines(md,from,to){
+    if(!("Translator" in window))return Promise.reject(new Error("no-tr"));
+    return Translator.availability({sourceLanguage:from,targetLanguage:to}).then(function(a){if(a==="unavailable")throw new Error("no-tr");
+      return Translator.create({sourceLanguage:from,targetLanguage:to});}).then(function(tr){
+      var lines=String(md).split("\n");
+      return lines.reduce(function(p,l){return p.then(function(acc){var m=l.match(/^(\s*(?:#{1,6}|[-*•]|\d+[.)])?\s*)(.*)$/);if(!m[2].trim())return acc.concat([l]);
+        return tr.translate(m[2]).then(function(t){return acc.concat([m[1]+t]);});});},Promise.resolve([])).then(function(a){return a.join("\n");});});
+  }
+  $("#trGo").addEventListener("click",function(){
+    var n=cur(),to=trLang.value;if(!n)return;closeSheets();toast("Translating to "+to+"…");
+    var src=n.md||stamped(n),from=n.kind==="meeting"?code(outLang.value):(n.lang||"en").slice(0,2);
+    var p=remoteReady()?callRemote("Translate this markdown into "+to+". Keep the markdown structure exactly. Return only the translation.",src):translateLines(src,from,code(to));
+    p.then(function(t){var x={id:Date.now(),kind:n.kind,date:new Date().toISOString(),dur:n.dur,lang:n.lang,tmpl:n.tmpl,segs:n.segs,md:t,title:((t.match(/^#\s+(.+)$/m)||[])[1]||n.title)+" ("+to+")",done:{},words:0,engine:remoteReady()?PNAME[provider()]:"Chrome's built-in translator"};
+      upsert(x);showNote(x,false);toast("Translated. Saved as a new note.");})
+    .catch(function(){toast("Translation isn't available in this browser. Add an AI key in Settings.");});
+  });
+
+  /* ---------- settings ---------- */
+  var HINTS={auto:"Free. Uses the AI built into this browser when it has one, and Vaani's basic engine everywhere else. Nothing leaves your device.",
+    sarvam:'Get a key at <a href="https://dashboard.sarvam.ai" target="_blank" rel="noopener">dashboard.sarvam.ai</a>. Best for Hindi, Kannada, Tamil and other Indian languages.',
+    openai:'Get a key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>.',
+    anthropic:'Get a key at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>.',
+    gemini:'Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a>.'};
+  var provSel=$("#provSel"),keyInp=$("#keyInp");
+  function syncProv(){var p=provSel.value;$("#keyWrap").hidden=p==="auto";keyInp.value=keyFor(p);$("#keyHint").innerHTML=HINTS[p]+(p!=="auto"?" Your key is kept only in this browser and sent only to that provider.":"");}
+  function checkStatus(){
+    var el=$("#aiStatus");el.textContent="Checking this browser…";
+    Promise.all([lmAvail(),smAvail()]).then(function(r){
+      var lm=r[0],sm=r[1];
+      if(lm==="available")el.innerHTML="<b>On-device AI is ready in this browser.</b> Free notes, questions and summaries without any key.";
+      else if(lm==="downloadable"||lm==="downloading")el.innerHTML="<b>This browser can run AI on your device.</b> It sets itself up the first time you make notes (a one-time download).";
+      else if(sm!=="unavailable")el.innerHTML="<b>On-device summaries are available here.</b> For questions and richer notes, use Chrome on a computer or add a key.";
+      else el.innerHTML="<b>This browser uses Vaani's basic engine.</b> It is free and works offline. For smarter notes without a key, open Vaani in Chrome on a computer, or add a key above.";
+    });
+  }
+  function openSettings(){provSel.value=provider();syncProv();checkStatus();openSheet("#setSheet");}
+  provSel.addEventListener("change",syncProv);
+  $("#setDone").addEventListener("click",function(){var p=provSel.value;save("vaani.provider",p);if(p!=="auto")save("vaani.key."+p,keyInp.value.trim());save("vaani.outLang",outLang.value);closeSheets();
+    toast(p==="auto"?"Using the free built-in engine":(keyInp.value.trim()?PNAME[p]+" is ready":"Add a key to use "+PNAME[p]));});
+
+  /* ---------- start ---------- */
+  renderList();view("idle");
+  if("serviceWorker" in navigator&&location.protocol==="https:"){navigator.serviceWorker.register("sw.js").catch(function(){});}
+})();
+</script>
+</body>
+</html>

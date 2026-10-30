@@ -1,0 +1,10 @@
+# Never publish personal builds or keys
+*personal*
+*.key
+.env
+.env.*
+secrets*
+# Local tooling
+.hallmark/
+.DS_Store
+node_modules/

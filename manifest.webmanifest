@@ -1,0 +1,13 @@
+{
+  "name": "Vaani",
+  "short_name": "Vaani",
+  "description": "Just talk. Vaani takes the notes. Free meeting notes and dictation in 22 languages.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
