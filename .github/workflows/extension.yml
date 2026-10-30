@@ -1,0 +1,61 @@
+# Every push that changes extension/ builds the extension zip, attaches it to a GitHub release,
+# and (once the Chrome Web Store secrets are added) uploads and publishes it to the store.
+# Bump "version" in extension/manifest.json for each store update; the store rejects a repeated version.
+name: Chrome extension
+
+on:
+  push:
+    branches: [main]
+    paths: ["extension/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      CWS_PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
+      CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+      CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+      CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+      CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version
+        id: v
+        run: echo "version=$(jq -r .version extension/manifest.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Build zip
+        run: cd extension && zip -r -X ../vaani-extension.zip . -x ".*"
+
+      - name: Attach to a GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="extension-v${{ steps.v.outputs.version }}"
+          if gh release view "$tag" > /dev/null 2>&1; then
+            gh release upload "$tag" vaani-extension.zip --clobber
+          else
+            gh release create "$tag" vaani-extension.zip \
+              --title "Vaani Chrome extension ${{ steps.v.outputs.version }}" \
+              --notes "Get it from the Chrome Web Store, or install by hand: download vaani-extension.zip, unzip it, open chrome://extensions, turn on Developer mode, click Load unpacked and pick the unzipped folder."
+          fi
+
+      - name: Publish to the Chrome Web Store
+        if: env.CWS_REFRESH_TOKEN != '' && env.CWS_EXTENSION_ID != ''
+        run: |
+          set -euo pipefail
+          TOKEN=$(curl -sf https://oauth2.googleapis.com/token \
+            -d "client_id=$CWS_CLIENT_ID&client_secret=$CWS_CLIENT_SECRET&refresh_token=$CWS_REFRESH_TOKEN&grant_type=refresh_token" | jq -r .access_token)
+          BASE=https://chromewebstore.googleapis.com
+          echo "Uploading version ${{ steps.v.outputs.version }}"
+          curl -sf -H "Authorization: Bearer $TOKEN" -X POST -T vaani-extension.zip \
+            "$BASE/upload/v2/publishers/$CWS_PUBLISHER_ID/items/$CWS_EXTENSION_ID:upload" | tee upload.json
+          echo
+          curl -sf -H "Authorization: Bearer $TOKEN" -X POST \
+            "$BASE/v2/publishers/$CWS_PUBLISHER_ID/items/$CWS_EXTENSION_ID:publish" | tee publish.json
+          echo
+          echo "Submitted for Chrome Web Store review."
