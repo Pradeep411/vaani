@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Vaani: Meeting Notes for Meet, Teams and Zoom",
+  "name": "Vaani: AI Meeting Notes for Google Meet, Teams and Zoom",
   "short_name": "Vaani",
   "version": "1.0.0",
-  "description": "Free meeting notes in 22 languages. When a Meet, Teams or Zoom call starts in Chrome, Vaani offers to take notes. No sign-up.",
+  "description": "Free AI meeting notes, transcripts and action items for Google Meet, Teams and Zoom. 22 languages incl. Hindi. No sign-up, no bot.",
   "homepage_url": "https://pradeep411.github.io/vaani/",
   "icons": { "16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png" },
   "action": {
