@@ -512,7 +512,7 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
   /* ---------- data ---------- */
   var LANGS=[["en-IN","English (India)"],["en-US","English (US)"],["en-GB","English (UK)"],["hi-IN","Hindi (हिन्दी)"],["kn-IN","Kannada (ಕನ್ನಡ)"],["ta-IN","Tamil (தமிழ்)"],["te-IN","Telugu (తెలుగు)"],["mr-IN","Marathi (मराठी)"],["bn-IN","Bengali (বাংলা)"],["gu-IN","Gujarati (ગુજરાતી)"],["ml-IN","Malayalam (മലയാളം)"],["pa-IN","Punjabi (ਪੰਜਾਬੀ)"],["ur-PK","Urdu (اردو)"],["es-ES","Spanish"],["fr-FR","French"],["de-DE","German"],["ar-SA","Arabic"],["pt-BR","Portuguese"],["ru-RU","Russian"],["zh-CN","Chinese"],["ja-JP","Japanese"],["id-ID","Indonesian"]];
   var OUT=[["English","en"],["Hindi","hi"],["Kannada","kn"],["Tamil","ta"],["Telugu","te"],["Marathi","mr"],["Bengali","bn"],["Gujarati","gu"],["Malayalam","ml"],["Punjabi","pa"],["Urdu","ur"],["Spanish","es"],["French","fr"],["German","de"],["Arabic","ar"],["Portuguese","pt"],["Chinese","zh"],["Japanese","ja"]];
-  var FMT="Format in markdown. First line: '# ' and a short title of at most 6 words. Then these sections in order, leaving out any that are genuinely empty: '## Summary' (2 short sentences), '## Action items' (one bullet each, written as 'Owner: task, due date if said'), '## Decided' (bullets), '## Open questions' (bullets). Be faithful to the transcript, which may mix languages; never invent owners, dates or facts.";
+  var FMT="Format in markdown. First line: '# ' and a short title of at most 6 words. Then these sections in order, leaving out any that are genuinely empty: '## Summary' (2 short sentences), '## Action items' (one '- ' bullet per task, written like '- Meera: get pricing from finance, by tomorrow noon', using the person's name), '## Decided' (bullets), '## Open questions' (bullets). Be faithful to the transcript, which may mix languages; never invent owners, dates or facts.";
   var TMPL={
     general:{label:"General meeting",sys:"Write clear, action-oriented meeting notes."},
     client:{label:"Client call",sys:"This is a client call. Put the client's needs and pain points in the Summary; make Action items the next steps with owners."},
@@ -764,7 +764,7 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
     }
     var secs=parseMd(n.md),h="",k=0;
     secs.forEach(function(s,si){
-      var isAct=/action|to.?do|task|next step|kaam/i.test(s.h);
+      var isAct=/action|to.?do|task|next step|kaam/i.test(s.h);if(isAct&&s.paras.length){s.items=s.items.concat(s.paras);s.paras=[];}
       if(s.h)h+='<span class="sec-h">'+il(s.h)+'</span>';
       h+='<div class="card">';
       s.paras.forEach(function(p){h+='<div class="row"><span>'+il(p)+'</span></div>';});
