@@ -5,66 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vaani Store Art</title>
 <meta name="robots" content="noindex">
+<meta name="description" content="Chrome Web Store screenshots and promo tiles for Vaani, captured from the real app.">
 <style>
-:root{--bg:#F2F2F7;--fg:#1d1d1f;--fg2:#6e6e73;color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#000;--fg:#f5f5f7;--fg2:#a1a1a6;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#000;--fg:#f5f5f7;--fg2:#a1a1a6;color-scheme:dark}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:32px max(16px,env(safe-area-inset-right,0px)) 32px max(16px,env(safe-area-inset-left,0px))}
-h1{font-size:22px;margin:0 0 4px}p{color:var(--fg2);margin:0 0 24px}
-figure{margin:0 0 28px}canvas{max-width:100%;height:auto;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.12);display:block}
+/* Hallmark · checked form · genre mm · shape: asset page, a column of real captures · surface: system grey paper · posture: restrained · nav: none · footer: none · copy: plain sentence case */
+:root{--bg:#F2F2F7;--fg:#1D1D1F;--fg2:#6E6E73;--edge:rgba(60,60,67,0.18);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1C1C1E;--fg:#F5F5F7;--fg2:#A1A1A6;--edge:rgba(84,84,88,0.6);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1C1C1E;--fg:#F5F5F7;--fg2:#A1A1A6;--edge:rgba(84,84,88,0.6);color-scheme:dark}
+html,body{overflow-x:clip}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:32px 16px}
+main{max-width:1000px;margin:0 auto}
+h1{font-size:22px;margin:0 0 4px;text-wrap:balance}
+p{color:var(--fg2);margin:0 0 24px}
+figure{margin:0 0 32px}
+img{display:block;max-width:100%;height:auto;border-radius:12px;box-shadow:0 0 0 1px var(--edge)}
 figcaption{font-size:13px;color:var(--fg2);margin-top:8px}
 </style>
 </head>
 <body>
+<main>
 <h1>Vaani Chrome Web Store art</h1>
-<p>Drawn in your browser. Right-click an image to save it.</p>
-<div id="out"></div>
-<script>
-(function(){
-var F='-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif';
-function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
-function txt(c,s,x,y,size,weight,color,align){c.font=(weight||400)+' '+size+'px '+F;c.fillStyle=color;c.textAlign=align||'left';c.textBaseline='alphabetic';c.fillText(s,x,y);}
-function wave(c,cx,cy,s,color){var hs=[.35,.7,1,.55,.85,.4];c.fillStyle=color;hs.forEach(function(h,i){var bw=s*.07,gap=s*.06,x=cx-(hs.length*(bw+gap)-gap)/2+i*(bw+gap),bh=s*.5*h;rr(c,x,cy-bh/2,bw,bh,bw/2);c.fill();});}
-function logo(c,cx,cy,s){c.fillStyle='#fff';c.beginPath();c.arc(cx,cy,s/2,0,7);c.fill();c.lineWidth=s*.06;c.strokeStyle='#D1D1D6';c.stroke();c.fillStyle='#FF3B30';c.beginPath();c.arc(cx,cy,s*.36,0,7);c.fill();wave(c,cx,cy,s*.62,'#fff');}
-function check(c,x,y,done){if(done){c.fillStyle='#0A66D8';c.beginPath();c.arc(x,y,9,0,7);c.fill();c.strokeStyle='#fff';c.lineWidth=2.4;c.beginPath();c.moveTo(x-4,y);c.lineTo(x-1,y+3.5);c.lineTo(x+4.5,y-3.5);c.stroke();}else{c.strokeStyle='#C7C7CC';c.lineWidth=1.6;c.beginPath();c.arc(x,y,8.5,0,7);c.stroke();}}
-function pill(c,x,y){c.save();c.shadowColor='rgba(0,0,0,.35)';c.shadowBlur=30;c.shadowOffsetY=10;c.fillStyle='rgba(28,28,30,.94)';rr(c,x,y,500,58,29);c.fill();c.restore();
-  c.fillStyle='#FF3B30';c.beginPath();c.arc(x+30,y+29,11,0,7);c.fill();
-  txt(c,'Take notes on this call?',x+52,y+26,15,600,'#fff');txt(c,'Vaani writes the notes and action items for you',x+52,y+44,12,400,'rgba(255,255,255,.62)');
-  c.fillStyle='#fff';rr(c,x+352,y+12,104,34,17);c.fill();txt(c,'Start notes',x+404,y+34,14,600,'#000','center');txt(c,'×',x+477,y+35,18,500,'rgba(255,255,255,.6)','center');}
-function call(c,x,y,w,h){c.fillStyle='#202124';rr(c,x,y,w,h,22);c.fill();
-  var names=[['Priya','#5E5CE6'],['Arjun','#FF9F0A'],['Meera','#30B0C7'],['You','#34C759']],tw=(w-60)/2,th=(h-130)/2;
-  names.forEach(function(n,i){var tx=x+20+(i%2)*(tw+20),ty=y+20+Math.floor(i/2)*(th+20);c.fillStyle='#3C4043';rr(c,tx,ty,tw,th,14);c.fill();c.fillStyle=n[1];c.beginPath();c.arc(tx+tw/2,ty+th/2,38,0,7);c.fill();txt(c,n[0][0],tx+tw/2,ty+th/2+13,36,600,'#fff','center');txt(c,n[0],tx+14,ty+th-14,14,500,'#fff');});
-  var by=y+h-58;[0,1,2].forEach(function(i){c.fillStyle='#3C4043';c.beginPath();c.arc(x+w/2-90+i*60,by+20,22,0,7);c.fill();});c.fillStyle='#EA4335';rr(c,x+w/2+70,by-2,64,44,22);c.fill();}
-function noteCard(c,x,y,w,h,title,meta,secs){c.save();c.shadowColor='rgba(0,0,0,.18)';c.shadowBlur=40;c.shadowOffsetY=16;c.fillStyle='#F2F2F7';rr(c,x,y,w,h,26);c.fill();c.restore();
-  txt(c,'Notes ready. You saved about 4 min of typing.',x+24,y+40,12,600,'#0A66D8');txt(c,title,x+24,y+74,26,700,'#000');txt(c,meta,x+24,y+98,13,400,'#6e6e73');
-  var cy=y+124;secs.forEach(function(s){txt(c,s[0],x+30,cy+14,12,500,'#6e6e73');cy+=24;var rows=s[1],ch=rows.length*38+8;c.fillStyle='#fff';rr(c,x+20,cy,w-40,ch,12);c.fill();
-    rows.forEach(function(r,i){var ry=cy+27+i*38;if(s[2]){check(c,x+42,ry-5,r[2]);txt(c,r[0],x+60,ry,13.5,600,r[2]?'#8e8e93':'#000');var nw=c.measureText(r[0]).width;txt(c,r[1],x+64+nw,ry,13.5,400,r[2]?'#8e8e93':'#000');if(r[2]){c.strokeStyle='#8e8e93';c.lineWidth=1;c.beginPath();c.moveTo(x+60,ry-5);c.lineTo(x+66+nw+c.measureText(r[1]).width,ry-5);c.stroke();}}else{txt(c,r,x+36,ry,13.5,400,'#000');}});cy+=ch+12;});}
-var SALES=[['Deal snapshot',['Mr. Khan: immersive entry tunnel, Dubai launch','Budget around 40 lakhs, launch in March']],['Action items',[['Team:',' send proposal with 3 options, by Monday',true],['Team:',' share past Dubai project videos',false],['Mr. Khan:',' review with CMO, next Thursday',false]],true],['Next step',['CMO review on Thursday']]];
-function shot1(){var cv=document.createElement('canvas');cv.width=1280;cv.height=800;var c=cv.getContext('2d');
-  var g=c.createLinearGradient(0,0,1280,800);g.addColorStop(0,'#F5F5F7');g.addColorStop(1,'#E8E8ED');c.fillStyle=g;c.fillRect(0,0,1280,800);
-  txt(c,'Your call starts. Vaani offers to take notes.',64,84,38,700,'#1d1d1f');txt(c,'Works with Google Meet, Microsoft Teams and Zoom in Chrome. Hears everyone, even with headphones.',64,120,18,400,'#6e6e73');
-  call(c,64,160,720,580);pill(c,174,190);
-  noteCard(c,820,140,400,620,'Dubai launch call','Sales call, 18:42, English (India)',SALES);return cv;}
-function shot2(){var cv=document.createElement('canvas');cv.width=1280;cv.height=800;var c=cv.getContext('2d');c.fillStyle='#F5F5F7';c.fillRect(0,0,1280,800);
-  txt(c,'The right notes for every meeting',640,86,40,700,'#1d1d1f','center');txt(c,'Vaani works out what kind of meeting it was and writes the notes to match.',640,124,18,400,'#6e6e73','center');
-  var cards=[['Sales call',[['Deal snapshot',['Need, stage, budget, timeline']],['Objections',['Timeline: shown 2 on-time projects']],['Action items',[['Team:',' proposal by Monday',false],['Client:',' CMO review Thursday',false]],true]]],
-             ['Management meeting',[['Highlights',['Revenue flat, target is 2x','Fix ROI, do not cut costs']],['Action items',[['Ravi:',' close Delhi hiring, Dec',true],['Snehal:',' Mumbai pipeline',false]],true],['Risks and blockers',['Client payments 45 days late']]]],
-             ['Developer or tech',[['Technical decisions',['Cap frames at 50 fps for the show']],['Action items',[['Abilash:',' push fps cap, tomorrow',false],['Mehnaz:',' fix ring 3 mapping',true]],true],['Open technical questions',['Art-Net or DMX?']]]]];
-  cards.forEach(function(cd,i){var x=64+i*392,y=176,w=368,h=430;c.save();c.shadowColor='rgba(0,0,0,.12)';c.shadowBlur=30;c.shadowOffsetY=10;c.fillStyle='#fff';rr(c,x,y,w,h,24);c.fill();c.restore();
-    txt(c,cd[0],x+24,y+52,22,700,'#000');var cy=y+74;
-    cd[1].forEach(function(s){txt(c,s[0],x+24,cy+14,12,600,'#6e6e73');cy+=24;var rows=s[1],ch=rows.length*34+6;c.fillStyle='#F2F2F7';rr(c,x+16,cy,w-32,ch,12);c.fill();
-      rows.forEach(function(r,j){var ry=cy+24+j*34;if(s[2]){check(c,x+36,ry-5,r[2]);txt(c,r[0],x+54,ry,13.5,600,r[2]?'#8e8e93':'#000');var nw=c.measureText(r[0]).width;txt(c,r[1],x+56+nw,ry,13.5,400,r[2]?'#8e8e93':'#000');}else txt(c,r,x+30,ry,13.5,400,'#000');});cy+=ch+16;});});txt(c,'Also: client calls, founders, customer support, daily stand-ups, interviews, one-on-ones and lectures.',640,668,17,500,'#6e6e73','center');txt(c,'Free · 22 languages · No sign-up · No bot joins your call',640,708,17,600,'#0A66D8','center');return cv;}
-function tile(){var cv=document.createElement('canvas');cv.width=440;cv.height=280;var c=cv.getContext('2d');var g=c.createLinearGradient(0,0,440,280);g.addColorStop(0,'#FFFFFF');g.addColorStop(1,'#ECECF1');c.fillStyle=g;c.fillRect(0,0,440,280);
-  logo(c,220,92,96);txt(c,'Vaani',220,180,34,700,'#1d1d1f','center');txt(c,'Meeting notes for Meet, Teams and Zoom',220,212,15,500,'#6e6e73','center');txt(c,'Free · 22 languages · No sign-up',220,238,13,500,'#0A66D8','center');return cv;}
-function marquee(){var cv=document.createElement('canvas');cv.width=1400;cv.height=560;var c=cv.getContext('2d');var g=c.createLinearGradient(0,0,1400,560);g.addColorStop(0,'#FFFFFF');g.addColorStop(1,'#E8E8ED');c.fillStyle=g;c.fillRect(0,0,1400,560);
-  logo(c,170,190,120);txt(c,'Just talk.',110,330,64,700,'#1d1d1f');txt(c,'Vaani takes the notes.',110,404,64,700,'#1d1d1f');txt(c,'Free meeting notes for Meet, Teams and Zoom, in 22 languages.',112,452,22,400,'#6e6e73');
-  pill(c,800,150);noteCard(c,880,230,420,236,'Thursday client demo','Client call, 12:04, English (India)',[['Action items',[['Meera:',' get pricing, by tomorrow noon',true],['Ravi:',' confirm the venue, Wednesday',false]],true]]);return cv;}
-var items=[['shot-1.png','Screenshot 1, 1280×800',shot1()],['shot-2.png','Screenshot 2, 1280×800',shot2()],['tile.png','Small promo tile, 440×280',tile()],['marquee.png','Marquee promo tile, 1400×560',marquee()]];
-var out=document.getElementById('out');
-items.forEach(function(it){var f=document.createElement('figure');f.appendChild(it[2]);var cap=document.createElement('figcaption');cap.textContent=it[1];f.appendChild(cap);out.appendChild(f);});
-window.vaaniStoreArt=function(){return Promise.all(items.map(function(it){return new Promise(function(res){it[2].toBlob(function(b){res({name:it[0],blob:b});},'image/png');});}));};
-if(window.opener){window.vaaniStoreArt().then(function(list){try{window.opener.postMessage({vaaniStoreArt:list},'*');}catch(e){}});}
-})();
-</script>
+<p>Real captures of the app, taken from the live build with sample data. Right-click an image to save it.</p>
+<figure><img src="store/shot-home.png" width="1280" height="800" alt="Vaani Home on a laptop: the record card, then Up next with deadlines on a line"><figcaption>Screenshot 1, 1280×800. Home</figcaption></figure>
+<figure><img src="store/shot-note.png" width="1280" height="800" alt="A meeting note with the minute each point was said and tickable action items"><figcaption>Screenshot 2, 1280×800. Notes</figcaption></figure>
+<figure><img src="store/shot-todos-dark.png" width="1280" height="800" alt="To-dos from every meeting in dark mode, overdue first"><figcaption>Screenshot 3, 1280×800. To-dos, dark</figcaption></figure>
+<figure><img src="store/shot-phone.png" width="1280" height="800" alt="Vaani on a phone: Home with the record button in the tab bar, and a note"><figcaption>Screenshot 4, 1280×800. Phone</figcaption></figure>
+<figure><img src="store/tile-small.png" width="440" height="280" alt="The record card from Vaani Home"><figcaption>Small promo tile, 440×280</figcaption></figure>
+<figure><img src="store/marquee.png" width="1400" height="560" alt="Vaani Home on a wide screen"><figcaption>Marquee promo tile, 1400×560</figcaption></figure>
+</main>
 </body>
 </html>
