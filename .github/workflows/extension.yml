@@ -1,6 +1,14 @@
-# Every push that changes extension/ builds the extension zip, attaches it to a GitHub release,
-# and (once the Chrome Web Store secrets are added) uploads and publishes it to the store.
+# PROPOSED replacement for .github/workflows/extension.yml (security audit V-08). Not deployed with the app.
+# Every push to main that changes extension/ builds the zip and attaches it to a GitHub release. Publishing to the
+# Chrome Web Store is a separate job that waits for a human: it runs in the "chrome-web-store" environment, which
+# must have required reviewers, a main-only deployment branch rule, and the five CWS_* secrets as environment secrets.
 # Bump "version" in extension/manifest.json for each store update; the store rejects a repeated version.
+#
+# One-time setup in GitHub (Settings):
+#   Environments > New environment "chrome-web-store" > Required reviewers: the owner; Deployment branches: main only;
+#   add CWS_PUBLISHER_ID, CWS_EXTENSION_ID, CWS_CLIENT_ID, CWS_CLIENT_SECRET, CWS_REFRESH_TOKEN here, and delete
+#   them from the repository-level secrets.
+#   Actions > General > Workflow permissions: "Read repository contents" (the jobs below ask for more only where needed).
 name: Chrome extension
 
 on:
@@ -9,24 +17,33 @@ on:
     paths: ["extension/**"]
   workflow_dispatch:
 
-permissions:
-  contents: write
+# nothing by default; each job asks for exactly what it needs
+permissions: {}
+
+concurrency:
+  group: chrome-extension
+  cancel-in-progress: false
 
 jobs:
-  release:
+  build:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    env:
-      CWS_PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
-      CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
-      CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
-      CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
-      CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+    permissions:
+      contents: write   # create the GitHub release and upload the zip
+    outputs:
+      version: ${{ steps.v.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
-      - name: Read version
+      - name: Read and check the version
         id: v
-        run: echo "version=$(jq -r .version extension/manifest.json)" >> "$GITHUB_OUTPUT"
+        run: |
+          set -euo pipefail
+          v=$(jq -r .version extension/manifest.json)
+          [[ "$v" =~ ^[0-9]+(\.[0-9]+){0,3}$ ]] || { echo "Bad version in extension/manifest.json"; exit 1; }
+          echo "version=$v" >> "$GITHUB_OUTPUT"
 
       - name: Build zip
         run: cd extension && zip -r -X ../vaani-extension.zip . -x ".*"
@@ -34,28 +51,64 @@ jobs:
       - name: Attach to a GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.v.outputs.version }}
         run: |
-          tag="extension-v${{ steps.v.outputs.version }}"
-          if gh release view "$tag" > /dev/null 2>&1; then
-            gh release upload "$tag" vaani-extension.zip --clobber
+          set -euo pipefail
+          tag="extension-v$VERSION"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release upload "$tag" vaani-extension.zip --clobber --repo "$GITHUB_REPOSITORY"
           else
-            gh release create "$tag" vaani-extension.zip \
-              --title "Vaani Chrome extension ${{ steps.v.outputs.version }}" \
+            gh release create "$tag" vaani-extension.zip --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+              --title "Vaani Chrome extension $VERSION" \
               --notes "Get it from the Chrome Web Store, or install by hand: download vaani-extension.zip, unzip it, open chrome://extensions, turn on Developer mode, click Load unpacked and pick the unzipped folder."
           fi
 
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: vaani-extension
+          path: vaani-extension.zip
+          retention-days: 7
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    # required reviewers on this environment gate every store upload; its secrets exist only here
+    environment: chrome-web-store
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: vaani-extension
+
       - name: Publish to the Chrome Web Store
-        if: env.CWS_REFRESH_TOKEN != '' && env.CWS_EXTENSION_ID != ''
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+          CWS_PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
+          CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+          CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
         run: |
           set -euo pipefail
-          TOKEN=$(curl -sf https://oauth2.googleapis.com/token \
-            -d "client_id=$CWS_CLIENT_ID&client_secret=$CWS_CLIENT_SECRET&refresh_token=$CWS_REFRESH_TOKEN&grant_type=refresh_token" | jq -r .access_token)
+          if [ -z "$CWS_REFRESH_TOKEN" ] || [ -z "$CWS_EXTENSION_ID" ]; then echo "Chrome Web Store secrets are not set; skipping."; exit 0; fi
+          [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){0,3}$ ]] || exit 1
+          [[ "$CWS_PUBLISHER_ID" =~ ^[A-Za-z0-9_-]+$ && "$CWS_EXTENSION_ID" =~ ^[a-p]{32}$ ]] || { echo "Bad publisher or extension id"; exit 1; }
+          TOKEN=$(curl -sSf https://oauth2.googleapis.com/token \
+            --data-urlencode "client_id=$CWS_CLIENT_ID" \
+            --data-urlencode "client_secret=$CWS_CLIENT_SECRET" \
+            --data-urlencode "refresh_token=$CWS_REFRESH_TOKEN" \
+            --data-urlencode "grant_type=refresh_token" | jq -r .access_token)
+          [ -n "$TOKEN" ] && [ "$TOKEN" != "null" ] || { echo "Could not get an access token"; exit 1; }
+          echo "::add-mask::$TOKEN"
           BASE=https://chromewebstore.googleapis.com
-          echo "Uploading version ${{ steps.v.outputs.version }}"
-          curl -sf -H "Authorization: Bearer $TOKEN" -X POST -T vaani-extension.zip \
-            "$BASE/upload/v2/publishers/$CWS_PUBLISHER_ID/items/$CWS_EXTENSION_ID:upload" | tee upload.json
-          echo
-          curl -sf -H "Authorization: Bearer $TOKEN" -X POST \
-            "$BASE/v2/publishers/$CWS_PUBLISHER_ID/items/$CWS_EXTENSION_ID:publish" | tee publish.json
-          echo
+          echo "Uploading version $VERSION"
+          curl -sSf -H "Authorization: Bearer $TOKEN" -X POST -T vaani-extension.zip \
+            "$BASE/upload/v2/publishers/$CWS_PUBLISHER_ID/items/$CWS_EXTENSION_ID:upload" > upload.json
+          jq -r '.uploadState // .state // "uploaded"' upload.json
+          curl -sSf -H "Authorization: Bearer $TOKEN" -X POST \
+            "$BASE/v2/publishers/$CWS_PUBLISHER_ID/items/$CWS_EXTENSION_ID:publish" > publish.json
+          jq -r '.status // .state // "submitted"' publish.json
           echo "Submitted for Chrome Web Store review."
