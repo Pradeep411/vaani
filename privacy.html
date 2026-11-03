@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'sha256-WLIrhz2q4yeurzG4mGNzLP/Fy2EqRPba47x8RvswAIw='; img-src 'self'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vaani Privacy</title>
 <meta name="description" content="What the Vaani app and Chrome extension do with your data: no account, no server, no tracking.">
@@ -9,7 +10,9 @@
 <style>
 /* Hallmark · checked form · genre mm · shape: legal page, one column of plain prose · surface: absolute (iOS paper, #FFF light and #000 dark, the same as the app) · posture: restrained · nav: none · footer: two links · copy: plain sentence case */
 /* Hallmark · waive 7b · surface: absolute is stamped and every text pair passes 4.5:1 · the dark page is true black to match the app */
-/* Hallmark · dismissed 44b · a legal page has no hero to fill the fold · dismissed 44d · same reason · dismissed 58 · the policy needs every line it has */
+/* Hallmark · dismissed 44b · a legal page has no hero to fill the fold */
+/* Hallmark · dismissed 44d · a legal page has no hero to fill the fold */
+/* Hallmark · dismissed 58 · a privacy policy needs every line it has, and v2.1 adds Insights and Google Calendar */
 :root{--bg:#FFFFFF;--fg:#1D1D1F;--fg2:#6E6E73;--line:#D2D2D7;--tint:#0A66D8;color-scheme:light}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#000000;--fg:#F5F5F7;--fg2:#A1A1A6;--line:#38383A;--tint:#3B8BFF;color-scheme:dark}}
 :root[data-theme="dark"]{--bg:#000000;--fg:#F5F5F7;--fg2:#A1A1A6;--line:#38383A;--tint:#3B8BFF;color-scheme:dark}
@@ -28,7 +31,7 @@ footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);color:v
 <body>
 <main>
 <h1>Privacy</h1>
-<p class="sub">Vaani web app and Vaani Chrome extension. Last updated 31 October 2026.</p>
+<p class="sub">Vaani web app and Vaani Chrome extension. Last updated 2 November 2026.</p>
 
 <p><b>Short version:</b> Vaani has no account, no server and no tracking. Your notes stay in your browser.</p>
 
@@ -43,9 +46,11 @@ footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);color:v
 <h2>The Vaani app</h2>
 <ul>
 <li><b>Speech to text</b> uses your browser’s speech engine. In Chrome and Edge the browser sends the audio to Google or Microsoft to do this. Safari uses Apple’s engine. Vaani never receives your audio.</li>
-<li><b>Hear everyone on a call:</b> if you turn this on and share a call’s tab, its sound is mixed with your microphone inside your browser and passed to the same speech engine. Nothing is saved as audio.</li>
-<li><b>Notes</b> are written on your device by default. If you add your own AI key (Sarvam AI, OpenAI, Anthropic or Google), the transcript text, never the audio, goes to that provider. Your key is stored only in your browser.</li>
-<li><b>Saved notes</b> live only in your browser’s local storage. Clearing your browser data deletes them.</li>
+<li><b>Hear everyone on a call:</b> if you turn this on and share a call’s tab, its sound is mixed with your microphone inside your browser and passed to the same speech engine, so the other people’s voices go there too. Nothing is saved as audio.</li>
+<li><b>Notes</b> are written on your device by default. If you add your own AI key (Sarvam AI, OpenAI, Anthropic or Google), text, never audio, goes to that provider whenever Vaani writes notes, answers a question, recaps your week, translates or drafts a follow-up. Ask and Recap send the notes they search. Your key is stored only in your browser.</li>
+<li><b>Saved notes</b> live only in this browser’s storage (local storage, or IndexedDB when that is full). Clearing your browser data deletes them.</li>
+<li><b>Insights</b> are worked out in your browser from the notes you saved. Nothing is sent anywhere to make them.</li>
+<li><b>Google Calendar, only if you connect it:</b> Vaani reads your next 36 hours of events straight from Google into this browser. Nothing goes to any Vaani server. Disconnect any time. Access is read-only and the token is kept in memory only. Titles, times and call links are kept here for 36 hours, and removed the next time you open Vaani after that. Attendee names stay on this device. A note you take for an event keeps its title, which goes to your AI provider like any note title if you use your own key. That note also keeps the event’s attendee names and event id; backups leave both out unless you turn on “Include attendee names in backups” in Settings. Disconnecting deletes the saved events and asks Google to remove Vaani’s access. If the sign-in has expired, Vaani asks Google for a short-lived token only to revoke it. If Google can’t do that without your sign-in, Vaani tells you, and you can remove access yourself in your Google Account under Security, Third-party connections (myaccount.google.com/connections).</li>
 <li>No accounts, cookies for tracking, analytics or ads.</li>
 </ul>
 
@@ -53,6 +58,7 @@ footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);color:v
 <ul>
 <li>Turn off the call prompt in the extension’s menu, or remove the extension at any time.</li>
 <li>Delete any note from inside Vaani.</li>
+<li>Disconnect Google Calendar in Settings at any time. You can also remove Vaani in your Google Account under Security, Third-party connections (myaccount.google.com/connections).</li>
 </ul>
 
 <h2>Contact</h2>

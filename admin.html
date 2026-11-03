@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://www.gstatic.com/firebasejs/12.19.0/ https://accounts.google.com/gsi/client; style-src 'self' https://accounts.google.com/gsi/style; img-src 'self'; connect-src https://identitytoolkit.googleapis.com/v1/ https://securetoken.googleapis.com/v1/ https://firestore.googleapis.com/v1/projects/vaani-accounts/ https://accounts.google.com/gsi/; frame-src https://accounts.google.com/gsi/; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="Vaani usage for the owner: sign-ups, active people, logins, meeting types, devices and features. Counts only, never notes.">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<title>Vaani admin</title>
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to the numbers</a>
+<header class="ad-bar">
+  <p class="brand">Vaani <span>admin</span></p>
+  <span class="ad-who" id="who" hidden></span>
+  <button type="button" class="btn-t" id="signout" hidden>Sign out</button>
+</header>
+
+<main id="main" class="ad-col" tabindex="-1">
+  <!-- signed out, not the owner, or not set up -->
+  <section class="gate" id="gate" aria-labelledby="gateH" hidden>
+    <h1 id="gateH">Vaani admin</h1>
+    <p id="gateText">Sign in with the owner’s Google account. This page shows counts and times, never notes.</p>
+    <div id="gbtn" class="gbtn"></div>
+    <p class="err" id="gateErr" role="alert"></p>
+  </section>
+
+  <div id="board" hidden>
+    <div class="ad-head">
+      <div>
+        <h1 class="pg-h1">Usage</h1>
+        <p class="pg-sub" id="pgSub">Last 30 days, in India time (IST).</p>
+      </div>
+      <div class="tools" id="tools">
+        <div class="seg" role="radiogroup" aria-label="Period">
+          <button type="button" role="radio" data-range="7" aria-checked="false">7 days</button>
+          <button type="button" role="radio" data-range="30" aria-checked="true">30 days</button>
+          <button type="button" role="radio" data-range="90" aria-checked="false">90 days</button>
+        </div>
+        <button type="button" class="btn-t" id="refresh">Refresh</button>
+      </div>
+    </div>
+    <p class="notice warn" id="status" role="status" aria-live="polite" hidden></p>
+    <p class="sr" id="loadSr" role="status" aria-live="polite"></p>
+
+    <!-- loading: grey blocks in the shape of the page (admin-mock.html), no text -->
+    <div class="skel" id="skel" aria-hidden="true" hidden>
+      <div class="ad-kpis"><div><span class="sk sk-fig"></span></div><div><span class="sk sk-fig"></span></div><div><span class="sk sk-fig"></span></div><div><span class="sk sk-fig"></span></div><div><span class="sk sk-fig"></span></div></div>
+      <div class="ad-sec"><span class="sk sk-h"></span><span class="sk sk-line"></span></div>
+      <div class="ad-sec"><span class="sk sk-h"></span><span class="sk sk-heat"></span></div>
+      <div class="ad-pair"><div><span class="sk sk-row"></span><span class="sk sk-row"></span><span class="sk sk-row"></span></div><div><span class="sk sk-row"></span><span class="sk sk-row"></span><span class="sk sk-row"></span></div></div>
+    </div>
+
+    <!-- error: the numbers could not load -->
+    <div class="notice err" id="loadErr" role="alert" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.5"/></svg>
+      <p>Couldn’t load the numbers. Check your connection, then <button type="button" class="lnk-in" id="retry">try again</button>.</p>
+    </div>
+
+    <div id="dash" hidden>
+      <dl class="ad-kpis" data-full>
+        <div><dt>New sign-ups</dt><dd><span class="num" id="kSign">0</span><small id="kSignSub">0 people in all</small></dd></div>
+        <div><dt>Active today</dt><dd><span class="num" id="dau">0</span><small id="kDauSub">Today, India time</small></dd></div>
+        <div><dt>Active this week</dt><dd><span class="num" id="wau">0</span><small>Last 7 days</small></dd></div>
+        <div><dt>Active this month</dt><dd><span class="num" id="mau">0</span><small>Last 30 days</small></dd></div>
+        <div><dt>Recordings</dt><dd><span class="num" id="kRec">0</span><small id="kRecSub">Meetings and quick notes</small></dd></div>
+      </dl>
+
+      <!-- empty: one block instead of a page of zeros -->
+      <section class="empty-block" id="emptyBlock" aria-labelledby="hEmpty" hidden>
+        <h2 id="hEmpty">No one has signed up yet.</h2>
+        <p>Share Vaani’s link to get the first numbers. Charts and the users table fill in after the first sign-in.</p>
+        <button type="button" class="btn-f" id="copyLink">Copy Vaani’s link</button>
+        <p class="qual" id="copyDone" role="status"></p>
+      </section>
+
+      <section class="ad-sec" aria-labelledby="hTrend" data-full>
+        <div class="ad-h"><h2 id="hTrend">Active people each day</h2><p id="dauPeak"></p></div>
+        <div class="chart" id="dauChart"></div>
+        <div class="ad-sub-h">
+          <p class="ad-sub" id="signCap">New sign-ups each day</p>
+          <div class="seg small" role="radiogroup" aria-label="Group sign-ups by">
+            <button type="button" role="radio" data-group="day" aria-checked="true">Daily</button>
+            <button type="button" role="radio" data-group="week" aria-checked="false">Weekly</button>
+          </div>
+        </div>
+        <div class="chart" id="signChart"></div>
+      </section>
+
+      <section class="ad-sec" aria-labelledby="heatCap" data-full>
+        <div class="ad-h"><h2 id="heatCap">When people open Vaani</h2><p id="heatPeak"></p></div>
+        <div class="seg small ad-under" role="radiogroup" aria-label="Heatmap shows">
+          <button type="button" role="radio" data-heat="S" aria-checked="true">App opens</button>
+          <button type="button" role="radio" data-heat="L" aria-checked="false">Sign-ins</button>
+        </div>
+        <div class="heat-scroll" role="region" aria-labelledby="heatCap" tabindex="0">
+          <table class="heat" id="heat"></table>
+        </div>
+        <p class="ad-note">Each square is one hour of the week, India time. Hours run 0 to 23.</p>
+      </section>
+
+      <div class="ad-pair" data-full>
+        <section class="ad-sec" aria-labelledby="hTypes">
+          <div class="ad-h"><h2 id="hTypes">Meeting types</h2><p id="typeTotal"></p></div>
+          <ol class="hbars" id="typeBars"></ol>
+        </section>
+        <section class="ad-sec" aria-labelledby="hLen">
+          <div class="ad-h"><h2 id="hLen">Meeting length</h2><p id="lenTypical"></p></div>
+          <div class="chart" id="durChart"></div>
+        </section>
+      </div>
+
+      <div class="ad-pair" data-full>
+        <section class="ad-sec" aria-labelledby="hLang">
+          <div class="ad-h"><h2 id="hLang">Languages</h2><p id="langUsed"></p></div>
+          <ol class="hbars" id="langBars"></ol>
+        </section>
+        <section class="ad-sec" aria-labelledby="hDev">
+          <div class="ad-h"><h2 id="hDev">Devices</h2><p id="devPeople"></p></div>
+          <div class="stack" id="devStack" aria-hidden="true"></div>
+          <ul class="legend" id="devLegend"></ul>
+          <p class="ad-note">One person can use more than one device, so these can add up to more than the active total.</p>
+        </section>
+      </div>
+
+      <div class="ad-pair" data-full>
+        <section class="ad-sec" aria-labelledby="hLogin">
+          <div class="ad-h"><h2 id="hLogin">Sign-ins per person</h2></div>
+          <ol class="hbars" id="loginBars"></ol>
+          <p class="ad-note" id="loginAvg"></p>
+        </section>
+        <section class="ad-sec" aria-labelledby="hFeat">
+          <div class="ad-h"><h2 id="hFeat">Features</h2></div>
+          <div class="table-scroll" role="region" aria-labelledby="hFeat" tabindex="0">
+            <table class="data" id="featTable">
+              <thead><tr><th scope="col">Feature</th><th scope="col" class="n">People</th><th scope="col" class="n">Share of active</th><th scope="col" class="n">Times used</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <section class="ad-sec" aria-labelledby="hUsers" data-full>
+        <div class="ad-h"><h2 id="hUsers">Users</h2><p id="userCount"></p></div>
+        <div class="ad-tools">
+          <form class="ad-find" id="findForm" role="search">
+            <label class="au-l" for="find">Find by email</label>
+            <div class="find-row"><input class="field" id="find" type="search" autocomplete="off" spellcheck="false" autocapitalize="none" placeholder="name@gmail.com" maxlength="254"><button type="submit" class="btn-f">Find</button></div>
+          </form>
+          <button type="button" class="btn-f" id="csvUsers">Download CSV</button>
+          <button type="button" class="btn-t" id="csvDaily">Daily totals (CSV)</button>
+        </div>
+        <p class="ad-note" id="findNote" role="status" hidden></p>
+        <div class="table-scroll" role="region" aria-labelledby="hUsers" tabindex="0">
+          <table class="ad-table" id="userTable">
+            <caption class="sr" id="userCap">Users, most recently active first</caption>
+            <thead><tr>
+              <th scope="col">Email</th><th scope="col">Signed up</th>
+              <th scope="col" id="thActive" aria-sort="descending"><button type="button" id="sortActive">Last active<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></th>
+              <th scope="col" class="n">Sign-ins</th><th scope="col" class="n" id="thMeet">Meetings</th><th scope="col">Signed in with</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="ad-pages" id="pages"><span id="pageInfo"></span><button type="button" class="btn-t" id="prevPage">Previous</button><button type="button" class="btn-t" id="nextPage">Next</button></div>
+      </section>
+
+      <footer class="meta">
+        <p id="metaLine"></p>
+        <p>Counts, categories and times only. Vaani never receives what people say or their notes, so nothing on this page can show them.</p>
+      </footer>
+    </div>
+  </div>
+</main>
+<script type="module" src="admin.js"></script>
+</body>
+</html>

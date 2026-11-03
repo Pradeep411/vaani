@@ -1,0 +1,264 @@
+/* Hallmark · checked form · genre mm · shape: app screen · scope: app · redesign: none, extends the Vaani v2.2 system in app.css · surface: absolute (inherits app.css, #FFF light and #000 dark) · posture: restrained · nav: the app bar, brand only before sign-in · footer: none · signature: the sign-in card sits where the record card will be, and becomes it · copy: plain sentence case · modes: light+dark */
+/* Hallmark · pre-emit critique: P4 H5 E4 S4 R5 V3 · weakest: V, it reuses the app's own card, sheet and row recipes on purpose; the consent ledger of what Vaani keeps beside what it never gets is the one new composition */
+/* Hallmark · dismissed 25 · the 36ch measure is .v-making p in the shared app.css, a screen no accounts page shows; it stays open in the app audit as N11 */
+/* Vaani accounts: sign-in, consent and account rows. Loaded after app.css, by accounts.js, only while sign-in is switched on. Colour literals live only in the token blocks below.
+   team/v23 integration: the prototype's global [aria-disabled] and .done-btn:active rules are scoped to the account screens, the admin-only tokens stay for admin.css, and the gate, age card, consent boxes and Settings pieces are added at the end. */
+
+/* ================= tokens ================= */
+:root{
+  /* Google's sign-in button, light theme (Google identity branding) */
+  --g-fill:#FFFFFF;--g-hover:#F2F2F2;--g-edge:#747775;--g-ink:#1F1F1F;
+  --g-blue:#4285F4;--g-green:#34A853;--g-yellow:#FBBC05;--g-red:#EA4335;
+  /* chart ramp on the tint hue, then two greys for context; each is 3:1 or more on the page */
+  --dv-1:#08458F;--dv-2:#0A66D8;--dv-3:#5A8FD9;--dv-4:#737378;--dv-5:#8E8E93;
+  /* admin heatmap: the lightest step is 3:1 on an empty cell, each next step about 1.5 times darker */
+  --ah-0:var(--fill);--ah-1:#4F87D4;--ah-2:#2E6CC4;--ah-3:#1452A6;--ah-4:#0B3876;
+  --au-act-w:320px;
+}
+:root[data-theme="dark"]{
+  --g-fill:#131314;--g-hover:#1F1F21;--g-edge:#8E918F;--g-ink:#E3E3E3;
+  --dv-1:#A8CBFF;--dv-2:#4D97FF;--dv-3:#2F6FCC;--dv-4:#98989D;--dv-5:#636366;--ah-1:#2C66BD;--ah-2:#4D8FEA;--ah-3:#80B2F5;--ah-4:#C2DAFB;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --g-fill:#131314;--g-hover:#1F1F21;--g-edge:#8E918F;--g-ink:#E3E3E3;
+    --dv-1:#A8CBFF;--dv-2:#4D97FF;--dv-3:#2F6FCC;--dv-4:#98989D;--dv-5:#636366;--ah-1:#2C66BD;--ah-2:#4D8FEA;--ah-3:#80B2F5;--ah-4:#C2DAFB;
+  }
+}
+
+/* ================= sign-in page ================= */
+.au{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+.au-bar{display:flex;align-items:center;gap:var(--space-2);min-height:52px;padding:calc(env(safe-area-inset-top,0px) + var(--space-2)) var(--space-4) var(--space-1)}
+.au-bar .brand{margin-right:auto}
+.au-main{flex:1}
+.au .col{padding-top:var(--space-8);padding-bottom:var(--space-9)}
+
+.au-card{position:relative;display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:"alert" "head" "act" "note";margin-top:var(--space-6);padding:var(--space-6);border-radius:20px;background:var(--card);color:var(--label);box-shadow:0 0 0 .5px var(--glass-edge),var(--shadow-s)}
+.au-head{grid-area:head;min-width:0}
+.au-head h2{text-wrap:balance;font-size:22px;line-height:28px;font-weight:600;letter-spacing:-0.02em}
+.au-head p{margin-top:var(--space-1);font-size:15px;line-height:22px;color:var(--label2);max-width:48ch}
+.au-head p b{color:var(--label);font-weight:600;overflow-wrap:anywhere}
+.au-act{grid-area:act;display:flex;flex-direction:column;gap:var(--space-2);margin-top:var(--space-5);min-width:0}
+.au-note{grid-area:note;margin-top:var(--space-4);font-size:13px;line-height:18px;color:var(--label2);max-width:48ch}
+.au-wide{grid-column:1/-1}
+
+/* the two ways in: equal weight, no accent fill */
+.btn-g,.btn-2,.btn-danger{display:flex;align-items:center;justify-content:center;gap:var(--space-3);width:100%;min-height:52px;padding:0 var(--space-4);border-radius:14px;font-size:17px;font-weight:600;transition:background-color .15s var(--spring)}
+.btn-g{background:var(--g-fill);color:var(--g-ink);box-shadow:inset 0 0 0 1px var(--g-edge)}
+.btn-2{background:var(--fill);color:var(--label)}
+.btn-danger{background:var(--red-soft);color:var(--red-ink)}
+.btn-g svg,.btn-2 svg,.btn-danger svg{width:20px;height:20px}
+.btn-2 svg{color:var(--label2)}
+@media (hover:hover){
+  .btn-g:hover{background:var(--g-hover)}
+  .btn-2:hover{background:var(--fill2)}
+  .btn-danger:hover{box-shadow:inset 0 0 0 1px var(--red-ink)}
+}
+.btn-g:active,.btn-2:active,.btn-danger:active{transform:scale(.985)}
+.btn-g:focus-visible,.btn-2:focus-visible,.btn-danger:focus-visible,.au-act .done-btn:focus-visible{outline:2px solid var(--tint);outline-offset:2px;border-radius:14px}
+.gl-r{fill:var(--g-red)}.gl-b{fill:var(--g-blue)}.gl-y{fill:var(--g-yellow)}.gl-g{fill:var(--g-green)}
+.au-act .done-btn{display:flex;align-items:center;justify-content:center;gap:var(--space-2);margin-top:0}
+a.btn-2,a.btn-g{text-decoration:none}
+.au-act .cancel{margin-top:0}
+.au .done-btn:active,.acct-sheet .done-btn:active{transform:scale(.985)}
+
+/* busy and off: three channels for off, the label stays readable while busy */
+.au [aria-disabled="true"],.acct-sheet [aria-disabled="true"],#acctSet [aria-disabled="true"]{opacity:.55;cursor:not-allowed}
+.au [aria-disabled="true"]:active,.acct-sheet [aria-disabled="true"]:active{transform:none}
+.spin{display:none;width:18px;height:18px;border-radius:50%;box-shadow:inset 0 0 0 2px currentColor;-webkit-mask:conic-gradient(var(--mask) 0 75%,transparent 75% 100%);mask:conic-gradient(var(--mask) 0 75%,transparent 75% 100%);animation:spin .8s linear infinite}
+.is-busy .spin{display:inline-block}
+.is-busy>svg{display:none}
+.is-busy{cursor:progress}
+@keyframes spin{to{transform:rotate(1turn)}}
+
+/* a field that matches the button under it */
+.au-act .field{min-height:52px}
+.au-l{display:block;margin:0 var(--space-1) var(--space-1);font-size:13px;color:var(--label2)}
+.au-help{min-height:1lh;margin:0 var(--space-1);font-size:13px;line-height:18px;color:var(--label2)}
+.field[aria-invalid="true"]{box-shadow:inset 0 0 0 2px var(--red-ink)}
+.field[aria-invalid="true"]:focus{outline:2px solid var(--tint);outline-offset:2px}
+.field[readonly]{color:var(--label2)}
+
+/* quiet text actions under a card's buttons */
+.au-links{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-1) var(--space-4);margin-top:var(--space-1)}
+.au-links .lnk{padding:0}
+.au-links .lnk[aria-disabled="true"]{color:var(--label2);opacity:1;text-decoration:none}
+
+/* notices inside a card: what happened, then what to do */
+.au-alert{display:flex;gap:var(--space-3);align-items:flex-start;padding:var(--space-3) var(--space-4);border-radius:12px;background:var(--fill);font-size:15px;line-height:21px;color:var(--label)}
+.au-alert svg{width:20px;height:20px;margin-top:1px;color:var(--label2)}
+.au-alert.err{background:var(--red-soft)}
+.au-alert.err svg{color:var(--red-ink)}
+.au-alert .lnk-in{font-weight:600;white-space:nowrap}
+.au-card>.au-alert{grid-area:alert;margin-bottom:var(--space-5)}
+.au-err{display:flex;gap:var(--space-1);align-items:flex-start;color:var(--red-ink)}
+.au-err svg{width:16px;height:16px;margin-top:1px}
+
+/* waiting in place of the card's content */
+.au-wait{display:flex;align-items:center;gap:var(--space-3);color:var(--label2);font-size:15px}
+.au-wait .spin{display:inline-block;color:var(--tint)}
+.au-wait p{margin:0}
+.au-wait b{display:block;font-family:var(--font-d);font-size:22px;line-height:28px;font-weight:600;letter-spacing:-0.02em;color:var(--label)}
+
+/* the cold-open check: the card's shape, no shimmer */
+.sk{display:block;border-radius:8px;background:var(--fill)}
+.sk-t{width:46%;height:24px}
+.sk-p{width:70%;height:16px;margin-top:var(--space-2)}
+.sk-b{height:52px;border-radius:14px}
+
+/* the extension's popup window: same screen, tighter top */
+.ext .au .col{padding-top:var(--space-4)}
+.ext .web-only,.ext-only{display:none}
+.ext .ext-only{display:inline}
+
+/* text slots for facts the owner has not given yet */
+.fill{padding:0 var(--space-1);border-radius:3px;box-shadow:inset 0 0 0 1px var(--label3);color:var(--label2);-webkit-box-decoration-break:clone;box-decoration-break:clone}
+
+/* ================= consent ================= */
+.cs .col{padding-bottom:var(--space-4)}
+.cs-head{display:flex;flex-wrap:wrap;align-items:flex-end;gap:var(--space-4) var(--space-6)}
+.cs-head>div{flex:1 1 320px;min-width:0}
+.cs-head .pg-sub{max-width:52ch;line-height:22px}
+.cs-head .pg-sub b{color:var(--label);font-weight:600;overflow-wrap:anywhere}
+.cs-lang{display:flex;flex-direction:column;gap:var(--space-1)}
+.cs-lang .au-l{margin:0 var(--space-1)}
+.cs-lang .pill-select{align-self:flex-start}
+.cs-ledger{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-7);margin-top:var(--space-7)}
+.cs-ledger h2,.cs-sec h2{text-wrap:balance;font-size:20px;line-height:26px;font-weight:600;letter-spacing:-0.02em}
+.cs-ledger ul{list-style:none;margin:var(--space-2) 0 0;padding:0}
+.cs-ledger li{display:flex;gap:var(--space-3);align-items:flex-start;min-height:44px;padding:var(--space-3) 0;font-size:16px;line-height:22px;box-shadow:inset 0 -.5px 0 var(--sep)}
+.cs-ledger li svg{width:20px;height:20px;margin-top:1px}
+.cs-keep li svg{color:var(--tint)}
+.cs-never li svg{color:var(--label2)}
+.cs-new{display:inline-flex;align-items:center;height:20px;margin-left:var(--space-2);padding:0 var(--space-2);border-radius:6px;background:var(--tint-soft);color:var(--label);font-size:12px;font-weight:600;vertical-align:1px}
+.cs-secs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-7);margin-top:var(--space-7)}
+.cs-sec p{margin-top:var(--space-2);font-size:16px;line-height:24px;color:var(--label);max-width:60ch}
+.cs-sec p + p{margin-top:var(--space-3)}
+.cs-foot{position:sticky;bottom:0;z-index:5;margin-top:var(--space-7);background:var(--bg);box-shadow:inset 0 .5px 0 var(--sep)}
+.cs-foot-in{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2) var(--space-5);width:100%;max-width:calc(var(--col) + var(--gutter) * 2);margin:0 auto;padding:var(--space-4) var(--gutter) calc(env(safe-area-inset-bottom,0px) + var(--space-4))}
+.cs-foot .done-btn{display:flex;align-items:center;justify-content:center;gap:var(--space-2);width:auto;min-width:240px;margin-top:0;padding:0 var(--space-7)}
+.cs-foot .lnk{display:inline-flex;align-items:center;font-size:16px;text-decoration:none}
+.cs-foot .lnk:hover{text-decoration:underline}
+.cs-foot .btn-t{font-size:16px}
+.cs-foot .au-alert{flex:1 1 100%}
+
+/* ================= account, in Settings ================= */
+.acct-box{margin-top:var(--space-4)}
+.acct{display:flex;align-items:center;gap:var(--space-3);min-height:68px;padding:var(--space-3) var(--space-1)}
+.acct-av{width:44px;height:44px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--h6-soft);color:var(--h6-ink);font-family:var(--font-d);font-size:19px;font-weight:600}
+.acct-who{flex:1;min-width:0}
+.acct-who b{display:block;font-size:16px;line-height:21px;font-weight:600;overflow-wrap:anywhere}
+.acct-who span{display:block;font-size:13px;line-height:18px;color:var(--label2);overflow-wrap:anywhere}
+.acct button{min-height:44px;padding:0 var(--space-1);font-size:16px;color:var(--tint)}
+.set-row .rm{color:var(--red-ink)}
+.set-row .busy{display:inline-flex;align-items:center;gap:var(--space-2);min-height:44px;font-size:16px;color:var(--label2)}
+.set-row .busy .spin{display:inline-block}
+.set-row small.err{color:var(--red-ink)}
+.del-view .facts{margin-top:var(--space-2)}
+.del-view .form-l{margin-top:var(--space-5)}
+.del-view .btn-danger{margin-top:var(--space-4)}
+.del-view .btn-g{margin-top:var(--space-4)}
+.del-view .au-alert{margin-top:var(--space-4)}
+.del-view .au-help{margin-top:var(--space-1)}
+
+@media (min-width:900px){
+  .au-bar{padding:var(--space-4) var(--space-5) 0}
+  .au-bar .brand{font-size:20px}
+  .au .col{padding-top:var(--space-9)}
+  .au-card{grid-template-columns:minmax(0,1fr) var(--au-act-w);grid-template-areas:"alert alert" "head act" "note act";column-gap:var(--space-7);align-items:start}
+  .au-act{margin-top:0}
+  .au-note{align-self:end}
+  .au-card.solo{grid-template-columns:minmax(0,1fr);grid-template-areas:"head"}
+}
+@media (max-width:899px){
+  .au-bar{box-shadow:inset 0 -.5px 0 var(--sep)}
+  .au .col{padding-top:var(--space-5)}
+  .au-card{padding:var(--space-5)}
+  .cs-ledger,.cs-secs{grid-template-columns:minmax(0,1fr);gap:var(--space-6)}
+  .cs-ledger{margin-top:var(--space-6)}
+  .cs-foot .done-btn{flex:1 1 100%;width:100%;min-width:0}
+  .cs-foot .lnk,.cs-foot .btn-t{min-height:44px}
+  .au-links .lnk{min-height:44px}
+  .au-note .lnk-in,.cs-sec .lnk-in{display:inline-block;line-height:20px;padding-block:var(--space-3);margin-block:calc(var(--space-3) * -1)}
+}
+@media (prefers-reduced-motion:reduce){
+  .spin{animation:none}
+  .btn-g:active,.btn-2:active,.btn-danger:active,.au .done-btn:active,.acct-sheet .done-btn:active{transform:none}
+}
+
+/* ================= team/v23: the gate over the app ================= */
+/* The gate covers the app until the person has signed in and agreed (or said they are under 18). It is hidden
+   until this stylesheet has loaded, so it never shows unstyled. */
+.acct-gate{position:fixed;inset:0;z-index:60;overflow-y:auto;overscroll-behavior:contain;background:var(--bg);color:var(--label);visibility:hidden}
+.acct-gate.ready{visibility:visible}
+.acct-gate[hidden]{display:none}
+.acct-gated,.acct-gated body{overflow:clip}
+.au .hero h1{text-wrap:balance}
+.au .lbl{min-width:0}
+/* Google's own button renders inside this box (Google Identity Services); the grey block holds its place */
+.gbtn{position:relative;display:flex;justify-content:center;align-items:center;min-height:52px;border-radius:14px;overflow:hidden}
+.gbtn>.sk-b{width:100%}
+/* S5: Google's 40 px button scaled to the email button's 52 px, inside the email button's 14 px corners. The ring is
+   drawn on top so the clipped corners still show an edge (Google's own --g-edge colour). */
+.gbtn.is-ready>div{transform:scale(1.3);transform-origin:center}
+.gbtn.is-ready::after{content:"";position:absolute;inset:0;border-radius:14px;box-shadow:inset 0 0 0 1px var(--g-edge);pointer-events:none}
+.gbtn[hidden]{display:none}
+/* consent sits in the gate's column, with its own sticky footer */
+.au .cs{margin-top:var(--space-7)}
+.cs-h2b{margin-top:var(--space-6)}
+.cs-more{margin-top:var(--space-7);font-size:15px;line-height:22px;color:var(--label)}
+.cs-more summary{display:inline-flex;align-items:center;min-height:44px;color:var(--tint);cursor:pointer;border-radius:8px}
+.cs-more summary:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
+.cs-more p{margin-top:var(--space-3);max-width:60ch;color:var(--label2)}
+.cs-tbl{margin-top:var(--space-2);overflow-x:auto;border-radius:12px;box-shadow:inset 0 0 0 .5px var(--sep)}
+.cs-tbl:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
+.cs-tbl table{width:100%;min-width:520px;border-collapse:collapse;font-size:14px;line-height:20px}
+.cs-tbl th,.cs-tbl td{padding:var(--space-2) var(--space-3);text-align:left;vertical-align:top;box-shadow:inset 0 -.5px 0 var(--sep)}
+.cs-tbl th{font-weight:600;color:var(--label2);font-size:13px}
+.cs-boxes{margin:var(--space-7) 0 0;padding:0;border:0;min-width:0}
+.cs-box{display:flex;gap:var(--space-3);align-items:flex-start;padding:var(--space-4);border-radius:14px;background:var(--card);box-shadow:0 0 0 .5px var(--glass-edge);font-size:16px;line-height:23px;cursor:pointer}
+.cs-box + .cs-err + .cs-box{margin-top:var(--space-2)}
+.cs-box input{flex:none;width:22px;height:22px;margin:1px 0 0;accent-color:var(--tint-fill)}
+.cs-box input:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
+.cs-box b{font-weight:600}
+.cs-box i{font-style:normal;color:var(--label2);font-size:14px}
+.cs-box.bad{box-shadow:inset 0 0 0 2px var(--red-ink)}
+.cs-err{margin-top:var(--space-1)}
+/* Settings and the sign-out sheet */
+.set-row small{display:block;margin-top:2px;font-size:13px;line-height:18px;color:var(--label2)}
+.set-row small:empty{display:none}
+.set-box{margin-top:var(--space-4);padding:var(--space-3);background:var(--card2);box-shadow:inset 0 0 0 1px var(--field-edge)}
+.acct-sheet .hint{margin-top:var(--space-2)}
+.acct-sheet .done-btn{display:flex;align-items:center;justify-content:center;gap:var(--space-2)}
+@media (max-width:899px){
+  .cs-box{padding:var(--space-3)}
+  .cs-tbl table{min-width:480px}
+}
+/* headings take focus when a step opens (screen readers start there); the ring is for controls, not for them */
+.au [tabindex="-1"]:focus{outline:none;box-shadow:none}
+/* consent has its own heading, as in the design: no hero above it */
+.acct-gate[data-state="consent"] .hero{display:none}
+.acct-gate[data-state="consent"] .au .cs,.acct-gate[data-state="consent"] .cs{margin-top:0}
+
+/* ================= v2.2 fix round (REAUDIT-DESIGN-v23.md) ================= */
+/* S2: room above and below a Settings row that has a status line */
+#acctSet .set-row{padding-top:var(--space-3);padding-bottom:var(--space-3)}
+/* S7: "What exactly is kept" reads as a disclosure; the rotation is static */
+.cs-more summary::after{content:"";width:8px;height:8px;margin-left:var(--space-2);border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(45deg) translateY(-2px)}
+.cs-more[open] summary::after{transform:rotate(225deg)}
+/* n1: the consent footer is a sibling of the column now; it is full width and holds the column inside */
+.au-main{display:flex;flex-direction:column}
+.au-main>.col{flex:1}
+.cs-foot[hidden]{display:none}
+/* n3: quiet buttons on the account screens underline on hover instead of a low-contrast fill */
+.au .cancel:hover,.acct-sheet .cancel:hover{background:none;text-decoration:underline}
+/* n4: a long name or email stays on one line in the account row (the full text is in the title) */
+.acct-who span,.acct-who b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* n6: no single word left alone on a ledger line */
+.cs-ledger li span{text-wrap:pretty}
+/* the re-sign-in step inside the delete sheet */
+#acRe .gbtn,#acRe .done-btn{margin-top:var(--space-4)}
+#acRe .au-alert{margin-top:var(--space-3)}
+#acRe .hint{margin-top:var(--space-3)}
+/* design re-check: a sheet heading that takes focus when a step opens (Finish deleting, Sign in again) draws no ring; the ring is for controls (same rule as the gate, line 238) */
+.acct-sheet [tabindex="-1"]:focus{outline:none;box-shadow:none}

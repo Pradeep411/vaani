@@ -2,13 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-5/ITveRsfFZ8rds2orX+Q5W519Uo6RbB6WUYAWbI/1k=' https://accounts.google.com/gsi/client https://www.gstatic.com/firebasejs/12.19.0/; style-src 'self' https://accounts.google.com/gsi/style; img-src 'self'; connect-src https://api.sarvam.ai https://api.openai.com https://api.anthropic.com https://generativelanguage.googleapis.com https://www.googleapis.com/calendar/v3/ https://accounts.google.com/gsi/ https://oauth2.googleapis.com/revoke https://identitytoolkit.googleapis.com/v1/ https://securetoken.googleapis.com/v1/ https://firestore.googleapis.com/v1/projects/vaani-accounts/; frame-src https://accounts.google.com/gsi/; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Vaani: Free AI Meeting Notes for Meet, Zoom and Teams in 22 Languages</title>
-<meta name="description" content="Just talk. Vaani takes the notes. Free meeting notes and dictation in 22 languages, right in your browser. No sign-up, no bot in your call.">
+<meta name="description" content="Just talk. Vaani takes the notes. Free meeting notes and dictation in 22 languages, right in your browser. No bot in your call.">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <meta property="og:title" content="Vaani: just talk, Vaani takes the notes">
-<meta property="og:description" content="Free meeting notes and dictation in 22 languages. No sign-up, no bot in your call.">
+<meta property="og:description" content="Free meeting notes and dictation in 22 languages. No bot in your call.">
 <meta property="og:image" content="https://pradeep411.github.io/vaani/icons/og.png">
 <meta property="og:url" content="https://pradeep411.github.io/vaani/">
 <meta name="twitter:card" content="summary_large_image">
@@ -165,6 +166,7 @@
     <div id="keyWrap">
       <label class="form-l" for="keyInp">Your API key</label>
       <input class="field" id="keyInp" type="password" placeholder="Paste your key" autocomplete="off" spellcheck="false">
+      <button class="btn-t key-rm" id="keyRm" type="button" hidden>Remove this key</button>
     </div>
     <p class="hint" id="keyHint"></p>
     <div class="status" id="aiStatus">Checking this browser…</div>
@@ -185,11 +187,12 @@
 <div class="scrim" id="privSheet" hidden>
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="privH">
     <h2 id="privH">Where your words go</h2>
-    <p class="sub">Vaani has no server and no account. Here is every stop, plainly.</p>
+    <p class="sub">Your words stay on this device. Here is every stop, plainly.</p>
     <div class="facts">
-      <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg><span><b>Your browser turns speech into text.</b> Chrome and Edge send the audio to Google or Microsoft to do this; Safari uses Apple’s engine. Vaani itself never receives your audio.</span></div>
-      <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span><b>Notes stay on this device.</b> Everything you save lives in this browser only. Clearing browser data deletes it.</span></div>
-      <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg><span><b>The built-in notes engine runs on your device.</b> If you add your own AI key in Settings, the text (never audio) goes to that provider when notes are made.</span></div>
+      <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg><span><b>Your browser turns speech into text.</b> Chrome and Edge send the audio to Google or Microsoft to do this; Safari uses Apple’s engine. With “Hear everyone on a call” on, the other people’s voices go there too. Vaani itself never receives your audio.</span></div>
+      <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span><b>Notes stay on this device.</b> Everything you save lives in this browser’s storage (local storage, or IndexedDB when that is full). Clearing browser data deletes it.</span></div>
+      <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg><span><b>The built-in notes engine runs on your device.</b> If you add your own AI key in Settings, text (never audio) goes to that provider whenever Vaani writes notes, answers a question, recaps your week, translates or drafts a follow-up. Ask and Recap send the notes they search.</span></div>
+      <div class="fact" id="privCal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span><b>Google Calendar, only if you connect it.</b> Vaani reads your next 36 hours of events straight from Google into this browser. None of it goes to a Vaani account or database. Disconnect any time. Attendee names stay on this device; an event’s title becomes the note’s title, which goes to your AI provider like any note title if you use your own key. A note you take for an event keeps the attendee names; backups leave them out unless you turn them on in Settings. Disconnect deletes the saved events and asks Google to remove Vaani’s access. If Google can’t, Vaani tells you, and you can remove it in your Google Account under Security, Third-party connections.</span></div>
       <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M17 11a3 3 0 1 0 0-6M21.5 20a5.5 5.5 0 0 0-4.5-5.4"/></svg><span><b>Tell people you are taking notes.</b> It’s polite, and in many places it’s the law.</span></div>
     </div>
     <button class="done-btn" data-close>Got it</button>
@@ -198,17 +201,22 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<script src="accounts.js"></script>
 <script>
 (function(){
   "use strict";
+  /* never run inside someone else's frame (a meta CSP cannot set frame-ancestors) */
+  if(window.top!==window.self){document.body.innerHTML="";var fm=document.createElement("main");fm.className="framed";var fp=document.createElement("p");fp.textContent="Vaani works only in its own tab.";var fa=document.createElement("a");fa.href=location.href;fa.target="_blank";fa.rel="noopener noreferrer";fa.textContent="Open Vaani in its own tab";fm.appendChild(fp);fm.appendChild(fa);document.body.appendChild(fm);return;}
   var $=function(s,r){return (r||document).querySelector(s);},$$=function(s,r){return [].slice.call((r||document).querySelectorAll(s));};
   /* storage: localStorage first. When a write fails (storage full or blocked) the value stays in memory (MEM),
      a copy goes to IndexedDB so it survives a reload, and the user is told. Nothing is dropped silently. */
   var MEM={},IDB=null,bootP=null;
+  /* v2.2 accounts: with sign-in switched on, each account's keys live under its own prefix (accounts.js). Off: unchanged keys. */
+  var K=(window.VaaniAccounts&&typeof window.VaaniAccounts.key==="function")?window.VaaniAccounts.key:function(k){return k;};
   function idb(){if(!IDB)IDB=new Promise(function(res,rej){try{var r=indexedDB.open("vaani",1);r.onupgradeneeded=function(){r.result.createObjectStore("kv");};r.onsuccess=function(){res(r.result);};r.onerror=function(){rej(r.error);};}catch(e){rej(e);}});return IDB;}
   function idbDo(fn){return (bootP||Promise.resolve()).then(idb).then(function(db){return new Promise(function(res,rej){var tx=db.transaction("kv","readwrite");fn(tx.objectStore("kv"));tx.oncomplete=function(){res(true);};tx.onerror=tx.onabort=function(){rej(tx.error);};});});}
-  function raw(k){if(Object.prototype.hasOwnProperty.call(MEM,k))return MEM[k];try{return localStorage.getItem(k);}catch(e){return null;}}
-  function put(k,v){
+  function raw(k){k=K(k);if(Object.prototype.hasOwnProperty.call(MEM,k))return MEM[k];try{return localStorage.getItem(k);}catch(e){return null;}}
+  function put(k,v){k=K(k);
     try{localStorage.setItem(k,v);if(Object.prototype.hasOwnProperty.call(MEM,k)){delete MEM[k];idbDo(function(st){st.delete(k);}).catch(function(){});}return true;}
     catch(e){MEM[k]=v;idbDo(function(st){st.put(v,k);}).then(function(){storeFail(true);},function(){storeFail(false);});return false;}
   }
@@ -218,7 +226,7 @@
   function save(k,v){return put(k,String(v));}
   function loadJSON(k,d){try{var v=raw(k);return v?JSON.parse(v):d;}catch(e){return d;}}
   function saveJSON(k,v){return put(k,JSON.stringify(v));}
-  function remove(k){var had=Object.prototype.hasOwnProperty.call(MEM,k);delete MEM[k];try{localStorage.removeItem(k);}catch(e){}if(had)idbDo(function(st){st.delete(k);}).catch(function(){});}
+  function remove(k){k=K(k);var had=Object.prototype.hasOwnProperty.call(MEM,k);delete MEM[k];try{localStorage.removeItem(k);}catch(e){}if(had)idbDo(function(st){st.delete(k);}).catch(function(){});}
   /* on start, bring back anything a full or blocked localStorage could not hold last time */
   bootP=new Promise(function(done){try{if(!window.indexedDB)return done();}catch(e){return done();}
     idb().then(function(db){var out={},tx=db.transaction("kv","readonly"),c=tx.objectStore("kv").openCursor();
@@ -226,7 +234,7 @@
       tx.oncomplete=function(){done(out);};tx.onerror=function(){done({});};}).catch(function(){done({});});
   }).then(function(out){out=out||{};var ks=Object.keys(out),left=[];if(!ks.length)return;
     ks.forEach(function(k){var v=out[k];
-      if(Object.prototype.hasOwnProperty.call(MEM,k)&&k==="vaani.history"){try{var a=JSON.parse(MEM[k]),b=JSON.parse(v),seen={};a.forEach(function(n){seen[n.id]=1;});v=JSON.stringify(a.concat(b.filter(function(n){return !seen[n.id];})));}catch(e){}}
+      if(Object.prototype.hasOwnProperty.call(MEM,k)&&k===K("vaani.history")){try{var a=JSON.parse(MEM[k]),b=JSON.parse(v),seen={};a.forEach(function(n){seen[n.id]=1;});v=JSON.stringify(a.concat(b.filter(function(n){return !seen[n.id];})));}catch(e){}}
       else if(Object.prototype.hasOwnProperty.call(MEM,k))return;
       try{localStorage.setItem(k,v);delete MEM[k];left.push(k);}catch(e){MEM[k]=v;}});
     if(left.length)idb().then(function(db){var tx=db.transaction("kv","readwrite");left.forEach(function(k){tx.objectStore("kv").delete(k);});}).catch(function(){});
@@ -286,7 +294,9 @@
   setMode(mode);
 
   /* ---------- history ---------- */
-  function notes(){var a=loadJSON("vaani.history",[]);return a.map(function(n){ if(!n.segs){ n.segs=String(n.text||"").split(/\n/).filter(Boolean).map(function(l){var m=l.match(/^\[(\d+:\d+)\]\s*(.*)$/);return m?{t:m[1],x:m[2]}:{t:"",x:l};}); n.kind=n.kind==="meeting"?"meeting":"note"; } return n; });}
+  /* ids are positive numbers everywhere they reach markup: coerce digit strings, drop anything else */
+  function okId(n){if(!n||typeof n!=="object")return false;if(typeof n.id==="string"&&/^\d{1,16}$/.test(n.id))n.id=+n.id;return typeof n.id==="number"&&isFinite(n.id)&&n.id>0;}
+  function notes(){var a=loadJSON("vaani.history",[]);if(!Array.isArray(a))a=[];return a.filter(okId).map(function(n){ if(!n.segs){ n.segs=String(n.text||"").split(/\n/).filter(Boolean).map(function(l){var m=l.match(/^\[(\d+:\d+)\]\s*(.*)$/);return m?{t:m[1],x:m[2]}:{t:"",x:l};}); n.kind=n.kind==="meeting"?"meeting":"note"; } return n; });}
   function setNotes(a){var ok=saveJSON("vaani.history",a);if(window.VaaniHook)VaaniHook("change",a);return ok;}
   function getNote(id){return notes().filter(function(n){return n.id===id;})[0];}
   function upsert(n){var a=notes(),i=-1;a.forEach(function(x,j){if(x.id===n.id)i=j;});if(i>=0)a[i]=n;else a.unshift(n);return setNotes(a);}
@@ -319,7 +329,7 @@
   function elapsed(){return Math.floor((Date.now()-startedAt)/1000);}
   if(!SR){$("#recBtn").disabled=true;$("#recLabel").textContent="Open Vaani in Chrome, Edge or Safari to record. Your saved notes still work here.";}
 
-  var callOn=load("vaani.call","0")==="1",callTrack=null,callStreams=[],callAc=null;var Q=new URLSearchParams(location.search),SRC=Q.get("src");if(!/^(meet|teams|zoom|installed)$/.test(SRC||""))SRC=null;if(SRC&&SRC!=="installed")callOn=true;function syncCall(){$("#callChip").setAttribute("aria-pressed",callOn?"true":"false");}$("#callChip").addEventListener("click",function(){callOn=!callOn;save("vaani.call",callOn?"1":"0");syncCall();if(callOn)toast("When you start, pick your call tab and turn on Share tab audio");});syncCall();if(SRC||!window.chrome)$("#extLink").hidden=true;if(SRC==="installed"){$("#heroSub").textContent="Vaani is in Chrome now. Join a Meet, Teams or Zoom call and it will offer to take notes.";}else if(SRC){setMode("meeting");var nm={meet:"Google Meet",teams:"Teams",zoom:"Zoom"}[SRC];$("#heroSub").textContent=(nm?"Ready for your "+nm+" call. ":"")+"Tap the red button, pick the call tab and turn on Share tab audio.";}function stopCall(){callStreams.forEach(function(st){st.getTracks().forEach(function(t){t.stop();});});callStreams=[];if(callAc){try{callAc.close();}catch(e){}callAc=null;}callTrack=null;}function getCall(){return navigator.mediaDevices.getDisplayMedia({video:true,audio:{suppressLocalAudioPlayback:false},systemAudio:"include",selfBrowserSurface:"exclude",preferCurrentTab:false}).then(function(ds){callStreams.push(ds);if(!ds.getAudioTracks().length){stopCall();toast("No call sound was shared, so Vaani hears only you. Next time turn on Share tab audio.");return;}return navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}}).then(function(mic){callStreams.push(mic);callAc=new (window.AudioContext||window.webkitAudioContext)();var d=callAc.createMediaStreamDestination();callAc.createMediaStreamSource(ds).connect(d);callAc.createMediaStreamSource(mic).connect(d);callTrack=d.stream.getAudioTracks()[0];ds.getVideoTracks().forEach(function(v){v.addEventListener("ended",function(){if(listening)toast("Call sharing stopped. Vaani keeps listening to you.");});});});}).catch(function(){stopCall();toast("Recording just your microphone");});}function startRec(){if(listening)return;if(window.VaaniHook&&VaaniHook("beforeStart",{})===false)return;if(mode==="meeting"&&callOn&&!callTrack&&!listening&&navigator.mediaDevices&&navigator.mediaDevices.getDisplayMedia){getCall().then(startRec0);return;}startRec0();}function startRec0(){
+  var callOn=load("vaani.call","0")==="1",callTrack=null,callStreams=[],callAc=null;var Q=new URLSearchParams(location.search),SRC=Q.get("src");if(!/^(meet|teams|zoom|installed|ext)$/.test(SRC||""))SRC=null;var CALLSRC=/^(meet|teams|zoom)$/.test(SRC||"");if(CALLSRC)callOn=true;function syncCall(){$("#callChip").setAttribute("aria-pressed",callOn?"true":"false");}$("#callChip").addEventListener("click",function(){callOn=!callOn;save("vaani.call",callOn?"1":"0");syncCall();if(callOn)toast("When you start, pick your call tab and turn on Share tab audio");});syncCall();if(SRC||!window.chrome)$("#extLink").hidden=true;if(SRC==="installed"){$("#heroSub").textContent="Vaani is in Chrome now. Join a Meet, Teams or Zoom call and it will offer to take notes.";}else if(CALLSRC){setMode("meeting");var nm={meet:"Google Meet",teams:"Teams",zoom:"Zoom"}[SRC];$("#heroSub").textContent=(nm?"Ready for your "+nm+" call. ":"")+"Tap the red button, pick the call tab and turn on Share tab audio.";}function stopCall(){callStreams.forEach(function(st){st.getTracks().forEach(function(t){t.stop();});});callStreams=[];if(callAc){try{callAc.close();}catch(e){}callAc=null;}callTrack=null;}function getCall(){return navigator.mediaDevices.getDisplayMedia({video:true,audio:{suppressLocalAudioPlayback:false},systemAudio:"include",selfBrowserSurface:"exclude",preferCurrentTab:false}).then(function(ds){callStreams.push(ds);if(!ds.getAudioTracks().length){stopCall();toast("No call sound was shared, so Vaani hears only you. Next time turn on Share tab audio.");return;}return navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}}).then(function(mic){callStreams.push(mic);callAc=new (window.AudioContext||window.webkitAudioContext)();var d=callAc.createMediaStreamDestination();callAc.createMediaStreamSource(ds).connect(d);callAc.createMediaStreamSource(mic).connect(d);callTrack=d.stream.getAudioTracks()[0];ds.getVideoTracks().forEach(function(v){v.addEventListener("ended",function(){if(listening)toast("Call sharing stopped. Vaani keeps listening to you.");});});});}).catch(function(){stopCall();toast("Recording just your microphone");});}function startRec(){if(listening)return;if(window.VaaniHook&&VaaniHook("beforeStart",{})===false)return;if(mode==="meeting"&&callOn&&!callTrack&&!listening&&navigator.mediaDevices&&navigator.mediaDevices.getDisplayMedia){getCall().then(startRec0);return;}startRec0();}function startRec0(){
     if(!SR){toast("This browser can't turn speech into text");return;}
     if(listening)return;
     segs=[];interim="";lyShown=0;lyInterim=null;$("#lyrics").innerHTML="";
@@ -357,11 +367,11 @@
   function cleanup(){if(window.VaaniHook)VaaniHook("cleanup",{});want=false;listening=false;if(rec){try{rec.stop();}catch(e){}}clearInterval(timerInt);stopViz();stopCall();}
   function stopRec(){
     if(!listening)return;
-    var dur=elapsed();cleanup();
+    var dur=elapsed(),wasCall=!!callTrack;cleanup();
     if(interim){segs.push({t:fmt(dur),x:interim});interim="";}
     var w=words(segs.map(function(s){return s.x;}).join(" "));
     if(!w){view("idle");toast("Vaani didn't catch any words. Check your microphone and try again.");return;}
-    var n={id:Date.now(),kind:mode,date:new Date().toISOString(),dur:dur,lang:langSel.value,tmpl:tmplSel.value,segs:segs.slice(),title:titleFrom(segs[0].x),md:"",done:{},words:w};
+    var n={id:Date.now(),kind:mode,date:new Date().toISOString(),dur:dur,lang:langSel.value,tmpl:tmplSel.value,segs:segs.slice(),title:titleFrom(segs[0].x),md:"",done:{},words:w};if(wasCall)n.call=true;
     if(window.VaaniHook)VaaniHook("beforeSave",n);upsert(n);currentId=n.id;
     makeNotes(n);
   }
@@ -550,7 +560,7 @@
     var sys="Answer questions about a conversation using only its transcript. Be short and specific. If the answer is not in the transcript, say so. Answer in "+outLang.value+".";
     var pr="Transcript:\n"+stamped(n)+"\n\nQuestion: "+q;
     var rr=remoteReady(),p=rr?tmo(callRemote(sys,pr),60000):tmo(onDevice(sys,pr),25000);
-    p.then(function(a){$(".a",box).innerHTML=il(a).replace(/\n/g,"<br>");}).catch(function(err){
+    p.then(function(a){$(".a",box).innerHTML=il(a).replace(/\n/g,"<br>");if(window.VaaniHook)VaaniHook("asked",{engine:rr?provider():"chrome"});}).catch(function(err){
       $(".a",box).innerHTML=rr?esc(PNAME[provider()]+(err&&err.message==="timeout"?" didn't answer in time. Try again in a moment, or check your key in ":" didn't answer. Check your key in "))+'<button data-open="settings">Settings</button>.':'Asking questions needs the AI built into Chrome on a computer, or your own AI key. <button data-open="settings">Open Settings</button>';});
   }
   $("#askSend").addEventListener("click",ask);
@@ -574,18 +584,19 @@
     var eng="Chrome's built-in translator",local=function(){return tmo(translateLines(src,from,code(to)),60000);};
     var p=remoteReady()?tmo(callRemote("Translate this markdown into "+to+". Keep the markdown structure exactly. Return only the translation.",src),60000).then(function(t){eng=PNAME[provider()];return t;},local):local();
     p.then(function(t){var x={id:Date.now(),kind:n.kind,date:new Date().toISOString(),dur:n.dur,lang:n.lang,tmpl:n.tmpl,segs:n.segs,md:t,title:((t.match(/^#\s+(.+)$/m)||[])[1]||n.title)+" ("+to+")",done:{},of:n.id,words:0,engine:eng};
-      upsert(x);showNote(x,false);toast("Translated. Saved as a new note.");})
+      upsert(x);showNote(x,false);toast("Translated. Saved as a new note.");if(window.VaaniHook)VaaniHook("translated",{to:code(to),engine:eng===PNAME[provider()]?provider():"chrome"});})
     .catch(function(){toast(remoteReady()?PNAME[provider()]+" didn't translate it, and this browser has no translator. Try again later.":"Translation isn't available in this browser. Add an AI key in Settings.");});
   });
 
   /* ---------- settings ---------- */
-  var HINTS={auto:"Free. Notes are written in this browser, by its built-in AI when it has one and by Vaani's basic engine everywhere else. Speech to text is done by your browser: Chrome sends the audio to Google, and Edge to Microsoft.",
+  var HINTS={auto:"Free. Notes are written in this browser, by its built-in AI when it has one and by Vaani’s basic engine everywhere else. Speech to text is done by your browser: Chrome sends the audio to Google, and Edge to Microsoft.",
     sarvam:'Get a key at <a href="https://dashboard.sarvam.ai" target="_blank" rel="noopener">dashboard.sarvam.ai</a>. Best for Hindi, Kannada, Tamil and other Indian languages.',
     openai:'Get a key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>.',
     anthropic:'Get a key at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>.',
     gemini:'Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a>.'};
   var provSel=$("#provSel"),keyInp=$("#keyInp");
-  function syncProv(){var p=provSel.value;$("#keyWrap").hidden=p==="auto";keyInp.value=keyFor(p);$("#keyHint").innerHTML=HINTS[p]+(p!=="auto"?" Your key is kept only in this browser and sent only to that provider.":"");}
+  function syncProv(){var p=provSel.value;$("#keyWrap").hidden=p==="auto";keyInp.value=keyFor(p);$("#keyHint").innerHTML=HINTS[p]+(p!=="auto"?" Your key is kept only in this browser and sent only to that provider. Use a key with a monthly spend limit.":"");$("#keyRm").hidden=p==="auto"||!keyFor(p);}
+  $("#keyRm").addEventListener("click",function(e){var p=provSel.value,old=keyFor(p),H=window.VaaniHome;remove("vaani.key."+p);keyInp.value="";syncProv();var msg="Removed your "+PNAME[p]+" key";if(H&&H.actToast){H.actToast(msg,"Undo",function(){var typed=keyFor(p)||(provSel.value===p&&keyInp.value.trim());if(typed||!old){old="";return;}save("vaani.key."+p,old);old="";syncProv();$("#keyRm").focus();},function(){old="";if(!document.activeElement||document.activeElement===document.body)keyInp.focus();});var ub=document.querySelector(".vtoast button");if(ub&&e&&e.detail===0)ub.focus({preventScroll:true});else keyInp.focus();}else toast(msg+" from this browser");});
   function checkStatus(){
     var el=$("#aiStatus");el.textContent="Checking this browser…";
     Promise.all([lmAvail(),smAvail()]).then(function(r){
@@ -593,7 +604,7 @@
       if(lm==="available")el.innerHTML="<b>On-device AI is ready in this browser.</b> Free notes, questions and summaries without any key.";
       else if(lm==="downloadable"||lm==="downloading")el.innerHTML="<b>This browser can run AI on your device.</b> It sets itself up the first time you make notes (a one-time download).";
       else if(sm!=="unavailable")el.innerHTML="<b>On-device summaries are available here.</b> For questions and richer notes, use Chrome on a computer or add a key.";
-      else el.innerHTML="<b>This browser uses Vaani's basic engine.</b> It is free and works offline. For smarter notes without a key, open Vaani in Chrome on a computer, or add a key above.";
+      else el.innerHTML="<b>This browser uses Vaani’s basic engine.</b> It is free and works offline. For smarter notes without a key, open Vaani in Chrome on a computer, or add a key above.";
     });
   }
   function openSettings(){provSel.value=provider();syncProv();checkStatus();openSheet("#setSheet");}
@@ -601,10 +612,10 @@
   $("#setDone").addEventListener("click",function(){var p=provSel.value;save("vaani.provider",p);if(p!=="auto")save("vaani.key."+p,keyInp.value.trim());save("vaani.outLang",outLang.value);closeSheets();
     toast(p==="auto"?"Using the free built-in engine":(keyInp.value.trim()?PNAME[p]+" is ready":"Add a key to use "+PNAME[p]));});
 
-  /* ---------- start ---------- */window.Vaani={notes:notes,getNote:getNote,upsert:upsert,setNotes:setNotes,showNote:showNote,view:view,startRec:startRec,stopRec:stopRec,setMode:setMode,getMode:function(){return mode;},generate:generate,toast:toast,esc:esc,il:il,parseMd:parseMd,dayLabel:dayLabel,timeLabel:timeLabel,words:words,load:load,save:save,loadJSON:loadJSON,saveJSON:saveJSON,TMPL:TMPL,PNAME:PNAME,remoteReady:remoteReady,provider:provider,openSheet:openSheet,closeSheets:closeSheets,shareText:shareText,copyText:copyText,APP_URL:APP_URL,makeNotes:makeNotes,titleFrom:titleFrom,plain:plain,stamped:stamped,fmt:fmt,basicNotes:basicNotes,elapsed:elapsed,isListening:function(){return listening;},getSegs:function(){return segs;},getInterim:function(){return interim;},getStartedAt:function(){return startedAt;},cur:cur,getCurrentId:function(){return currentId;},setCurrentId:function(i){currentId=i;},langSel:langSel,tmplSel:tmplSel,outLang:outLang,SRC:SRC,getCallOn:function(){return callOn;},renderSaved:renderSaved,isMac:isMac,LANGS:LANGS,openSettings:openSettings,lmAvail:lmAvail,ownerSplit:ownerSplit,hasTmpl:hasTmpl,hasSR:!!SR,remove:remove,storeFailing:storeFailing,basicClean:basicClean,savedWords:savedWords,sortNotes:function(a){return a.sort(function(x,y){return new Date(y.date)-new Date(x.date);});}};
+  /* ---------- start ---------- */window.Vaani={notes:notes,getNote:getNote,upsert:upsert,setNotes:setNotes,showNote:showNote,view:view,startRec:startRec,stopRec:stopRec,setMode:setMode,getMode:function(){return mode;},generate:generate,toast:toast,esc:esc,il:il,parseMd:parseMd,dayLabel:dayLabel,timeLabel:timeLabel,words:words,load:load,save:save,loadJSON:loadJSON,saveJSON:saveJSON,TMPL:TMPL,PNAME:PNAME,remoteReady:remoteReady,provider:provider,openSheet:openSheet,closeSheets:closeSheets,shareText:shareText,copyText:copyText,APP_URL:APP_URL,makeNotes:makeNotes,titleFrom:titleFrom,plain:plain,stamped:stamped,fmt:fmt,basicNotes:basicNotes,elapsed:elapsed,isListening:function(){return listening;},getSegs:function(){return segs;},getInterim:function(){return interim;},getStartedAt:function(){return startedAt;},cur:cur,getCurrentId:function(){return currentId;},setCurrentId:function(i){currentId=i;},langSel:langSel,tmplSel:tmplSel,outLang:outLang,SRC:SRC,getCallOn:function(){return callOn;},renderSaved:renderSaved,isMac:isMac,LANGS:LANGS,openSettings:openSettings,lmAvail:lmAvail,setCallOn:function(v){callOn=!!v;syncCall();},hasCallTrack:function(){return !!callTrack;},isCallSrc:CALLSRC,ownerSplit:ownerSplit,hasTmpl:hasTmpl,hasSR:!!SR,remove:remove,storeFailing:storeFailing,basicClean:basicClean,savedWords:savedWords,sortNotes:function(a){return a.sort(function(x,y){return new Date(y.date)-new Date(x.date);});}};
   view("idle");
   if("serviceWorker" in navigator&&location.protocol==="https:"){navigator.serviceWorker.register("sw.js").catch(function(){});}
 })();
 </script>
-<script src="home.js"></script></body>
+<script src="home.js"></script><script src="insights.js"></script><script src="calendar.js"></script></body>
 </html>
