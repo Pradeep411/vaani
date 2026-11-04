@@ -37,6 +37,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var prompt: PromptController!
     private var statusBar: StatusBarController!
     private var pollTimer: Timer?
+    /// Standard or the no-sandbox diagnostic build (re-audit D-01).
+    private var flavor: BuildFlavor = .diagnostic
+    /// What the call pill told the user about capture scope (re-audit N-05).
+    private var promisedScope: CaptureScope = .callAppOnly
 
     private var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
 
@@ -57,6 +61,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func launch() {
+        flavor = BuildFlavor.detect(
+            infoFlag: Bundle.main.object(forInfoDictionaryKey: BuildFlavor.infoKey),
+            sandboxContainerID: ProcessInfo.processInfo.environment["APP_SANDBOX_CONTAINER_ID"])
+        if !flavor.allowsLoginItem, SMAppService.mainApp.status == .enabled {
+            try? SMAppService.mainApp.unregister()
+        }
         prompt = PromptController()
         settingsModel = SettingsModel(store: settingsStore)
         settingsWindow = SettingsWindowController(model: settingsModel)
@@ -90,7 +100,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusBar.snapshot = { [weak self] in
             guard let self else {
                 return .init(detectionOn: false, recording: false, recordingApp: nil, minutes: 0, notice: nil,
-                             pageUsingMic: false, takeNotesNowAllSound: true, openAtLogin: false)
+                             pageUsingMic: false, takeNotesNowAllSound: true, openAtLogin: false,
+                             diagnostic: true)
             }
             return .init(detectionOn: self.detector.settings.enabled,
                          recording: self.recorder.isRecording,
@@ -100,10 +111,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                          pageUsingMic: self.notesWindow?.isCapturingMic ?? false,
                          takeNotesNowAllSound: self.recorder.plannedTap(for: self.detector.currentLiveCall(),
                                                                         settings: self.detector.settings).isSystemWide,
-                         openAtLogin: SMAppService.mainApp.status == .enabled)
+                         openAtLogin: self.flavor.allowsLoginItem && SMAppService.mainApp.status == .enabled,
+                         diagnostic: self.flavor == .diagnostic)
         }
         statusBar.onStop = { [weak self] in self?.stopRecording(.user) }
-        statusBar.onTakeNotesNow = { [weak self] in self?.takeNotesNow() }
+        statusBar.onTakeNotesNow = { [weak self] promised in self?.takeNotesNow(promised: promised) }
         statusBar.onOpenVaani = { [weak self] in self?.openVaani() }
         statusBar.onToggleDetection = { [weak self] in self?.settingsModel.update { $0.enabled.toggle() } }
         statusBar.onShowSettings = { [weak self] in self?.settingsWindow.show() }
@@ -140,6 +152,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         bridge.tick(now: now)
+        // Re-audit N-04: a page kept loaded only to receive a session is
+        // unloaded once that session is released and the window stays closed.
+        if let w = notesWindow, w.closedByUser,
+           NotesWindowPolicy.shouldTearDown(windowOnScreen: w.isOnScreen, recording: recorder.isRecording,
+                                            sessionBuffered: bridge.current != nil) {
+            w.tearDown()
+            notesWindow = nil
+        }
         statusBar.refresh()
     }
 
@@ -149,6 +169,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Say "all Mac sound" before recording when that is what will happen
         // (FaceTime, unknown apps, or the setting is on) (audit M-01).
         let allSound = recorder.plannedTap(for: c, settings: detector.settings).isSystemWide
+        promisedScope = allSound ? .allMacSound : .callAppOnly
         let content = PillContent(
             kind: .callDetected,
             title: c.title,
@@ -205,7 +226,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func ensureNotesWindow() -> VaaniWindowController {
         if let w = notesWindow, w.crashNotice == nil { return w }
         notesWindow?.tearDown()
-        let w = VaaniWindowController(bridge: bridge)
+        let w = VaaniWindowController(bridge: bridge, flavor: flavor)
         w.onStopRequested = { [weak self] in self?.stopRecording(.webRequested) }
         w.onPageStateChange = { [weak self] in self?.statusBar.refresh() }
         w.onClosed = { [weak self] in self?.notesWindowClosed() }
@@ -234,22 +255,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func takeNotesFromPrompt() {
         guard let candidate = detector.userTookNotes(now: now) else { return }
-        startRecording(candidate)
+        let promise = promisedScope
+        promisedScope = .callAppOnly   // default for next time: "this app only"
+        startRecording(candidate, promised: promise)
     }
 
-    private func takeNotesNow() {
+    /// - Parameter promised: what the menu item said when the menu opened.
+    private func takeNotesNow(promised: CaptureScope) {
         guard !recorder.isRecording else { return }
         prompt.hide(ifShowing: .callDetected)
         let live = detector.currentLiveCall()
         detector.manualRecordingStarted(now: now, attachTo: live)
-        startRecording(live)
+        startRecording(live, promised: promised)
     }
 
-    private func startRecording(_ candidate: CallCandidate?) {
+    private func startRecording(_ candidate: CallCandidate?, promised: CaptureScope) {
         ensureNotesWindow().showQuietly()
         let settings = detector.settings
         Task { @MainActor in
-            let ok = await recorder.start(candidate: candidate, settings: settings)
+            let ok = await recorder.start(candidate: candidate, settings: settings, promised: promised)
             if !ok {
                 detector.recordingEnded(now: now)
                 showMicrophoneAlert()
@@ -293,6 +317,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func toggleOpenAtLogin() {
+        guard flavor.allowsLoginItem else { return }   // never for the diagnostic build
         do {
             if SMAppService.mainApp.status == .enabled {
                 try SMAppService.mainApp.unregister()

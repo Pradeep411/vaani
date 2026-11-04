@@ -18,14 +18,20 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         /// "Take notes now" would record all Mac sound (no app-only target).
         var takeNotesNowAllSound: Bool
         var openAtLogin: Bool
+        /// No-sandbox diagnostic build (re-audit D-01).
+        var diagnostic: Bool
     }
 
     var snapshot: () -> Snapshot = {
         Snapshot(detectionOn: true, recording: false, recordingApp: nil, minutes: 0, notice: nil,
-                 pageUsingMic: false, takeNotesNowAllSound: true, openAtLogin: false)
+                 pageUsingMic: false, takeNotesNowAllSound: true, openAtLogin: false, diagnostic: true)
     }
     var onStop: (() -> Void)?
-    var onTakeNotesNow: (() -> Void)?
+    /// Passes the scope the menu item showed when the menu opened (N-05).
+    var onTakeNotesNow: ((CaptureScope) -> Void)?
+    /// Defaults to "call app only": if the menu item was never shown with
+    /// the all-sound wording, a wider plan at start asks first (re-audit).
+    private var menuPromise: CaptureScope = .callAppOnly
     var onOpenVaani: (() -> Void)?
     var onToggleDetection: (() -> Void)?
     var onShowSettings: (() -> Void)?
@@ -50,7 +56,8 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         guard let button = item.button else { return }
         let live = s.recording || s.pageUsingMic
         let symbol = live ? "record.circle.fill" : "waveform"
-        let label = s.recording ? Copy.statusRecordingLabel : (s.pageUsingMic ? Copy.pageMicInUse : Copy.statusIdleLabel)
+        var label = s.recording ? Copy.statusRecordingLabel : (s.pageUsingMic ? Copy.pageMicInUse : Copy.statusIdleLabel)
+        if s.diagnostic { label = Copy.diagnosticBanner + " " + label }
         let image = NSImage(systemSymbolName: symbol, accessibilityDescription: label)
         image?.isTemplate = !live
         button.image = image
@@ -66,11 +73,16 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     private func rebuild(_ menu: NSMenu) {
         let s = snapshot()
+        menuPromise = .callAppOnly   // only the item shown below may widen it
         menu.removeAllItems()
 
         let status: String
         if s.recording { status = Copy.menuRecording(s.recordingApp, minutes: s.minutes) }
         else { status = s.detectionOn ? Copy.menuListening : Copy.menuDetectionOff }
+        if s.diagnostic {
+            menu.addItem(disabled(Copy.diagnosticBanner))
+            menu.addItem(.separator())
+        }
         menu.addItem(disabled(status))
         if s.pageUsingMic { menu.addItem(disabled(Copy.pageMicInUse)) }
         if let notice = s.notice {
@@ -91,6 +103,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             menu.addItem(stop)
         } else {
             // Say "all Mac sound" before recording when that is what happens (audit M-01).
+            menuPromise = s.takeNotesNowAllSound ? .allMacSound : .callAppOnly
             menu.addItem(action(s.takeNotesNowAllSound ? Copy.menuTakeNotesNowAllSound : Copy.menuTakeNotesNow,
                                 #selector(takeNotesNow)))
         }
@@ -101,9 +114,13 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         detect.state = s.detectionOn ? .on : .off
         menu.addItem(detect)
         menu.addItem(action(Copy.menuIgnored, #selector(showSettings)))
-        let login = action(Copy.menuLogin, #selector(toggleLogin))
-        login.state = s.openAtLogin ? .on : .off
-        menu.addItem(login)
+        if s.diagnostic {
+            menu.addItem(disabled(Copy.diagnosticLoginOff))
+        } else {
+            let login = action(Copy.menuLogin, #selector(toggleLogin))
+            login.state = s.openAtLogin ? .on : .off
+            menu.addItem(login)
+        }
         menu.addItem(.separator())
         let quit = action(Copy.menuQuit, #selector(quit))
         quit.keyEquivalent = "q"
@@ -124,7 +141,11 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     @objc private func stop() { onStop?() }
-    @objc private func takeNotesNow() { onTakeNotesNow?() }
+    @objc private func takeNotesNow() {
+        let promise = menuPromise
+        menuPromise = .callAppOnly   // used once
+        onTakeNotesNow?(promise)
+    }
     @objc private func openVaani() { onOpenVaani?() }
     @objc private func toggleDetection() { onToggleDetection?() }
     @objc private func showSettings() { onShowSettings?() }

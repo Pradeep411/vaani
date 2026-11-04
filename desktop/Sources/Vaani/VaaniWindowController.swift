@@ -25,7 +25,15 @@ final class VaaniWindowController: NSObject, NSWindowDelegate, WKNavigationDeleg
     private var lastClickAt: TimeInterval?
     private var clickMonitor: Any?
     private var micObservation: NSKeyValueObservation?
+    private var hideObserver: NSObjectProtocol?
     private var tornDown = false
+    private let flavor: BuildFlavor
+    /// Per-web-view secret written into the user script and passed only as a
+    /// callAsyncJavaScript argument; `_deliver` refuses calls without it, so
+    /// page scripts cannot fake native messages (re-audit F-01).
+    private let deliverToken: String
+    /// The user closed the window (as opposed to minimising it).
+    private(set) var closedByUser = false
 
     /// The page pressed Stop.
     var onStopRequested: (() -> Void)?
@@ -37,25 +45,33 @@ final class VaaniWindowController: NSObject, NSWindowDelegate, WKNavigationDeleg
     private(set) var crashNotice: String?
 
     /// The document-start script, read from the app bundle (single source of
-    /// truth, also run by the Node tests). If it is missing, the bridge stays
+    /// truth, also run by the Node tests), with this web view's delivery
+    /// token written in. If it is missing or malformed, the bridge stays
     /// closed: the page never sees __VAANI_DESKTOP__.
-    private static func loadUserScript() -> String? {
+    private static func loadUserScript(token: String) -> String? {
         guard let url = Bundle.main.url(forResource: BridgeConfig.userScriptName, withExtension: "js"),
-              let source = try? String(contentsOf: url, encoding: .utf8) else {
-            NSLog("Vaani: %@.js missing from the app bundle; desktop bridge disabled", BridgeConfig.userScriptName)
+              let source = try? String(contentsOf: url, encoding: .utf8),
+              let built = UserScriptBuilder.build(source: source, token: token) else {
+            NSLog("Vaani: %@.js missing or malformed; desktop bridge disabled", BridgeConfig.userScriptName)
             return nil
         }
-        return source
+        return built
     }
 
-    init(bridge: BridgeSession) {
+    init(bridge: BridgeSession, flavor: BuildFlavor) {
         self.bridge = bridge
+        self.flavor = flavor
+        let token = UserScriptBuilder.makeToken()
+        self.deliverToken = token
         let config = WKWebViewConfiguration()
-        config.websiteDataStore = .default()   // inside the sandbox container when sandboxed
+        // Standard build: the default store, inside the sandbox container.
+        // Diagnostic (no-sandbox) build: nothing is stored at all, so no keys
+        // or notes ever land outside the sandbox (re-audit D-01).
+        config.websiteDataStore = flavor.persistsWebData ? .default() : .nonPersistent()
         config.preferences.javaScriptCanOpenWindowsAutomatically = false
         config.preferences.isFraudulentWebsiteWarningEnabled = true
         let content = WKUserContentController()
-        if let source = Self.loadUserScript() {
+        if let source = Self.loadUserScript(token: token) {
             content.addUserScript(WKUserScript(source: source, injectionTime: .atDocumentStart,
                                                forMainFrameOnly: true, in: .page))
         }
@@ -66,7 +82,7 @@ final class VaaniWindowController: NSObject, NSWindowDelegate, WKNavigationDeleg
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1100, height: 760),
                           styleMask: [.titled, .closable, .miniaturizable, .resizable],
                           backing: .buffered, defer: false)
-        window.title = Copy.windowTitle
+        window.title = flavor == .diagnostic ? Copy.diagnosticWindowTitle : Copy.windowTitle
         window.isReleasedWhenClosed = false
         window.contentView = webView
         window.minSize = NSSize(width: 380, height: 480)
@@ -91,10 +107,18 @@ final class VaaniWindowController: NSObject, NSWindowDelegate, WKNavigationDeleg
             }
             return event
         }
-        // Menu-bar indicator whenever the page itself uses the mic (audit M-02).
+        // Menu-bar indicator whenever the page itself uses the mic (audit
+        // M-02), and the page mic is forced off whenever the window is not on
+        // screen, even if WebKit reused an earlier grant (re-audit N-04).
         micObservation = webView.observe(\.microphoneCaptureState, options: [.new]) { _, _ in
             MainActor.assumeIsolated {
-                if let owner = relay.owner { owner.onPageStateChange?() }
+                if let owner = relay.owner { owner.enforcePageMicRule() }
+            }
+        }
+        hideObserver = NotificationCenter.default.addObserver(forName: NSApplication.didHideNotification,
+                                                              object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated {
+                if let owner = relay.owner { owner.enforcePageMicRule() }
             }
         }
         webView.load(URLRequest(url: BridgeConfig.startURL))
@@ -102,17 +126,36 @@ final class VaaniWindowController: NSObject, NSWindowDelegate, WKNavigationDeleg
 
     /// Show next to the call without taking keyboard focus from it.
     func showQuietly() {
+        closedByUser = false
         if !window.isVisible { window.orderFrontRegardless() }
     }
 
     /// Show and focus (menu "Open Vaani").
     func showAndFocus() {
+        closedByUser = false
         NSApp.activate()
         window.makeKeyAndOrderFront(nil)
     }
 
     func setRecording(_ recording: Bool) {
-        window.title = recording ? Copy.windowTitleRecording : Copy.windowTitle
+        if flavor == .diagnostic {
+            window.title = Copy.diagnosticWindowTitle
+        } else {
+            window.title = recording ? Copy.windowTitleRecording : Copy.windowTitle
+        }
+    }
+
+    /// Really on screen: shown, not minimised, app not hidden.
+    var isOnScreen: Bool { window.isVisible && !window.isMiniaturized && !NSApp.isHidden }
+
+    /// Re-audit N-04: the page may use the mic only while the window is on
+    /// screen. Also refreshes the menu-bar indicator.
+    fileprivate func enforcePageMicRule() {
+        guard !tornDown else { return }
+        if NotesWindowPolicy.mustForceMicOff(pageCapturing: isCapturingMic, windowOnScreen: isOnScreen) {
+            webView.setMicrophoneCaptureState(.none, completionHandler: nil)
+        }
+        onPageStateChange?()
     }
 
     /// True while the page itself is using the mic (its own dictation).
@@ -126,6 +169,8 @@ final class VaaniWindowController: NSObject, NSWindowDelegate, WKNavigationDeleg
         clickMonitor = nil
         micObservation?.invalidate()
         micObservation = nil
+        if let hideObserver { NotificationCenter.default.removeObserver(hideObserver) }
+        hideObserver = nil
         webView.setMicrophoneCaptureState(.none, completionHandler: nil)
         webView.stopLoading()
         webView.navigationDelegate = nil
@@ -144,8 +189,26 @@ final class VaaniWindowController: NSObject, NSWindowDelegate, WKNavigationDeleg
     nonisolated func send(_ message: NativeToWeb) -> Bool {
         MainActor.assumeIsolated {
             guard !tornDown, BridgeGate.maySend(to: webView.url) else { return false }
-            webView.callAsyncJavaScript(NativeToWeb.dispatchScript, arguments: ["msg": message.payload],
-                                        in: nil, in: .page, completionHandler: nil)
+            if case .hello(let nonce) = message {
+                // Re-audit N-03: the dispatch script returns whether a
+                // connected listener took the message. If `hello` reached
+                // nobody (someone else sent `ready` early), reset the
+                // handshake so the web app's own `ready` is honoured.
+                let relay = MainActorRelay(self)
+                webView.callAsyncJavaScript(NativeToWeb.dispatchScript,
+                                            arguments: ["msg": message.payload, "token": deliverToken],
+                                            in: nil, in: .page) { result in
+                    MainActor.assumeIsolated {
+                        var delivered = false
+                        if case .success(let value) = result, let ok = value as? Bool { delivered = ok }
+                        if !delivered, let owner = relay.owner { owner.bridge.helloNotDelivered(nonce: nonce) }
+                    }
+                }
+            } else {
+                webView.callAsyncJavaScript(NativeToWeb.dispatchScript,
+                                            arguments: ["msg": message.payload, "token": deliverToken],
+                                            in: nil, in: .page, completionHandler: nil)
+            }
             return true
         }
     }
@@ -200,8 +263,18 @@ final class VaaniWindowController: NSObject, NSWindowDelegate, WKNavigationDeleg
         MainActor.assumeIsolated {
             // Closing the window ends any capture the page itself started
             // (security audit M-02).
+            closedByUser = true
             webView.setMicrophoneCaptureState(.none, completionHandler: nil)
             onClosed?()
+        }
+    }
+
+    // windowDidMiniaturize:
+    nonisolated func windowDidMiniaturize(_ notification: Notification) {
+        MainActor.assumeIsolated {
+            // Minimised is not on screen: page mic off (re-audit N-04).
+            webView.setMicrophoneCaptureState(.none, completionHandler: nil)
+            onPageStateChange?()
         }
     }
 
@@ -304,7 +377,7 @@ final class VaaniWindowController: NSObject, NSWindowDelegate, WKNavigationDeleg
                              initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType,
                              decisionHandler: @escaping (WKPermissionDecision) -> Void) {
         let decision: WKPermissionDecision = MainActor.assumeIsolated {
-            let allowed = type == .microphone && window.isVisible && BridgeGate.accepts(
+            let allowed = type == .microphone && isOnScreen && BridgeGate.accepts(
                 isMainFrame: frame.isMainFrame,
                 origin: FrameOrigin(scheme: origin.protocol, host: origin.host, port: origin.port),
                 pageURL: webView.url)

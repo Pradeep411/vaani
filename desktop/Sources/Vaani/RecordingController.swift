@@ -6,6 +6,9 @@
 // Security audit M-01: the tap is never widened to all Mac sound without the
 // user saying yes. If the app-only tap has heard nothing at all, the user is
 // asked ("Record all sound" / "Mic only"); no answer in 60 s means mic only.
+// Re-audit N-05: `start` gets the scope the pill or menu promised. If the
+// plan at start time is wider (all Mac sound) than that promise, recording
+// starts mic only and the same question is asked first.
 #if os(macOS)
 import AVFoundation
 import CoreAudio
@@ -60,7 +63,8 @@ final class RecordingController {
     // MARK: Start
 
     /// Returns false if recording could not start (microphone permission off).
-    func start(candidate: CallCandidate?, settings: DetectionSettings) async -> Bool {
+    /// - Parameter promised: what the pill or menu item told the user.
+    func start(candidate: CallCandidate?, settings: DetectionSettings, promised: CaptureScope) async -> Bool {
         guard !isRecording else { return true }
         guard await Self.microphoneAllowed() else {
             notice = Copy.micDenied
@@ -93,9 +97,17 @@ final class RecordingController {
 
         var startNotice: String?
         var startCode: NoticeCode = .tapUnavailable
+        var askAfterStart = false
         if #available(macOS 14.2, *) {
             let plan = plannedTap(for: candidate, settings: settings)
-            if startTap(plan: plan) {
+            if ScopeDecision.decide(promised: promised, planned: plan) == .askBeforeAllSound {
+                // Wider than promised: mic only until the user chooses.
+                mixer.deactivate(.app)
+                captureMode = .micOnly
+                startNotice = Copy.micOnlyUntilChosen
+                startCode = .micOnly
+                askAfterStart = true
+            } else if startTap(plan: plan) {
                 captureMode = plan.isSystemWide ? .micAndSystem : .micAndApp
                 health = TapHealthMonitor(startedAt: now)
                 watchDefaultOutput()
@@ -122,6 +134,11 @@ final class RecordingController {
         if let startNotice {
             notice = startNotice
             bridge.notice(startCode, startNotice)
+        }
+
+        if askAfterStart {
+            widenAskedAt = now
+            onAskToWiden?(candidate?.displayName ?? "the call app")
         }
 
         let relay = MainActorRelay(self)
@@ -196,9 +213,11 @@ final class RecordingController {
         widenAskedAt = nil
         guard #available(macOS 14.2, *) else { return }
         let own = processes().filter { $0.pid == getpid() }.map(\.objectID)
+        mixer?.activate(.app)
         if startTap(plan: .systemWideExcluding(own)) {
             captureMode = .micAndSystem
             health = TapHealthMonitor(startedAt: now)
+            if outputListener == nil { watchDefaultOutput() }
             notice = Copy.widenedByUser
             bridge.notice(.systemWide, Copy.widenedByUser)
             onChange?()
