@@ -18,14 +18,27 @@ Native side: `Sources/VaaniCore/Bridge.swift`, `BridgeSession.swift`,
 | Allowed origin | exactly `https://pradeep411.github.io` (https, default port, no user info) |
 | Allowed path | `/vaani` or anything under `/vaani/` (no `.`/`..` segments, no `%2e`, `%2f`, `%5c`) |
 | Frames | top frame only, both directions |
-| Defined before page scripts run | `window.__VAANI_DESKTOP__ = { protocol: 1, platform: 'macos', handler: 'vaaniDesktop', connect(cb), _deliver(msg) }` (frozen, non-writable, non-configurable; only on the allowed origin and path, top frame) |
-| Page to native | `window.webkit.messageHandlers.vaaniDesktop.postMessage(obj)` |
-| Native to page | native calls `__VAANI_DESKTOP__._deliver(msg)`, which passes `msg` to the **one** callback registered with `connect(cb)` |
+| Defined before page scripts run | `window.__VAANI_DESKTOP__ = { protocol: 1, platform: 'macos', handler: 'vaaniDesktop', connect(cb), _deliver(msg, token) }` (frozen, non-writable, non-configurable; only on the allowed origin and path, top frame) |
+| Page to native | `cap.post(obj)` with the capability `connect(cb)` returned (it adds `v` and the nonce and calls the message handler captured at document start) |
+| Native to page | native calls `__VAANI_DESKTOP__._deliver(msg, token)` with a per-web-view token known only to the app and the user script (calls without it are ignored), which passes a null-prototype copy of `msg` (without any `nonce`) to the **one** callback registered with `connect(cb)`, and returns whether a callback took it |
 
-`connect(cb)` returns `true` for the first caller and `false` for every later
-one: the slot locks. **The web app must load the bridge module and call
-`connect` before it loads any third-party script** (Google sign-in, Firebase,
-analytics), so only Vaani's own code receives call audio.
+`connect(cb)` returns a one-time, frozen capability `{ post(msg) }` to the
+first caller and `null` to every later one: the slot locks. A successful
+`connect` also sends `ready` for the page. The per-load nonce lives only
+inside the user script; the page never sees it and does not handle it.
+**The web app must load the bridge module and call `connect` before it loads
+any third-party script** (Google sign-in, Firebase, analytics).
+
+What this protects: passive listeners, stray scripts, forged `stop` /
+`session.done` / `resume` messages (they lack the nonce and native refuses
+them), and fake deliveries into the page such as a forged `hello` that would
+overwrite the nonce (they lack the delivery token and `_deliver` ignores
+them). What it does not: any script in the page, even one loaded after the
+bridge module, can patch a global that the web app's code uses on the audio
+(a String or typed-array method, or the web app's own functions) and read
+that audio. The reference module captures `atob` and `charCodeAt` at load;
+the rest of the web app's audio handling is not covered. Treat every script
+on the page as able to hear a recording in progress.
 
 The web app is "in desktop mode" only when all of these are true:
 `location.origin === 'https://pradeep411.github.io'`, path starts with
@@ -62,12 +75,19 @@ calendar sign-in in desktop mode and point to the browser version.
    the web view's current URL passes the path rule; the body is a JSON object
    of at most 8 KB with `v === 1` and a known `type`; `sessionId`, if present,
    matches `^[A-Za-z0-9-]{1,64}$`; and, for every type except `ready`,
-   `nonce` equals the nonce sent in this page load's `hello`.
+   `nonce` equals the nonce sent in this page load's `hello` (the user script
+   adds it; page code never handles it).
 4. Outbound: before every send, native re-checks that the current page URL is
    the allowed page. Messages are passed as a typed argument to
    `callAsyncJavaScript` in the page world; no data is ever spliced into
    script text. The only script native runs is:
-   `const b = window.__VAANI_DESKTOP__; return !!(b && b._deliver(msg));`
+   `const b = window.__VAANI_DESKTOP__; return !!(b && b._deliver(msg, token));`
+   with `msg` and `token` passed as `callAsyncJavaScript` arguments. The
+   token is written into the user script by the app and never appears in a
+   page global or in script text.
+   For `hello`, native reads that return value: `false` (nobody connected yet,
+   for example another script sent `ready` early) resets the handshake, so
+   the web app's own `ready` is honoured at once.
 5. Catch-up is batched: at most 200 chunks per 250 ms tick, one catch-up at a
    time, live chunks queue behind it so order is kept. A repeated `ready` in
    the same page load is ignored; `ready` across reloads and `resume` are
@@ -82,23 +102,24 @@ sides (forward compatible). Field order does not matter.
 
 | type | fields | when | native does |
 | --- | --- | --- | --- |
-| `ready` | `protocol: 1` (no nonce needed) | once per page load, after `connect` | sends `hello` (with this load's `nonce`); if a session exists, `session.start` (with `firstSeq`), any `capture.notice`, then every kept `audio.chunk` from `firstSeq` in batches, then `session.stop` if it has ended |
+| `ready` | `protocol: 1` (no nonce needed) | sent by the user script when `connect` succeeds | sends `hello` (with this load's `nonce`); if a session exists, `session.start` (with `firstSeq`), any `capture.notice`, then every kept `audio.chunk` from `firstSeq` in batches, then `session.stop` if it has ended |
 | `resume` | `sessionId`, `fromSeq` (int, 0 or more), `nonce` | the page saw a gap in `seq` | re-sends kept chunks with `seq >= fromSeq`, then `session.stop` if ended. If `fromSeq` is older than the oldest kept chunk, first sends `capture.notice` code `gap` with `firstSeq` |
 | `stop` | `sessionId` (optional), `nonce` | the user pressed Stop in the web app | stops recording (same as the menu-bar Stop) if the id matches or is absent |
 | `session.done` | `sessionId`, `nonce` | notes for that session are saved | releases its in-memory copy of the audio. Only honoured after `session.stop` |
 
 ```js
-webkit.messageHandlers.vaaniDesktop.postMessage({ v: 1, type: 'ready', protocol: 1 });
-webkit.messageHandlers.vaaniDesktop.postMessage({ v: 1, type: 'resume', sessionId, fromSeq: 12, nonce });
-webkit.messageHandlers.vaaniDesktop.postMessage({ v: 1, type: 'stop', sessionId, nonce });
-webkit.messageHandlers.vaaniDesktop.postMessage({ v: 1, type: 'session.done', sessionId, nonce });
+const cap = window.__VAANI_DESKTOP__.connect(onMessage);   // also sends { v: 1, type: 'ready', protocol: 1 }
+cap.post({ type: 'resume', sessionId, fromSeq: 12 });      // the user script adds v and the nonce
+cap.post({ type: 'stop', sessionId });
+cap.post({ type: 'session.done', sessionId });
 ```
 
 ### Native to page
 
 ```js
-// After "ready" (once per page load)
-{ v: 1, type: 'hello', protocol: 1, platform: 'macos', nativeVersion: '0.1.0', nonce: '<per page load>',
+// After "ready" (once per page load). Native sends a nonce; the user script
+// keeps it and the page receives hello WITHOUT it.
+{ v: 1, type: 'hello', protocol: 1, platform: 'macos', nativeVersion: '0.1.0',
   audio: { encoding: 'pcm_s16le', sampleRate: 16000, channels: 1, chunkMs: 250 } }
 
 // A recording started (user tapped "Take notes", or "Take notes now")
@@ -136,23 +157,24 @@ the reference module builds the file.
 ## 4. Sequence
 
 ```
-page loads ──► connect(cb), postMessage ready ─► native: hello {nonce}
+page loads ──► connect(cb) (sends ready) ───────► native: hello {nonce kept by the user script}
                                                  (if a session is live:
                                                   session.start {firstSeq}, notices,
                                                   kept chunks in batches, stop)
 user taps "Take notes" in the pill ───────────► native: session.start
                                                  audio.chunk seq 0,1,2... every 250 ms
-page sees seq jump 7 -> 9 ─► resume {fromSeq 8, nonce} ► native: chunks 8, 9, ...
+page sees seq jump 7 -> 9 ─► cap.post resume {fromSeq 8} ► native: chunks 8, 9, ...
 call app off the mic for 60 s, Stop, or no answer to "Still taking notes?"
                                               ─► native: session.stop
-page saves notes ─► session.done {nonce} ─────► native releases its audio copy
+page saves notes ─► cap.post session.done ─────► native releases its audio copy
 ```
 
 Rules for the page:
 
 - Load the module and call `connect` before any third-party script.
-- Echo the `nonce` from `hello` on every message except `ready` (the
-  reference module does this).
+- Send everything through the `post` capability from `connect`; never call
+  `webkit.messageHandlers.vaaniDesktop.postMessage` directly (it has no nonce,
+  so native ignores it).
 - For a session it did not know, start at `firstSeq` (not 0), and tell the
   user once that the start of the call was not kept if `firstSeq > 0`.
 - Process chunks strictly in `seq` order per session; drop duplicates, ask

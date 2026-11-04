@@ -32,7 +32,10 @@ This build is not signed by Apple yet, so macOS asks you to confirm once.
    the file attached to the GitHub Release instead.) Check the `.sha256` file
    next to it matches the one you were given. Unzip it until you see
    **Vaani.app**.
-   Do not install the `NOSANDBOX-diagnostic` file; it is only for testing.
+   Never use **Vaani DIAGNOSTIC** (`Vaani-DIAGNOSTIC-no-sandbox.app`) for daily
+   use: it is a separate test-only app, made only when asked for, with the
+   sandbox off. It says "Diagnostic build, sandbox off, not for daily use." in
+   its menu and window title, keeps no keys or notes, and cannot open at login.
 2. Drag **Vaani.app** into your **Applications** folder.
 3. Open it:
    - **macOS 15 (Sequoia) or later:** double-click Vaani. macOS says it
@@ -84,9 +87,21 @@ Vaani still records your mic and tells you so in one line.
 Note: because this test build is unsigned, macOS forgets these choices each
 time you install a new build. The signed version will remember them.
 
+## Before any signed build
+
+Signing is not set up yet. Before anyone adds Apple signing secrets to
+GitHub, the owner follows `OWNER-SETUP.md` (protected `release` environment,
+tag and branch rules, outside-contributor approval). Until then, do not add
+the secrets.
+
 ## Everyday use
 
-- **Take notes:** tap it on the bar when a call starts.
+- **Take notes:** tap it on the bar when a call starts. The bar says before
+  you tap whether it will record the call app's sound or all Mac sound; if
+  that changes by the time recording starts, Vaani records your mic only and
+  asks first. **Take notes now** works the same way: unless the menu item said
+  "with all Mac sound", Vaani assumes "this app only" and asks before
+  recording anything wider.
 - **Not now:** hides the bar for this call only. The next call asks again.
 - **Stop:** click the menu-bar icon (red dot while recording), then
   **Stop taking notes**. The notes window title also says "Vaani, taking notes".
@@ -100,7 +115,9 @@ time you install a new build. The signed version will remember them.
 - **Open Vaani:** shows the notes window. Closing the window stops the page
   using the microphone; if no call is being delivered, the page is unloaded.
 - The red menu-bar dot also shows whenever the notes page itself uses your
-  microphone (for example its own dictation, which asks you first).
+  microphone (for example its own dictation, which asks you first). The page
+  can use the mic only while its window is on screen: minimising the window
+  or hiding Vaani turns it off.
 
 ### Google sign-in (calendar) does not work inside the Mac window
 
@@ -142,9 +159,9 @@ These cannot be tested in CI. Tick each on the owner's Mac, with the normal
 
 - [ ] Vaani starts and the menu-bar icon appears (sandbox on).
 - [ ] Zoom app call: bar says "Meeting detected · Zoom" within about 3 s.
-      If no bar ever appears in the sandboxed build but it does in the
-      `NOSANDBOX-diagnostic` build, the sandbox hides the Core Audio process
-      list: report it.
+      If no bar ever appears in the sandboxed build, report it. Only if asked,
+      run **Vaani DIAGNOSTIC** once to compare, then delete it (it is a
+      separate app with its own name; it never replaces Vaani).
 - [ ] Microsoft Teams (new): "Meeting detected · Microsoft Teams".
 - [ ] WhatsApp voice or video call: "Call detected · WhatsApp".
 - [ ] FaceTime: "Call detected · FaceTime" with "Records your mic and all Mac
@@ -169,6 +186,11 @@ These cannot be tested in CI. Tick each on the owner's Mac, with the normal
       Save sheet; scripted links do not open the browser, clicked ones do.
 - [ ] Close the notes window while not recording: macOS's orange mic dot is
       off and the menu shows no page-mic line.
+- [ ] Start web dictation in the notes window, then minimise the window or
+      hide Vaani: the orange mic dot goes off.
+- [ ] Vaani DIAGNOSTIC (only if asked): menu and window title show the
+      diagnostic line; "Open at login" is not offered; after quitting and
+      reopening, the notes window has no saved keys.
 - [ ] VoiceOver on: the bar is announced; both buttons are labelled.
 - [ ] Reduce Motion on: the bar fades in without sliding.
 
@@ -178,8 +200,8 @@ These cannot be tested in CI. Tick each on the owner's Mac, with the normal
 cd desktop
 swift test                    # pure-Swift logic (also runs on Linux)
 bash scripts/build-app.sh     # macOS: build/Vaani.app + build/Vaani-macOS-arm64.zip (sandbox on)
-SANDBOX=0 bash scripts/build-app.sh   # diagnostic only: build-nosandbox/...
-node --test web-bridge/vaani-desktop-bridge.test.mjs
+SANDBOX=0 bash scripts/build-app.sh   # diagnostic only: build-nosandbox/Vaani-DIAGNOSTIC-no-sandbox.app (ad-hoc only)
+for f in web-bridge/*.test.mjs; do node --test "$f"; done
 ```
 
 Layout:
@@ -188,10 +210,11 @@ Layout:
 | --- | --- |
 | `Sources/VaaniCore/` | Pure Swift, no Apple-only frameworks: detector state machine, app catalog and ignore list, settings, resampler and mixer, PCM, bridge protocol, URL policy, tap planning, text cleaning, open and reload limits. Portable to the Windows phase. |
 | `Sources/Vaani/` | macOS app (all files inside `#if os(macOS)`): Core Audio process list, mic and system-audio tap capture, pill, menu bar, notes window, settings window. |
-| `Tests/VaaniCoreTests/` | 75 unit tests, including regression tests for every finding in the security audit. |
+| `Tests/VaaniCoreTests/` | 90 unit tests, including regression tests for every finding in the security audit and re-audit. |
 | `Resources/` | Info.plist, entitlements (sandboxed, and the diagnostic one), and `vaani-userscript.js`, the bridge's document-start script (also run by the Node tests). |
-| `web-bridge/` | Reference JS module for the web app, plus Node tests. |
+| `web-bridge/` | Reference JS module for the web app, plus Node tests (including the auditor's same-realm probes). |
 | `.github/workflows/desktop-mac.yml` | CI. Move to the repo root `.github/workflows/` when this folder lands as `desktop/`. |
+| `OWNER-SETUP.md` | GitHub settings the owner must make before any signing secret is added. |
 
 How detection works:
 
