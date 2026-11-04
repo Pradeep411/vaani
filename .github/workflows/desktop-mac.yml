@@ -4,8 +4,15 @@
 # at the REPO ROOT, and the Swift package lives in desktop/ (working-directory
 # below). Nothing here pushes, deploys or publishes.
 #
-# Optional job "sign-and-notarize" runs only when ALL of these repository
-# secrets exist (add them later, with an Apple Developer account):
+# Artifacts: only push and manual runs upload an app. Pull-request runs build
+# and test but never upload anything installable (security audit M-03).
+# Install only builds from a push to main (or a GitHub Release), never from
+# "the latest run".
+#
+# Optional job "sign-and-notarize" runs only on a push to main or a
+# desktop-v* tag, inside the protected GitHub Environment "release"
+# (required reviewer: the owner; deployment branches: main and desktop-v*
+# tags), and only when ALL of these ENVIRONMENT secrets exist (audit L-07):
 #   MACOS_CERTIFICATE_P12      base64 of a "Developer ID Application" .p12
 #   MACOS_CERTIFICATE_PASSWORD password of that .p12
 #   MACOS_SIGN_IDENTITY        e.g. "Developer ID Application: Name (TEAMID)"
@@ -16,6 +23,8 @@ name: Desktop macOS
 
 on:
   push:
+    branches: ["**"]
+    tags: ["desktop-v*"]
     paths:
       - "desktop/**"
       - ".github/workflows/desktop-mac.yml"
@@ -57,20 +66,23 @@ jobs:
           xcodebuild -version
           swift --version
 
-      - name: Unit tests (VaaniCore, pure Swift)
+      - name: Unit tests (VaaniCore, pure Swift; also compiles the app target)
         run: swift test 2>&1 | tee test.log
 
       - name: Bridge reference module tests (Node)
         run: node --test web-bridge/vaani-desktop-bridge.test.mjs
 
-      - name: Build Vaani.app (release, arm64, ad-hoc signed)
+      - name: Build Vaani.app (release, arm64, App Sandbox on, ad-hoc signed)
         run: bash scripts/build-app.sh 2>&1 | tee build.log
+
+      - name: Build diagnostic variant (sandbox off, for Mac testing only)
+        run: SANDBOX=0 bash scripts/build-app.sh 2>&1 | tee build-nosandbox.log
 
       - name: Fail if any delegate method does not match its protocol
         # A WebKit/AppKit delegate method that only "nearly matches" is never
         # called; for the navigation policy that would be a security hole.
         run: |
-          if grep -E "nearly matches (optional )?requirement" build.log; then
+          if grep -E "nearly matches (optional )?requirement" test.log build.log build-nosandbox.log; then
             echo "::error::A delegate method signature does not match its protocol."
             exit 1
           fi
@@ -80,6 +92,7 @@ jobs:
           plutil -p build/Vaani.app/Contents/Info.plist
           codesign -dv --verbose=2 build/Vaani.app
           codesign -d --entitlements - --xml build/Vaani.app
+          test -f build/Vaani.app/Contents/Resources/vaani-userscript.js
           file build/Vaani.app/Contents/MacOS/Vaani | tee /dev/stderr | grep -q arm64
           # The native layer must not contain any network client code.
           if nm -u build/Vaani.app/Contents/MacOS/Vaani | grep -E "URLSession|NSURLConnection|CFNetwork|nw_connection"; then
@@ -102,18 +115,33 @@ jobs:
             exit 1
           fi
 
-      - name: Upload unsigned app
+      - name: Upload unsigned app (not for pull requests)
+        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: Vaani-macOS-unsigned-${{ matrix.os }}
-          path: desktop/build/Vaani-macOS-arm64.zip
+          path: |
+            desktop/build/Vaani-macOS-arm64.zip
+            desktop/build/Vaani-macOS-arm64.zip.sha256
           if-no-files-found: error
           retention-days: 14
+
+      - name: Upload diagnostic no-sandbox app (not for pull requests)
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: Vaani-macOS-NOSANDBOX-diagnostic-${{ matrix.os }}
+          path: |
+            desktop/build-nosandbox/Vaani-macOS-arm64-NOSANDBOX-diagnostic.zip
+            desktop/build-nosandbox/Vaani-macOS-arm64-NOSANDBOX-diagnostic.zip.sha256
+          if-no-files-found: error
+          retention-days: 7
 
   sign-and-notarize:
     name: Sign and notarize (optional)
     needs: build
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/desktop-v'))
+    environment: release
     runs-on: macos-15
     timeout-minutes: 45
     env:
@@ -166,15 +194,18 @@ jobs:
           rm -f "$KEY"
           xcrun stapler staple build/Vaani.app
           spctl --assess --type execute --verbose=4 build/Vaani.app
-          rm -f build/Vaani-macOS-arm64.zip
+          rm -f build/Vaani-macOS-arm64.zip build/Vaani-macOS-arm64.zip.sha256
           ditto -c -k --keepParent build/Vaani.app build/Vaani-macOS-arm64-signed.zip
+          shasum -a 256 build/Vaani-macOS-arm64-signed.zip | tee build/Vaani-macOS-arm64-signed.zip.sha256
 
       - name: Upload signed app
         if: env.HAS_SIGNING == 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: Vaani-macOS-signed
-          path: desktop/build/Vaani-macOS-arm64-signed.zip
+          path: |
+            desktop/build/Vaani-macOS-arm64-signed.zip
+            desktop/build/Vaani-macOS-arm64-signed.zip.sha256
           if-no-files-found: error
           retention-days: 30
 
