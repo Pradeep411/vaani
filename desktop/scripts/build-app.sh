@@ -2,7 +2,13 @@
 # Builds Vaani.app from the Swift package and zips it. macOS only.
 #
 #   bash scripts/build-app.sh                    # Apple Silicon, App Sandbox ON, ad-hoc signed
-#   SANDBOX=0 bash scripts/build-app.sh          # DIAGNOSTIC: sandbox off (never hand out)
+#   SANDBOX=0 bash scripts/build-app.sh          # DIAGNOSTIC: sandbox off, never signed, never handed out
+#
+# SANDBOX must be exactly 1 or 0. The diagnostic build (0) is a different app:
+# bundle ID io.github.pradeep411.vaani.desktop.diagnostic, name
+# "Vaani DIAGNOSTIC", bundle Vaani-DIAGNOSTIC-no-sandbox.app, a
+# VaaniDiagnosticBuild=true key (runtime banner, no login item, no stored web
+# data), and it can only be ad-hoc signed (security re-audit D-01).
 #   ARCH=universal bash scripts/build-app.sh     # arm64 + x86_64
 #   SIGN_IDENTITY="Developer ID Application: ..." bash scripts/build-app.sh
 #
@@ -18,18 +24,31 @@ fi
 ARCH="${ARCH:-arm64}"
 SANDBOX="${SANDBOX:-1}"
 SIGN_IDENTITY="${SIGN_IDENTITY:--}"   # "-" = ad-hoc (unsigned for Gatekeeper)
-if [[ "$SANDBOX" == "1" ]]; then
-  OUT="${OUT:-build}"
-  ENTITLEMENTS="Resources/Vaani.entitlements"
-  EXPECTED_KEYS="com.apple.security.app-sandbox com.apple.security.device.audio-input com.apple.security.files.user-selected.read-write com.apple.security.network.client"
-  ZIP_SUFFIX=""
-else
-  OUT="${OUT:-build-nosandbox}"
-  ENTITLEMENTS="Resources/Vaani-nosandbox.entitlements"
-  EXPECTED_KEYS="com.apple.security.device.audio-input"
-  ZIP_SUFFIX="-NOSANDBOX-diagnostic"
-fi
-APP="$OUT/Vaani.app"
+case "$SANDBOX" in
+  1)
+    OUT="${OUT:-build}"
+    ENTITLEMENTS="Resources/Vaani.entitlements"
+    EXPECTED_KEYS="com.apple.security.app-sandbox com.apple.security.device.audio-input com.apple.security.files.user-selected.read-write com.apple.security.network.client"
+    ZIP_SUFFIX=""
+    APP_NAME="Vaani.app"
+    ;;
+  0)
+    if [[ "$SIGN_IDENTITY" != "-" ]]; then
+      echo "Refusing to sign the diagnostic (SANDBOX=0) build with a real identity." >&2
+      exit 1
+    fi
+    OUT="${OUT:-build-nosandbox}"
+    ENTITLEMENTS="Resources/Vaani-nosandbox.entitlements"
+    EXPECTED_KEYS="com.apple.security.device.audio-input"
+    ZIP_SUFFIX="-NOSANDBOX-diagnostic"
+    APP_NAME="Vaani-DIAGNOSTIC-no-sandbox.app"
+    ;;
+  *)
+    echo "SANDBOX must be exactly 1 (normal) or 0 (diagnostic), not '$SANDBOX'." >&2
+    exit 1
+    ;;
+esac
+APP="$OUT/$APP_NAME"
 
 echo "==> swift build (release, $ARCH)"
 if [[ "$ARCH" == "universal" ]]; then
@@ -51,6 +70,18 @@ printf 'APPL????' > "$APP/Contents/PkgInfo"
 if [[ -f Resources/AppIcon.icns ]]; then
   cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
   plutil -replace CFBundleIconFile -string AppIcon "$APP/Contents/Info.plist"
+fi
+if [[ "$SANDBOX" == "0" ]]; then
+  # A different app: different ID and name, flagged for the runtime banner.
+  plutil -replace CFBundleIdentifier -string "io.github.pradeep411.vaani.desktop.diagnostic" "$APP/Contents/Info.plist"
+  plutil -replace CFBundleName -string "Vaani DIAGNOSTIC" "$APP/Contents/Info.plist"
+  plutil -replace CFBundleDisplayName -string "Vaani DIAGNOSTIC" "$APP/Contents/Info.plist"
+  plutil -replace VaaniDiagnosticBuild -bool true "$APP/Contents/Info.plist"
+else
+  # The normal app must never carry the diagnostic flag.
+  if plutil -extract VaaniDiagnosticBuild raw "$APP/Contents/Info.plist" >/dev/null 2>&1; then
+    echo "VaaniDiagnosticBuild must not be in the normal Info.plist" >&2; exit 1
+  fi
 fi
 plutil -lint "$APP/Contents/Info.plist"
 
