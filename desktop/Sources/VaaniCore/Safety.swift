@@ -71,3 +71,74 @@ public struct ReloadBackoff {
         lastCrash = -.infinity
     }
 }
+
+// MARK: - Build flavour (security re-audit D-01)
+
+/// The normal app, or the no-sandbox diagnostic build used only to tell
+/// sandbox problems apart from other faults on a test Mac. The diagnostic
+/// build must never look like, or store data like, the real app.
+public enum BuildFlavor: Equatable, Sendable {
+    case standard
+    case diagnostic
+
+    /// Info.plist key that build-app.sh sets to true for SANDBOX=0 builds.
+    public static let infoKey = "VaaniDiagnosticBuild"
+    public static let diagnosticBundleID = VaaniIdentity.bundleID + ".diagnostic"
+    public static let diagnosticName = "Vaani DIAGNOSTIC"
+
+    /// Fails safe: anything that is not clearly a sandboxed standard build is
+    /// treated as diagnostic (no login item, no stored web data).
+    /// - Parameters:
+    ///   - infoFlag: value of `VaaniDiagnosticBuild` in Info.plist.
+    ///   - sandboxContainerID: `APP_SANDBOX_CONTAINER_ID` from the environment
+    ///     (set by macOS only for sandboxed apps).
+    public static func detect(infoFlag: Any?, sandboxContainerID: String?) -> BuildFlavor {
+        if let flag = infoFlag as? Bool, flag { return .diagnostic }
+        if let flag = infoFlag as? String, ["1", "true", "yes"].contains(flag.lowercased()) { return .diagnostic }
+        guard let container = sandboxContainerID, !container.isEmpty else { return .diagnostic }
+        return .standard
+    }
+
+    public var allowsLoginItem: Bool { self == .standard }
+    public var persistsWebData: Bool { self == .standard }
+}
+
+// MARK: - Notes window rules (security re-audit N-04)
+
+public enum NotesWindowPolicy {
+    /// The page may hold the mic only while its window is really on screen
+    /// (visible, not minimised, app not hidden).
+    public static func mustForceMicOff(pageCapturing: Bool, windowOnScreen: Bool) -> Bool {
+        pageCapturing && !windowOnScreen
+    }
+
+    /// Unload the page once it has nothing left to deliver and is not shown.
+    public static func shouldTearDown(windowOnScreen: Bool, recording: Bool, sessionBuffered: Bool) -> Bool {
+        !windowOnScreen && !recording && !sessionBuffered
+    }
+}
+
+// MARK: - Promised capture scope (security re-audit N-05)
+
+/// What the pill or menu item told the user before recording.
+public enum CaptureScope: Equatable, Sendable {
+    /// "Take notes with Vaani?": the call app's own sound.
+    case callAppOnly
+    /// "Records your mic and all Mac sound" / "with all Mac sound".
+    case allMacSound
+
+    public init(plan: TapPlan) {
+        self = plan.isSystemWide ? .allMacSound : .callAppOnly
+    }
+}
+
+public enum ScopeDecision: Equatable, Sendable {
+    /// Start the tap as planned: it is within what the user was told.
+    case proceed
+    /// The plan became wider than promised: start mic only and ask first.
+    case askBeforeAllSound
+
+    public static func decide(promised: CaptureScope, planned: TapPlan) -> ScopeDecision {
+        (promised == .callAppOnly && planned.isSystemWide) ? .askBeforeAllSound : .proceed
+    }
+}

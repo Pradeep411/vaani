@@ -66,10 +66,15 @@ public enum Copy {
     public static let systemWideFromStart = "Recording your mic and all Mac sound."
     public static let widenedByUser = "Recording your mic and all Mac sound for this call."
     public static let micOnlyChosen = "Recording your mic only for this call."
+    public static let micOnlyUntilChosen = "Recording your mic only until you choose."
     public static let gapNotice = "The start of this call is no longer kept on this Mac. Notes cover the rest."
     public static let pageMicInUse = "The Vaani notes window is using your microphone."
     public static let pageCrashed = "The notes window stopped working. Choose Open Vaani to try again."
     public static let windowTitle = "Vaani"
+    // Diagnostic (no-sandbox) build only (security re-audit D-01)
+    public static let diagnosticBanner = "Diagnostic build, sandbox off, not for daily use."
+    public static let diagnosticWindowTitle = "Vaani DIAGNOSTIC: sandbox off, test only"
+    public static let diagnosticLoginOff = "Open at login is off in the diagnostic build."
     public static let windowTitleRecording = "Vaani, taking notes"
 
     // Settings window
@@ -96,6 +101,7 @@ public enum Copy {
          widenTitle("Zoom"), widenSubtitle, micOnly, recordAllSound, widenAnnouncement("Zoom"),
          menuTakeNotesNowAllSound, systemWideFromStart, widenedByUser, micOnlyChosen, gapNotice,
          pageMicInUse, pageCrashed, windowTitle, windowTitleRecording,
+         diagnosticBanner, diagnosticWindowTitle, diagnosticLoginOff, micOnlyUntilChosen,
          takeNotesHint("Zoom"), menuRecording("Zoom", minutes: 0), menuRecording(nil, minutes: 12)]
     }
 }

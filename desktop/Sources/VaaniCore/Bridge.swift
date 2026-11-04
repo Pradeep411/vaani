@@ -11,6 +11,10 @@ public enum BridgeConfig {
     /// Name of the document-start user script shipped in the app bundle. It
     /// defines window.__VAANI_DESKTOP__ with connect(cb) / _deliver(msg).
     public static let userScriptName = "vaani-userscript"
+    /// Placeholder in the user script that native replaces with a random
+    /// token before injecting it. `_deliver` refuses any call without that
+    /// token, so page scripts cannot feed fake messages (re-audit F-01).
+    public static let deliverTokenPlaceholder = "__VAANI_DELIVER_TOKEN__"
     public static let protocolVersion = 1
     /// Largest message the page may send to native, in bytes of JSON.
     public static let maxInboundBytes = 8 * 1024
@@ -316,7 +320,34 @@ public enum NativeToWeb {
 
     /// The only script native ever runs in the page. The message travels as
     /// the `msg` argument of callAsyncJavaScript and goes only to the single
-    /// callback registered with __VAANI_DESKTOP__.connect (audit L-05).
+    /// callback registered with __VAANI_DESKTOP__.connect (audit L-05). The
+    /// `token` argument is the per-web-view secret baked into the user
+    /// script; it exists only in that closure and in these call arguments,
+    /// never in any page global (re-audit F-01).
     public static let dispatchScript =
-        "const b = window.__VAANI_DESKTOP__; return !!(b && b._deliver(msg));"
+        "const b = window.__VAANI_DESKTOP__; return !!(b && b._deliver(msg, token));"
+}
+
+/// Builds the user script that is injected at document start (re-audit F-01).
+public enum UserScriptBuilder {
+    /// A fresh random token: 32 hex characters (safe inside a JS string).
+    public static func makeToken() -> String {
+        UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
+    }
+
+    public static func isValidToken(_ token: String) -> Bool {
+        token.count >= 32 && token.count <= 64 && token.unicodeScalars.allSatisfy {
+            ($0 >= "0" && $0 <= "9") || ($0 >= "a" && $0 <= "f")
+        }
+    }
+
+    /// Returns the script with the token in place, or nil (bridge stays
+    /// closed) if the token is malformed or the placeholder does not appear
+    /// exactly once.
+    public static func build(source: String, token: String) -> String? {
+        guard isValidToken(token) else { return nil }
+        let parts = source.components(separatedBy: BridgeConfig.deliverTokenPlaceholder)
+        guard parts.count == 2 else { return nil }
+        return parts.joined(separator: token)
+    }
 }

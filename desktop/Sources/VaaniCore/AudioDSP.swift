@@ -163,6 +163,15 @@ public final class AudioMixer: @unchecked Sendable {
         queues[source] = nil
     }
 
+    /// Start (or resume) mixing a source, empty queue (e.g. the user chose
+    /// "Record all sound" after the session began mic only).
+    public func activate(_ source: AudioSourceKind) {
+        lock.lock(); defer { lock.unlock() }
+        guard !active.contains(source) else { return }
+        active.insert(source)
+        queues[source] = []
+    }
+
     public var activeSources: Set<AudioSourceKind> {
         lock.lock(); defer { lock.unlock() }
         return active

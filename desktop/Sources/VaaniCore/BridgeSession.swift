@@ -19,8 +19,10 @@ public protocol BridgeTransport: AnyObject {
 ///    and `resume` at most once per `resumeMinInterval`.
 ///  * L-03: `session.start` carries `firstSeq`; a `resume` from before the
 ///    oldest kept chunk gets a `gap` notice with `firstSeq`.
-///  * L-05: every page message except `ready` must carry the nonce sent in
-///    `hello`; a new nonce is made for every page load.
+///  * L-05 / N-02: every page message except `ready` must carry the nonce
+///    sent in `hello`; a new nonce is made for every page load. The page's
+///    user script keeps the nonce in its closure; page scripts never see it.
+///  * N-03: if `hello` reaches no listener, the handshake is reset.
 public final class BridgeSession {
     public private(set) var pageReady = false
     public private(set) var pageNonce: String
@@ -115,6 +117,18 @@ public final class BridgeSession {
             guard let s = current, stopMessage == nil else { return false }
             return sid == nil || sid == s.id
         }
+    }
+
+    /// The `hello` for this page load did not reach a connected listener
+    /// (another script sent `ready` before the web app connected). Forget the
+    /// handshake so the web app's own `ready` is honoured at once
+    /// (security re-audit N-03).
+    public func helloNotDelivered(nonce: String) {
+        guard nonce == pageNonce, pageReady else { return }
+        pageReady = false
+        replayCursor = nil
+        stopSent = false
+        lastReadyAt = -.infinity
     }
 
     private func acceptReady(now: TimeInterval) {
