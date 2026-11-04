@@ -13,10 +13,17 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         var recordingApp: String?
         var minutes: Int
         var notice: String?
+        /// The notes page itself holds the mic (security audit M-02).
+        var pageUsingMic: Bool
+        /// "Take notes now" would record all Mac sound (no app-only target).
+        var takeNotesNowAllSound: Bool
         var openAtLogin: Bool
     }
 
-    var snapshot: () -> Snapshot = { Snapshot(detectionOn: true, recording: false, recordingApp: nil, minutes: 0, notice: nil, openAtLogin: false) }
+    var snapshot: () -> Snapshot = {
+        Snapshot(detectionOn: true, recording: false, recordingApp: nil, minutes: 0, notice: nil,
+                 pageUsingMic: false, takeNotesNowAllSound: true, openAtLogin: false)
+    }
     var onStop: (() -> Void)?
     var onTakeNotesNow: (() -> Void)?
     var onOpenVaani: (() -> Void)?
@@ -41,12 +48,13 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     func refresh() {
         let s = snapshot()
         guard let button = item.button else { return }
-        let symbol = s.recording ? "record.circle.fill" : "waveform"
-        let label = s.recording ? Copy.statusRecordingLabel : Copy.statusIdleLabel
+        let live = s.recording || s.pageUsingMic
+        let symbol = live ? "record.circle.fill" : "waveform"
+        let label = s.recording ? Copy.statusRecordingLabel : (s.pageUsingMic ? Copy.pageMicInUse : Copy.statusIdleLabel)
         let image = NSImage(systemSymbolName: symbol, accessibilityDescription: label)
-        image?.isTemplate = !s.recording
+        image?.isTemplate = !live
         button.image = image
-        button.contentTintColor = s.recording ? .systemRed : nil
+        button.contentTintColor = live ? .systemRed : nil
         button.setAccessibilityLabel(label)
         button.toolTip = label
     }
@@ -64,11 +72,13 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         if s.recording { status = Copy.menuRecording(s.recordingApp, minutes: s.minutes) }
         else { status = s.detectionOn ? Copy.menuListening : Copy.menuDetectionOff }
         menu.addItem(disabled(status))
+        if s.pageUsingMic { menu.addItem(disabled(Copy.pageMicInUse)) }
         if let notice = s.notice {
             let n = disabled(notice)
             n.toolTip = notice
             menu.addItem(n)
-            if notice != Copy.pageNotReady {
+            if notice != Copy.pageNotReady, notice != Copy.pageCrashed,
+               notice != Copy.micOnlyChosen, notice != Copy.widenedByUser, notice != Copy.systemWideFromStart {
                 menu.addItem(action(Copy.openSettings, #selector(openPrivacy)))
             }
         }
@@ -80,7 +90,9 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             stop.keyEquivalentModifierMask = [.command]
             menu.addItem(stop)
         } else {
-            menu.addItem(action(Copy.menuTakeNotesNow, #selector(takeNotesNow)))
+            // Say "all Mac sound" before recording when that is what happens (audit M-01).
+            menu.addItem(action(s.takeNotesNowAllSound ? Copy.menuTakeNotesNowAllSound : Copy.menuTakeNotesNow,
+                                #selector(takeNotesNow)))
         }
         menu.addItem(action(Copy.menuOpenVaani, #selector(openVaani)))
         menu.addItem(.separator())

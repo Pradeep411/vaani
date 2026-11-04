@@ -2,6 +2,10 @@
 //
 // Starts and stops one notes session: mic + system-audio tap -> mixer ->
 // 250 ms PCM chunks -> BridgeSession (in memory only) -> the Vaani page.
+//
+// Security audit M-01: the tap is never widened to all Mac sound without the
+// user saying yes. If the app-only tap has heard nothing at all, the user is
+// asked ("Record all sound" / "Mic only"); no answer in 60 s means mic only.
 #if os(macOS)
 import AVFoundation
 import CoreAudio
@@ -19,6 +23,10 @@ final class RecordingController {
     private(set) var notice: String?
 
     var onChange: (() -> Void)?
+    /// Ask the user whether to record all Mac sound (show the pill).
+    var onAskToWiden: ((String) -> Void)?
+    /// The widen question timed out; hide its pill.
+    var onWidenQuestionExpired: (() -> Void)?
     /// Supplies the current audio process list (from the detection loop).
     var processes: () -> [AudioProcessInfo] = { [] }
     /// Is the tapped app (or, for a wide tap, any app) playing sound right now?
@@ -31,9 +39,10 @@ final class RecordingController {
     private let soundFlag = SoundFlag()
     private var drainTimer: Timer?
     private var outputListener: AudioObjectPropertyListenerBlock?
-    private var noticeSent = false
+    private var permissionNoticeSent = false
     private var pageWarningShown = false
-    private var settings = DetectionSettings()
+    private var widenAskedAt: TimeInterval?
+    private static let widenAnswerTimeout: TimeInterval = 60
 
     init(bridge: BridgeSession) {
         self.bridge = bridge
@@ -41,12 +50,18 @@ final class RecordingController {
 
     private var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
 
+    /// The tap plan this call would get, so the pill and menu can say "all
+    /// Mac sound" before recording starts.
+    func plannedTap(for candidate: CallCandidate?, settings: DetectionSettings) -> TapPlan {
+        TapPlanner.plan(for: candidate, processes: processes(), selfPID: getpid(),
+                        captureAll: settings.captureAllSystemAudio)
+    }
+
     // MARK: Start
 
     /// Returns false if recording could not start (microphone permission off).
     func start(candidate: CallCandidate?, settings: DetectionSettings) async -> Bool {
         guard !isRecording else { return true }
-        self.settings = settings
         guard await Self.microphoneAllowed() else {
             notice = Copy.micDenied
             onChange?()
@@ -56,7 +71,7 @@ final class RecordingController {
         let mixer = AudioMixer(sources: [.mic, .app])
         self.mixer = mixer
         let mic = MicCapture()
-        mic.onSamples = { samples in mixer.append(.mic, samples) }
+        mic.onSamples = { @Sendable samples in mixer.append(.mic, samples) }
         do {
             // Mic first, then the tap (Bluetooth headsets switch profile when
             // the mic opens; building the tap afterwards avoids silent taps).
@@ -71,17 +86,24 @@ final class RecordingController {
         self.candidate = candidate
         self.startedAt = Date()
         self.isRecording = true
-        self.noticeSent = false
+        self.permissionNoticeSent = false
         self.pageWarningShown = false
+        self.widenAskedAt = nil
         self.notice = nil
 
         var startNotice: String?
+        var startCode: NoticeCode = .tapUnavailable
         if #available(macOS 14.2, *) {
-            if startTap(plan: TapPlanner.plan(for: candidate, processes: processes(),
-                                              selfPID: getpid(), captureAll: settings.captureAllSystemAudio)) {
-                captureMode = .micAndApp
+            let plan = plannedTap(for: candidate, settings: settings)
+            if startTap(plan: plan) {
+                captureMode = plan.isSystemWide ? .micAndSystem : .micAndApp
                 health = TapHealthMonitor(startedAt: now)
                 watchDefaultOutput()
+                if plan.isSystemWide {
+                    // Said before recording (pill or menu wording) and again here.
+                    startNotice = Copy.systemWideFromStart
+                    startCode = .systemWide
+                }
             } else {
                 mixer.deactivate(.app)
                 captureMode = .micOnly
@@ -99,11 +121,14 @@ final class RecordingController {
                                  capture: captureMode, notice: startNotice))
         if let startNotice {
             notice = startNotice
-            bridge.notice(.tapUnavailable, startNotice)
+            bridge.notice(startCode, startNotice)
         }
 
-        drainTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.drain() }
+        let relay = MainActorRelay(self)
+        drainTimer = makeCommonModeTimer(interval: 0.25) {
+            MainActor.assumeIsolated {
+                if let owner = relay.owner { owner.drain() }
+            }
         }
         onChange?()
         return true
@@ -115,7 +140,7 @@ final class RecordingController {
         let capture = ProcessTapCapture()
         let mixer = self.mixer
         let flag = soundFlag
-        capture.onSamples = { samples in
+        capture.onSamples = { @Sendable samples in
             if TapHealthMonitor.hasSound(samples) { flag.mark() }
             mixer?.append(.app, samples)
         }
@@ -135,20 +160,24 @@ final class RecordingController {
     private func drain() {
         guard isRecording, let mixer else { return }
         bridge.push(mixer.drain())
+        bridge.tick(now: now)
 
-        // Silent-tap check (permission off, or audio owned by another process).
         if #available(macOS 14.2, *), let health, let capture = tap as? ProcessTapCapture, let plan = capture.plan {
             health.observe(samples: soundFlag.take() ? [1] : [0], now: now)
             switch health.verdict(now: now, targetPlaying: isTargetPlaying(candidate, plan.isSystemWide),
                                   isSystemWide: plan.isSystemWide) {
-            case .widenToSystemWide:
-                let own = processes().filter { $0.pid == getpid() }.map(\.objectID)
-                if !startTap(plan: .systemWideExcluding(own)) { tapFailedMidSession() }
+            case .askToWiden:
+                widenAskedAt = now
+                onAskToWiden?(candidate?.displayName ?? "the call app")
             case .likelyNoPermission:
                 showNotice(.tapSilent, Copy.tapSilent)
             case .healthy, .waiting:
                 break
             }
+        }
+        if let asked = widenAskedAt, now - asked >= Self.widenAnswerTimeout {
+            onWidenQuestionExpired?()
+            keepMicOnly()                        // no answer: the safe choice
         }
 
         if !pageWarningShown, !bridge.pageReady, let startedAt, Date().timeIntervalSince(startedAt) > 15 {
@@ -161,38 +190,77 @@ final class RecordingController {
         }
     }
 
-    private func tapFailedMidSession() {
+    /// "Record all sound" on the pill.
+    func widenToAllSound() {
+        guard isRecording, widenAskedAt != nil else { return }
+        widenAskedAt = nil
+        guard #available(macOS 14.2, *) else { return }
+        let own = processes().filter { $0.pid == getpid() }.map(\.objectID)
+        if startTap(plan: .systemWideExcluding(own)) {
+            captureMode = .micAndSystem
+            health = TapHealthMonitor(startedAt: now)
+            notice = Copy.widenedByUser
+            bridge.notice(.systemWide, Copy.widenedByUser)
+            onChange?()
+        } else {
+            tapFailedMidSession()
+        }
+    }
+
+    /// "Mic only" on the pill, or no answer.
+    func keepMicOnly() {
+        guard isRecording, widenAskedAt != nil else { return }
+        widenAskedAt = nil
+        if #available(macOS 14.2, *) { (tap as? ProcessTapCapture)?.stop() }
         tap = nil
+        health = nil
+        mixer?.deactivate(.app)
+        captureMode = .micOnly
+        notice = Copy.micOnlyChosen
+        bridge.notice(.micOnly, Copy.micOnlyChosen)
+        onChange?()
+    }
+
+    private func tapFailedMidSession() {
+        if #available(macOS 14.2, *) { (tap as? ProcessTapCapture)?.stop() }
+        tap = nil
+        health = nil
         mixer?.deactivate(.app)
         captureMode = .micOnly
         showNotice(.tapUnavailable, Copy.micOnlyTapFailed)
     }
 
     private func showNotice(_ code: NoticeCode, _ text: String) {
-        guard !noticeSent else { return }
-        noticeSent = true
+        guard !permissionNoticeSent else { return }
+        permissionNoticeSent = true
         notice = text
         bridge.notice(code, text)
         onChange?()
     }
 
     /// Rebuild the tap when the user switches speakers or headphones; the
-    /// aggregate device is tied to the output device it was built on.
+    /// aggregate device is tied to the output device it was built on. The
+    /// plan (and so the consent scope) stays the same.
     @available(macOS 14.2, *)
     private func watchDefaultOutput() {
         var addr = CoreAudioRead.address(kAudioHardwarePropertyDefaultSystemOutputDevice)
-        let block: AudioObjectPropertyListenerBlock = { [weak self] _, _ in
-            DispatchQueue.main.async {
-                MainActor.assumeIsolated {
-                    guard let self, self.isRecording, let capture = self.tap as? ProcessTapCapture,
-                          let plan = capture.plan else { return }
-                    if !self.startTap(plan: plan) { self.tapFailedMidSession() }
-                }
+        // Core Audio calls this on the queue we pass (main). The block
+        // captures only a Sendable weak relay, never `self`.
+        let relay = MainActorRelay(self)
+        let block: AudioObjectPropertyListenerBlock = { _, _ in
+            MainActor.assumeIsolated {
+                if let owner = relay.owner { owner.defaultOutputChanged() }
             }
         }
         if AudioObjectAddPropertyListenerBlock(AudioObjectID(kAudioObjectSystemObject), &addr, DispatchQueue.main, block) == noErr {
             outputListener = block
         }
+    }
+
+    @available(macOS 14.2, *)
+    private func defaultOutputChanged() {
+        guard isRecording, let capture = tap as? ProcessTapCapture, let plan = capture.plan else { return }
+        if !startTap(plan: plan) { tapFailedMidSession() }
     }
 
     private func unwatchDefaultOutput() {
@@ -216,6 +284,7 @@ final class RecordingController {
         if let mixer { bridge.push(mixer.drain(flush: true)) }
         mixer = nil
         health = nil
+        widenAskedAt = nil
         bridge.stop(reason: reason, now: now)
         isRecording = false
         candidate = nil

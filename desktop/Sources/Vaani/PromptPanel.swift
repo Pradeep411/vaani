@@ -1,9 +1,13 @@
 // macOS ONLY. Verified by macOS CI (compile) and by eye on a Mac.
 //
-// The "Meeting detected · Zoom / Take notes with Vaani?" pill. A
-// non-activating floating panel at the top centre: it never takes focus from
-// the call, shows over full-screen apps, honours Reduce Motion, and announces
-// itself to VoiceOver.
+// The pill at the top centre of the screen. Three uses:
+//   call detected      "Meeting detected · Zoom"     [Not now] [Take notes]
+//   long session       "Still taking notes?"          [Stop]    [Keep going]
+//   cannot hear app    "Vaani cannot hear Zoom ..."   [Mic only] [Record all sound]
+// A non-activating floating panel: it never takes focus from the call, shows
+// over full-screen apps, honours Reduce Motion, and announces itself to
+// VoiceOver. No default-button shortcut, so a stray Return cannot start a
+// recording (security audit hardening note).
 #if os(macOS)
 import AppKit
 import SwiftUI
@@ -16,22 +20,41 @@ final class PromptPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 }
 
+enum PillKind: Equatable {
+    case callDetected
+    case stillTakingNotes
+    case askToWiden
+}
+
+struct PillContent {
+    var kind: PillKind
+    var title: String
+    var subtitle: String
+    var announcement: String
+    var icon: NSImage?
+    var secondaryLabel: String
+    var secondaryHint: String
+    var primaryLabel: String
+    var primaryHint: String
+}
+
 @MainActor
 final class PromptController {
-    var onTakeNotes: (() -> Void)?
-    var onNotNow: (() -> Void)?
     private var panel: PromptPanel?
-    private(set) var shownCandidate: CallCandidate?
+    private(set) var kind: PillKind?
+    private var onPrimary: (() -> Void)?
+    private var onSecondary: (() -> Void)?
 
-    func show(_ candidate: CallCandidate) {
-        hide(animated: false)
-        shownCandidate = candidate
+    func show(_ content: PillContent, primary: @escaping () -> Void, secondary: @escaping () -> Void) {
+        hide()
+        kind = content.kind
+        onPrimary = primary
+        onSecondary = secondary
 
-        let view = PillView(
-            candidate: candidate,
-            icon: Self.icon(for: candidate),
-            onTakeNotes: { [weak self] in self?.onTakeNotes?() },
-            onNotNow: { [weak self] in self?.onNotNow?() })
+        let relay = MainActorRelay(self)
+        let view = PillView(content: content,
+                            onPrimary: { MainActor.assumeIsolated { if let o = relay.owner { o.tapPrimary() } } },
+                            onSecondary: { MainActor.assumeIsolated { if let o = relay.owner { o.tapSecondary() } } })
         let host = NSHostingView(rootView: view)
         host.layoutSubtreeIfNeeded()
         let size = host.fittingSize
@@ -52,54 +75,68 @@ final class PromptController {
         panel.isMovableByWindowBackground = true
         panel.isReleasedWhenClosed = false
         panel.animationBehavior = .none
-        panel.setAccessibilityLabel(candidate.title)
+        panel.setAccessibilityLabel(content.title)
 
-        let screen = NSScreen.screens.first { NSMouseInRect(NSEvent.mouseLocation, $0.frame, false) }
-            ?? NSScreen.main ?? NSScreen.screens.first
+        let mouse = NSEvent.mouseLocation
+        let screen = NSScreen.screens.first { NSMouseInRect(mouse, $0.frame, false) } ?? NSScreen.main ?? NSScreen.screens.first
         let visible = screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
-        let target = NSPoint(x: visible.midX - size.width / 2, y: visible.maxY - size.height - 12)
+        let target = NSRect(x: visible.midX - size.width / 2, y: visible.maxY - size.height - 12,
+                            width: size.width, height: size.height)
         let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
 
-        // Reduce Motion: fade only. Otherwise a short 8 pt drop with ease-out
-        // (no bounce, transform-like frame move plus opacity).
-        panel.setFrameOrigin(reduceMotion ? target : NSPoint(x: target.x, y: target.y + 8))
+        // Reduce Motion: fade only. Otherwise a short 8 pt drop, ease-out,
+        // no bounce.
+        panel.setFrame(reduceMotion ? target : target.offsetBy(dx: 0, dy: 8), display: false)
         panel.alphaValue = 0
         panel.orderFrontRegardless()     // shows without activating Vaani
-        NSAnimationContext.runAnimationGroup { ctx in
-            ctx.duration = reduceMotion ? 0.12 : 0.22
-            ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = reduceMotion ? 0.12 : 0.22
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             panel.animator().alphaValue = 1
-            if !reduceMotion { panel.animator().setFrame(NSRect(origin: target, size: size), display: true) }
+            if !reduceMotion { panel.animator().setFrame(target, display: true) }
         }
         self.panel = panel
 
         NSAccessibility.post(element: NSApp as Any, notification: .announcementRequested, userInfo: [
-            .announcement: Copy.promptAnnouncement(candidate),
+            .announcement: content.announcement,
             .priority: NSAccessibilityPriorityLevel.high.rawValue
         ])
     }
 
-    func hide(animated: Bool = true) {
-        guard let panel else { return }
-        self.panel = nil
-        shownCandidate = nil
-        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-        guard animated else { panel.orderOut(nil); return }
-        NSAnimationContext.runAnimationGroup({ ctx in
-            ctx.duration = reduceMotion ? 0.1 : 0.16
-            panel.animator().alphaValue = 0
-        }, completionHandler: {
-            panel.orderOut(nil)
-        })
+    /// Hides at once (no completion-handler animation: keeps every AppKit
+    /// call on the main actor without @Sendable closures).
+    func hide() {
+        panel?.orderOut(nil)
+        panel = nil
+        kind = nil
+        onPrimary = nil
+        onSecondary = nil
+    }
+
+    /// Hide only if the pill on screen is of this kind.
+    func hide(ifShowing kind: PillKind) {
+        if self.kind == kind { hide() }
     }
 
     var isVisible: Bool { panel != nil }
 
-    private static func icon(for c: CallCandidate) -> NSImage? {
-        if let id = c.bundleID, let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) {
+    private func tapPrimary() {
+        let action = onPrimary
+        hide()
+        action?()
+    }
+
+    private func tapSecondary() {
+        let action = onSecondary
+        hide()
+        action?()
+    }
+
+    static func icon(forBundleID id: String?, pid: Int32?) -> NSImage? {
+        if let id, let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) {
             return NSWorkspace.shared.icon(forFile: url.path)
         }
-        if let pid = c.pids.first, let app = NSRunningApplication(processIdentifier: pid) {
+        if let pid, let app = NSRunningApplication(processIdentifier: pid) {
             return app.icon
         }
         return nil
@@ -120,14 +157,13 @@ private struct VisualEffectBackground: NSViewRepresentable {
 }
 
 struct PillView: View {
-    let candidate: CallCandidate
-    let icon: NSImage?
-    let onTakeNotes: () -> Void
-    let onNotNow: () -> Void
+    let content: PillContent
+    let onPrimary: () -> Void
+    let onSecondary: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
-            if let icon {
+            if let icon = content.icon {
                 Image(nsImage: icon)
                     .resizable()
                     .interpolation(.high)
@@ -135,10 +171,10 @@ struct PillView: View {
                     .accessibilityHidden(true)
             }
             VStack(alignment: .leading, spacing: 2) {
-                Text(candidate.title)
+                Text(content.title)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.primary)
-                Text(Copy.promptQuestion)
+                Text(content.subtitle)
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
             }
@@ -148,14 +184,13 @@ struct PillView: View {
 
             Spacer(minLength: 16)
 
-            Button(Copy.notNow, action: onNotNow)
+            Button(content.secondaryLabel, action: onSecondary)
                 .controlSize(.regular)
-                .accessibilityHint(Copy.notNowHint)
-            Button(Copy.takeNotes, action: onTakeNotes)
+                .accessibilityHint(content.secondaryHint)
+            Button(content.primaryLabel, action: onPrimary)
                 .buttonStyle(.borderedProminent)
                 .controlSize(.regular)
-                .keyboardShortcut(.defaultAction)
-                .accessibilityHint(Copy.takeNotesHint(candidate.displayName))
+                .accessibilityHint(content.primaryHint)
         }
         .padding(.leading, 12)
         .padding(.trailing, 10)
@@ -169,7 +204,7 @@ struct PillView: View {
                 .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 0.5)
         )
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(candidate.title)
+        .accessibilityLabel(content.title)
     }
 }
 #endif

@@ -3,46 +3,62 @@
 // The notes window: a WKWebView locked to https://pradeep411.github.io/vaani/.
 // Audio goes in through a narrow bridge (see WEB-BRIDGE-SPEC.md):
 //   native -> page: callAsyncJavaScript(dispatchScript, arguments: ["msg": ...])
-//                   which fires window 'vaani-desktop' CustomEvent
+//                   -> window.__VAANI_DESKTOP__._deliver(msg) -> the ONE
+//                   callback the page registered with connect()
 //   page -> native: window.webkit.messageHandlers.vaaniDesktop.postMessage(...)
 // Every inbound message is checked: top frame only, origin exactly
-// https://pradeep411.github.io, page path under /vaani/, known shape.
+// https://pradeep411.github.io, page path under /vaani/, known shape, and
+// (except `ready`) the per-load nonce.
 #if os(macOS)
 import AppKit
 import WebKit
 import VaaniCore
 
 @MainActor
-final class VaaniWindowController: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownloadDelegate, BridgeTransport {
+final class VaaniWindowController: NSObject, NSWindowDelegate, WKNavigationDelegate, WKUIDelegate,
+                                   WKDownloadDelegate, BridgeTransport {
     let window: NSWindow
     let webView: WKWebView
     private let bridge: BridgeSession
+    private let openGate = ExternalOpenGate()
+    private var backoff = ReloadBackoff()
+    private var lastClickAt: TimeInterval?
+    private var clickMonitor: Any?
+    private var micObservation: NSKeyValueObservation?
+    private var tornDown = false
+
     /// The page pressed Stop.
     var onStopRequested: (() -> Void)?
+    /// The page started or stopped using the microphone itself, or crashed.
+    var onPageStateChange: (() -> Void)?
+    /// The user closed the window.
+    var onClosed: (() -> Void)?
+    /// Set when the page crashed too often; shown in the menu.
+    private(set) var crashNotice: String?
 
-    /// Marks the page as running inside the desktop app. Defines nothing on
-    /// any other origin.
-    private static let flagScript = """
-    (function () {
-      if (location.origin !== 'https://pradeep411.github.io' || location.pathname.indexOf('/vaani/') !== 0) return;
-      Object.defineProperty(window, '__VAANI_DESKTOP__', {
-        value: Object.freeze({ protocol: \(BridgeConfig.protocolVersion), platform: 'macos',
-                               version: '\(VaaniIdentity.version)', handler: '\(BridgeConfig.handlerName)',
-                               event: '\(BridgeConfig.eventName)' }),
-        writable: false, configurable: false, enumerable: false
-      });
-    })();
-    """
+    /// The document-start script, read from the app bundle (single source of
+    /// truth, also run by the Node tests). If it is missing, the bridge stays
+    /// closed: the page never sees __VAANI_DESKTOP__.
+    private static func loadUserScript() -> String? {
+        guard let url = Bundle.main.url(forResource: BridgeConfig.userScriptName, withExtension: "js"),
+              let source = try? String(contentsOf: url, encoding: .utf8) else {
+            NSLog("Vaani: %@.js missing from the app bundle; desktop bridge disabled", BridgeConfig.userScriptName)
+            return nil
+        }
+        return source
+    }
 
     init(bridge: BridgeSession) {
         self.bridge = bridge
         let config = WKWebViewConfiguration()
-        config.websiteDataStore = .default()   // keeps the user's on-device keys and notes between launches
+        config.websiteDataStore = .default()   // inside the sandbox container when sandboxed
         config.preferences.javaScriptCanOpenWindowsAutomatically = false
         config.preferences.isFraudulentWebsiteWarningEnabled = true
         let content = WKUserContentController()
-        content.addUserScript(WKUserScript(source: Self.flagScript, injectionTime: .atDocumentStart,
-                                           forMainFrameOnly: true, in: .page))
+        if let source = Self.loadUserScript() {
+            content.addUserScript(WKUserScript(source: source, injectionTime: .atDocumentStart,
+                                               forMainFrameOnly: true, in: .page))
+        }
         config.userContentController = content
         webView = WKWebView(frame: NSRect(x: 0, y: 0, width: 1100, height: 760), configuration: config)
         webView.allowsBackForwardNavigationGestures = false
@@ -50,7 +66,7 @@ final class VaaniWindowController: NSObject, WKNavigationDelegate, WKUIDelegate,
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1100, height: 760),
                           styleMask: [.titled, .closable, .miniaturizable, .resizable],
                           backing: .buffered, defer: false)
-        window.title = "Vaani"
+        window.title = Copy.windowTitle
         window.isReleasedWhenClosed = false
         window.contentView = webView
         window.minSize = NSSize(width: 380, height: 480)
@@ -58,10 +74,29 @@ final class VaaniWindowController: NSObject, WKNavigationDelegate, WKUIDelegate,
         window.setFrameAutosaveName("VaaniNotesWindow")
         super.init()
 
+        window.delegate = self
         content.add(ScriptMessageProxy(owner: self), contentWorld: .page, name: BridgeConfig.handlerName)
         webView.navigationDelegate = self
         webView.uiDelegate = self
         bridge.attach(self)
+
+        let relay = MainActorRelay(self)
+        // Real clicks in this window (security audit L-04): a link opens in
+        // the browser only right after one.
+        clickMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseUp) { event in
+            MainActor.assumeIsolated {
+                if let owner = relay.owner, event.window === owner.window {
+                    owner.lastClickAt = ProcessInfo.processInfo.systemUptime
+                }
+            }
+            return event
+        }
+        // Menu-bar indicator whenever the page itself uses the mic (audit M-02).
+        micObservation = webView.observe(\.microphoneCaptureState, options: [.new]) { _, _ in
+            MainActor.assumeIsolated {
+                if let owner = relay.owner { owner.onPageStateChange?() }
+            }
+        }
         webView.load(URLRequest(url: BridgeConfig.startURL))
     }
 
@@ -76,19 +111,39 @@ final class VaaniWindowController: NSObject, WKNavigationDelegate, WKUIDelegate,
         window.makeKeyAndOrderFront(nil)
     }
 
+    func setRecording(_ recording: Bool) {
+        window.title = recording ? Copy.windowTitleRecording : Copy.windowTitle
+    }
+
     /// True while the page itself is using the mic (its own dictation).
-    var isCapturingMic: Bool { webView.microphoneCaptureState != WKMediaCaptureState.none }
+    var isCapturingMic: Bool { !tornDown && webView.microphoneCaptureState != WKMediaCaptureState.none }
+
+    /// Stop the page completely (window closed with no session to deliver).
+    func tearDown() {
+        guard !tornDown else { return }
+        tornDown = true
+        if let clickMonitor { NSEvent.removeMonitor(clickMonitor) }
+        clickMonitor = nil
+        micObservation?.invalidate()
+        micObservation = nil
+        webView.setMicrophoneCaptureState(.none, completionHandler: nil)
+        webView.stopLoading()
+        webView.navigationDelegate = nil
+        webView.uiDelegate = nil
+        let content = webView.configuration.userContentController
+        content.removeAllUserScripts()
+        content.removeScriptMessageHandler(forName: BridgeConfig.handlerName, contentWorld: .page)
+        window.delegate = nil
+        window.contentView = nil
+        bridge.pageWillReload()
+    }
 
     // MARK: BridgeTransport (native -> page)
 
-    // Delegate and protocol methods below that are synchronous are marked
-    // `nonisolated` and hop with MainActor.assumeIsolated: they are always
-    // called on the main thread, and this way they match the protocol whether
-    // or not the SDK marks it @MainActor (Xcode 15 vs 16).
     @discardableResult
     nonisolated func send(_ message: NativeToWeb) -> Bool {
         MainActor.assumeIsolated {
-            guard BridgeGate.maySend(to: webView.url) else { return false }
+            guard !tornDown, BridgeGate.maySend(to: webView.url) else { return false }
             webView.callAsyncJavaScript(NativeToWeb.dispatchScript, arguments: ["msg": message.payload],
                                         in: nil, in: .page, completionHandler: nil)
             return true
@@ -100,126 +155,234 @@ final class VaaniWindowController: NSObject, WKNavigationDelegate, WKUIDelegate,
     fileprivate func receive(_ message: WKScriptMessage) {
         let origin = message.frameInfo.securityOrigin
         let pageURL = message.webView?.url
-        guard message.name == BridgeConfig.handlerName,
+        guard !tornDown, message.name == BridgeConfig.handlerName,
               BridgeGate.accepts(isMainFrame: message.frameInfo.isMainFrame,
                                  origin: FrameOrigin(scheme: origin.protocol, host: origin.host, port: origin.port),
                                  pageURL: pageURL),
               let parsed = BridgeParser.parse(message.body) else { return }
-        if bridge.handle(parsed, now: ProcessInfo.processInfo.systemUptime) {
+        if bridge.handle(parsed.message, nonce: parsed.nonce, now: ProcessInfo.processInfo.systemUptime) {
             onStopRequested?()
         }
     }
 
-    // MARK: Navigation policy
-
-    func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
-        // Downloads count as "from our page" when the top page is ours: other
-        // origins can never load in any frame (subframe navigations to them
-        // are cancelled below). sourceFrame is not read: WebKit can hand back
-        // nil for it despite the non-optional Swift type.
-        let sourceAllowed = NavigationPolicy.isAllowedPage(webView.url)
-        let request = NavigationRequest(url: navigationAction.request.url,
-                                        isMainFrame: navigationAction.targetFrame?.isMainFrame ?? true,
-                                        userInitiated: navigationAction.navigationType == .linkActivated,
-                                        shouldDownload: navigationAction.shouldPerformDownload,
-                                        sourceIsAllowed: sourceAllowed)
-        switch NavigationPolicy.decide(request) {
-        case .allow: return .allow
-        case .download: return .download
-        case .cancel: return .cancel
-        case .openExternally(let url):
+    private func openExternallyIfClicked(_ url: URL) {
+        let now = ProcessInfo.processInfo.systemUptime
+        if openGate.allows(now: now, lastClickAt: lastClickAt, windowIsKey: window.isKeyWindow) {
             NSWorkspace.shared.open(url)
-            return .cancel
         }
     }
 
-    func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse) async -> WKNavigationResponsePolicy {
-        // Defence in depth against redirects: the top frame must still be ours.
-        if navigationResponse.isForMainFrame, !NavigationPolicy.isAllowedPage(navigationResponse.response.url) {
-            return .cancel
-        }
-        return navigationResponse.canShowMIMEType ? .allow : .download
+    fileprivate func reloadAfterCrash() {
+        guard !tornDown else { return }
+        webView.load(URLRequest(url: BridgeConfig.startURL))
     }
 
+    // MARK: - Delegate methods
+    //
+    // Rules used for every WebKit / AppKit delegate method in this app:
+    //  * Completion-handler form, Swift name derived mechanically from the
+    //    Objective-C selector (named in the comment above each method). The
+    //    async forms are NOT used: WebKit renames some of them (for example
+    //    requestMediaCapturePermission... becomes decideMediaCapturePermissions...),
+    //    which is how CI run #1 failed.
+    //  * Handler parameters are written as plain `@escaping (T) -> Void`.
+    //    Newer SDKs annotate them @MainActor @Sendable; Objective-C imports are
+    //    @preconcurrency, so in Swift 5 language mode the plain form matches
+    //    both the Xcode 15 and Xcode 16 SDKs.
+    //  * `nonisolated` + MainActor.assumeIsolated: AppKit and WebKit always
+    //    call these on the main thread. A nonisolated witness satisfies the
+    //    requirement whether or not the SDK marks the protocol @MainActor.
+
+    // MARK: NSWindowDelegate
+
+    // windowWillClose:
+    nonisolated func windowWillClose(_ notification: Notification) {
+        MainActor.assumeIsolated {
+            // Closing the window ends any capture the page itself started
+            // (security audit M-02).
+            webView.setMicrophoneCaptureState(.none, completionHandler: nil)
+            onClosed?()
+        }
+    }
+
+    // MARK: WKNavigationDelegate
+
+    // webView:decidePolicyForNavigationAction:decisionHandler:
+    nonisolated func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
+                             decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        let policy: WKNavigationActionPolicy = MainActor.assumeIsolated {
+            // Downloads count as "from our page" when the top page is ours:
+            // other origins can never load in any frame (subframe navigations
+            // to them are cancelled here). sourceFrame is not read: WebKit
+            // can hand back nil for it despite the non-optional Swift type.
+            let request = NavigationRequest(url: navigationAction.request.url,
+                                            isMainFrame: navigationAction.targetFrame?.isMainFrame ?? true,
+                                            userInitiated: navigationAction.navigationType == .linkActivated,
+                                            shouldDownload: navigationAction.shouldPerformDownload,
+                                            sourceIsAllowed: NavigationPolicy.isAllowedPage(webView.url))
+            switch NavigationPolicy.decide(request) {
+            case .allow: return .allow
+            case .download: return .download
+            case .cancel: return .cancel
+            case .openExternally(let url):
+                // A scripted a.click() also reports linkActivated: require a
+                // real recent mouse click, one open per second (audit L-04).
+                openExternallyIfClicked(url)
+                return .cancel
+            }
+        }
+        decisionHandler(policy)
+    }
+
+    // webView:decidePolicyForNavigationResponse:decisionHandler:
+    nonisolated func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse,
+                             decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
+        let policy: WKNavigationResponsePolicy = MainActor.assumeIsolated {
+            // Defence in depth against redirects: the top frame must still be ours.
+            if navigationResponse.isForMainFrame, !NavigationPolicy.isAllowedPage(navigationResponse.response.url) {
+                return .cancel
+            }
+            return navigationResponse.canShowMIMEType ? .allow : .download
+        }
+        decisionHandler(policy)
+    }
+
+    // webView:navigationAction:didBecomeDownload:
     nonisolated func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) {
         MainActor.assumeIsolated { download.delegate = self }
     }
 
+    // webView:navigationResponse:didBecomeDownload:
     nonisolated func webView(_ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload) {
         MainActor.assumeIsolated { download.delegate = self }
     }
 
+    // webView:didCommitNavigation:
     nonisolated func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
-        MainActor.assumeIsolated { bridge.pageWillReload() }   // the new page must say "ready" again
+        MainActor.assumeIsolated { bridge.pageWillReload() }   // new page: new nonce, must say "ready" again
     }
 
+    // webViewWebContentProcessDidTerminate:
+    // Reload with back-off 1 s, 5 s, 30 s, then stop and say so (audit L-02).
     nonisolated func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         MainActor.assumeIsolated {
             bridge.pageWillReload()
-            webView.load(URLRequest(url: BridgeConfig.startURL))
+            guard let delay = backoff.nextDelay(now: ProcessInfo.processInfo.systemUptime) else {
+                crashNotice = Copy.pageCrashed
+                onPageStateChange?()
+                return
+            }
+            let relay = MainActorRelay(self)
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                MainActor.assumeIsolated {
+                    if let owner = relay.owner { owner.reloadAfterCrash() }
+                }
+            }
         }
     }
 
-    // MARK: UI delegate
+    // MARK: WKUIDelegate
 
-    /// window.open / target=_blank: open real links in the default browser.
+    // webView:createWebViewWithConfiguration:forNavigationAction:windowFeatures:
+    // window.open / target=_blank: never a second web view; real links go to
+    // the default browser after a real click.
     nonisolated func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration,
                              for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
         MainActor.assumeIsolated {
             if case .openExternally(let url) = NavigationPolicy.decidePopup(navigationAction.request.url) {
-                NSWorkspace.shared.open(url)
+                openExternallyIfClicked(url)
             }
         }
         return nil
     }
 
-    /// The page's own dictation may use the mic; camera never.
-    func webView(_ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin,
-                 initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType) async -> WKPermissionDecision {
-        let allowed = type == .microphone && BridgeGate.accepts(
-            isMainFrame: frame.isMainFrame,
-            origin: FrameOrigin(scheme: origin.protocol, host: origin.host, port: origin.port),
-            pageURL: webView.url)
-        return allowed ? .grant : .deny
+    // webView:requestMediaCapturePermissionForOrigin:initiatedByFrame:type:decisionHandler:
+    // The page's own dictation may ask for the mic: WebKit shows its standard
+    // prompt (.prompt, audit M-02), and only while the window is on screen.
+    // Camera and every other origin: deny.
+    nonisolated func webView(_ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin,
+                             initiatedByFrame frame: WKFrameInfo, type: WKMediaCaptureType,
+                             decisionHandler: @escaping (WKPermissionDecision) -> Void) {
+        let decision: WKPermissionDecision = MainActor.assumeIsolated {
+            let allowed = type == .microphone && window.isVisible && BridgeGate.accepts(
+                isMainFrame: frame.isMainFrame,
+                origin: FrameOrigin(scheme: origin.protocol, host: origin.host, port: origin.port),
+                pageURL: webView.url)
+            return allowed ? .prompt : .deny
+        }
+        decisionHandler(decision)
     }
 
-    func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String,
-                 initiatedByFrame frame: WKFrameInfo) async {
-        let alert = NSAlert()
-        alert.messageText = String(message.prefix(500))
-        alert.addButton(withTitle: "OK")
-        alert.runModal()
+    // webView:runJavaScriptAlertPanelWithMessage:initiatedByFrame:completionHandler:
+    // Sheets, not app-modal loops, where possible (audit L-01).
+    nonisolated func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String,
+                             initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
+        MainActor.assumeIsolated {
+            let alert = NSAlert()
+            alert.messageText = String(message.prefix(500))
+            alert.addButton(withTitle: "OK")
+            if window.isVisible {
+                alert.beginSheetModal(for: window) { _ in MainActor.assumeIsolated { completionHandler() } }
+            } else {
+                _ = alert.runModal()
+                completionHandler()
+            }
+        }
     }
 
-    func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String,
-                 initiatedByFrame frame: WKFrameInfo) async -> Bool {
-        let alert = NSAlert()
-        alert.messageText = String(message.prefix(500))
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Cancel")
-        return alert.runModal() == .alertFirstButtonReturn
+    // webView:runJavaScriptConfirmPanelWithMessage:initiatedByFrame:completionHandler:
+    nonisolated func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String,
+                             initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (Bool) -> Void) {
+        MainActor.assumeIsolated {
+            let alert = NSAlert()
+            alert.messageText = String(message.prefix(500))
+            alert.addButton(withTitle: "OK")
+            alert.addButton(withTitle: "Cancel")
+            if window.isVisible {
+                alert.beginSheetModal(for: window) { response in
+                    MainActor.assumeIsolated { completionHandler(response == .alertFirstButtonReturn) }
+                }
+            } else {
+                completionHandler(alert.runModal() == .alertFirstButtonReturn)
+            }
+        }
     }
 
-    /// <input type=file> (importing audio or notes).
-    func webView(_ webView: WKWebView, runOpenPanelWith parameters: WKOpenPanelParameters,
-                 initiatedByFrame frame: WKFrameInfo) async -> [URL]? {
-        let panel = NSOpenPanel()
-        panel.allowsMultipleSelection = parameters.allowsMultipleSelection
-        panel.canChooseDirectories = false
-        panel.canChooseFiles = true
-        return panel.runModal() == .OK ? panel.urls : nil
+    // webView:runOpenPanelWithParameters:initiatedByFrame:completionHandler:
+    // <input type=file> (importing audio or notes).
+    nonisolated func webView(_ webView: WKWebView, runOpenPanelWith parameters: WKOpenPanelParameters,
+                             initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping ([URL]?) -> Void) {
+        MainActor.assumeIsolated {
+            let panel = NSOpenPanel()
+            panel.allowsMultipleSelection = parameters.allowsMultipleSelection
+            panel.canChooseDirectories = false
+            panel.canChooseFiles = true
+            panel.beginSheetModal(for: window) { response in
+                MainActor.assumeIsolated { completionHandler(response == .OK ? panel.urls : nil) }
+            }
+        }
     }
 
-    // MARK: Downloads (notes export)
+    // MARK: WKDownloadDelegate (notes export)
 
-    func download(_ download: WKDownload, decideDestinationUsing response: URLResponse,
-                  suggestedFilename: String) async -> URL? {
-        let panel = NSSavePanel()
-        panel.nameFieldStringValue = suggestedFilename
-        panel.canCreateDirectories = true
-        guard panel.runModal() == .OK, let url = panel.url else { return nil }
-        try? FileManager.default.removeItem(at: url)   // the user already confirmed "Replace"
-        return url
+    // download:decideDestinationUsingResponse:suggestedFilename:completionHandler:  (required)
+    nonisolated func download(_ download: WKDownload, decideDestinationUsing response: URLResponse,
+                              suggestedFilename: String, completionHandler: @escaping (URL?) -> Void) {
+        MainActor.assumeIsolated {
+            let panel = NSSavePanel()
+            panel.nameFieldStringValue = suggestedFilename
+            panel.canCreateDirectories = true
+            panel.beginSheetModal(for: window) { response in
+                MainActor.assumeIsolated {
+                    guard response == .OK, let url = panel.url else {
+                        completionHandler(nil)
+                        return
+                    }
+                    try? FileManager.default.removeItem(at: url)   // the user already confirmed "Replace"
+                    completionHandler(url)
+                }
+            }
+        }
     }
 }
 
@@ -227,9 +390,18 @@ final class VaaniWindowController: NSObject, WKNavigationDelegate, WKUIDelegate,
 @MainActor
 private final class ScriptMessageProxy: NSObject, WKScriptMessageHandler {
     weak var owner: VaaniWindowController?
-    init(owner: VaaniWindowController) { self.owner = owner }
-    nonisolated func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        MainActor.assumeIsolated { if let owner { owner.receive(message) } }
+
+    init(owner: VaaniWindowController) {
+        self.owner = owner
+        super.init()
+    }
+
+    // userContentController:didReceiveScriptMessage:  (required)
+    nonisolated func userContentController(_ userContentController: WKUserContentController,
+                                           didReceive message: WKScriptMessage) {
+        MainActor.assumeIsolated {
+            if let owner { owner.receive(message) }
+        }
     }
 }
 #endif

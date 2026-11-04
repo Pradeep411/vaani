@@ -10,12 +10,23 @@ import VaaniCore
 @MainActor
 final class SettingsModel: ObservableObject {
     @Published var settings: DetectionSettings
+    /// Bound to the toggle directly ($model.captureAllSystemAudio), instead of
+    /// Binding(get:set:) closures, which newer SDKs make @Sendable.
+    @Published var captureAllSystemAudio: Bool {
+        didSet {
+            guard captureAllSystemAudio != settings.captureAllSystemAudio else { return }
+            let value = captureAllSystemAudio
+            update { $0.captureAllSystemAudio = value }
+        }
+    }
     private let store: SettingsStore
     var onChange: ((DetectionSettings) -> Void)?
 
     init(store: SettingsStore) {
         self.store = store
-        self.settings = store.load()
+        let loaded = store.load()
+        self.settings = loaded
+        self.captureAllSystemAudio = loaded.captureAllSystemAudio
     }
 
     func update(_ change: (inout DetectionSettings) -> Void) {
@@ -85,8 +96,7 @@ struct SettingsView: View {
                 Button(Copy.restoreDefaults) { model.restoreDefaults() }
             }
             Divider()
-            Toggle(isOn: Binding(get: { model.settings.captureAllSystemAudio },
-                                 set: { v in model.update { $0.captureAllSystemAudio = v } })) {
+            Toggle(isOn: $model.captureAllSystemAudio) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(Copy.captureAllTitle)
                     Text(Copy.captureAllExplainer).font(.callout).foregroundStyle(.secondary)

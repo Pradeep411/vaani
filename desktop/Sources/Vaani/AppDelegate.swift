@@ -1,6 +1,6 @@
 // macOS ONLY. Verified by macOS CI (compile) and on a Mac (behaviour).
 //
-// Wires the pure detector (VaaniCore) to Core Audio, the prompt, the menu
+// Wires the pure detector (VaaniCore) to Core Audio, the pill, the menu
 // bar, the recorder and the notes window. Polls Core Audio once a second.
 #if os(macOS)
 import AppKit
@@ -12,6 +12,8 @@ final class UserDefaultsStore: KeyValueStore {
     func set(_ data: Data?, forKey key: String) { UserDefaults.standard.set(data, forKey: key) }
 }
 
+/// Reads an app's name from its bundle on disk. The detector cleans the
+/// result (SafeText) before it is shown or sent anywhere.
 struct RunningAppNameResolver: AppNameResolving {
     func displayName(bundleID: String?, pid: Int32) -> String? {
         if let bundleID, let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
@@ -32,7 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let bridge = BridgeSession(transport: nil)
     private var recorder: RecordingController!
     private var notesWindow: VaaniWindowController?
-    private lazy var prompt = PromptController()
+    private var prompt: PromptController!
     private var statusBar: StatusBarController!
     private var pollTimer: Timer?
 
@@ -45,15 +47,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         MainActor.assumeIsolated { launch() }
     }
 
+    nonisolated func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool { true }
+
+    nonisolated func applicationWillTerminate(_ notification: Notification) {
+        MainActor.assumeIsolated {
+            if recorder?.isRecording == true { recorder.stop(reason: .quit) }
+            bridge.wipe()   // audio never outlives the app
+        }
+    }
+
     private func launch() {
+        prompt = PromptController()
         settingsModel = SettingsModel(store: settingsStore)
         settingsWindow = SettingsWindowController(model: settingsModel)
         detector = MeetingDetector(settings: settingsModel.settings, selfPID: getpid(),
                                    nameResolver: RunningAppNameResolver())
+        let relay = MainActorRelay(self)
         loop = DetectionLoop(source: source, detector: detector,
                              clock: { ProcessInfo.processInfo.systemUptime },
-                             selfWebViewCapturing: { [weak self] in
-                                 MainActor.assumeIsolated { self?.notesWindow?.isCapturingMic ?? false }
+                             selfWebViewCapturing: {
+                                 MainActor.assumeIsolated { relay.owner?.notesWindow?.isCapturingMic ?? false }
                              })
         settingsModel.onChange = { [weak self] s in
             self?.detector.settings = s
@@ -69,47 +82,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             return self.loop.isPlaying(familyOf: candidate)
         }
-        recorder.onChange = { [weak self] in self?.statusBar.refresh() }
-
-        prompt.onTakeNotes = { [weak self] in self?.takeNotesFromPrompt() }
-        prompt.onNotNow = { [weak self] in
-            self?.detector.userSaidNotNow()
-            self?.prompt.hide()
-        }
+        recorder.onChange = { [weak self] in self?.recordingStateChanged() }
+        recorder.onAskToWiden = { [weak self] app in self?.askToWiden(app) }
+        recorder.onWidenQuestionExpired = { [weak self] in self?.prompt.hide(ifShowing: .askToWiden) }
 
         statusBar = StatusBarController()
         statusBar.snapshot = { [weak self] in
             guard let self else {
-                return .init(detectionOn: false, recording: false, recordingApp: nil, minutes: 0, notice: nil, openAtLogin: false)
+                return .init(detectionOn: false, recording: false, recordingApp: nil, minutes: 0, notice: nil,
+                             pageUsingMic: false, takeNotesNowAllSound: true, openAtLogin: false)
             }
             return .init(detectionOn: self.detector.settings.enabled,
                          recording: self.recorder.isRecording,
                          recordingApp: self.recorder.candidate?.displayName,
                          minutes: self.recorder.minutesRecorded,
-                         notice: self.recorder.notice,
+                         notice: self.recorder.notice ?? self.notesWindow?.crashNotice,
+                         pageUsingMic: self.notesWindow?.isCapturingMic ?? false,
+                         takeNotesNowAllSound: self.recorder.plannedTap(for: self.detector.currentLiveCall(),
+                                                                        settings: self.detector.settings).isSystemWide,
                          openAtLogin: SMAppService.mainApp.status == .enabled)
         }
         statusBar.onStop = { [weak self] in self?.stopRecording(.user) }
         statusBar.onTakeNotesNow = { [weak self] in self?.takeNotesNow() }
-        statusBar.onOpenVaani = { [weak self] in self?.ensureNotesWindow().showAndFocus() }
+        statusBar.onOpenVaani = { [weak self] in self?.openVaani() }
         statusBar.onToggleDetection = { [weak self] in self?.settingsModel.update { $0.enabled.toggle() } }
         statusBar.onShowSettings = { [weak self] in self?.settingsWindow.show() }
         statusBar.onToggleLogin = { [weak self] in self?.toggleOpenAtLogin() }
         statusBar.onOpenPrivacySettings = { [weak self] in self?.openPrivacySettings() }
         statusBar.refresh()
 
-        pollTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.tick() }
-        }
-        pollTimer?.tolerance = 0.2
-    }
-
-    nonisolated func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool { true }
-
-    nonisolated func applicationWillTerminate(_ notification: Notification) {
-        MainActor.assumeIsolated {
-            if recorder?.isRecording == true { recorder.stop(reason: .quit) }
-            bridge.wipe()   // audio never outlives the app
+        // Common run-loop modes: keeps detecting and auto-stopping while a
+        // menu is open or a panel is up (security audit L-01).
+        pollTimer = makeCommonModeTimer(interval: 1, tolerance: 0.2) {
+            MainActor.assumeIsolated {
+                if let owner = relay.owner { owner.tick() }
+            }
         }
     }
 
@@ -119,35 +126,120 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         for event in loop.tick() {
             switch event {
             case .showPrompt(let c):
-                if !recorder.isRecording { prompt.show(c) }
+                if !recorder.isRecording { showCallPrompt(c) }
             case .hidePrompt:
-                prompt.hide()
-            case .autoStop:
-                stopRecording(.callEnded)
+                prompt.hide(ifShowing: .callDetected)
+            case .askStillTakingNotes(let c):
+                askStillTakingNotes(c)
+            case .autoStop(let reason):
+                prompt.hide(ifShowing: .stillTakingNotes)
+                switch reason {
+                case .callEnded: stopRecording(.callEnded)
+                case .noAnswer: stopRecording(.noAnswer)
+                }
             }
         }
         bridge.tick(now: now)
+        statusBar.refresh()
+    }
+
+    // MARK: Pills
+
+    private func showCallPrompt(_ c: CallCandidate) {
+        // Say "all Mac sound" before recording when that is what will happen
+        // (FaceTime, unknown apps, or the setting is on) (audit M-01).
+        let allSound = recorder.plannedTap(for: c, settings: detector.settings).isSystemWide
+        let content = PillContent(
+            kind: .callDetected,
+            title: c.title,
+            subtitle: allSound ? Copy.promptQuestionAllSound : Copy.promptQuestion,
+            announcement: Copy.promptAnnouncement(c),
+            icon: PromptController.icon(forBundleID: c.bundleID, pid: c.pids.first),
+            secondaryLabel: Copy.notNow,
+            secondaryHint: Copy.notNowHint,
+            primaryLabel: Copy.takeNotes,
+            primaryHint: Copy.takeNotesHint(c.displayName))
+        prompt.show(content, primary: { [weak self] in self?.takeNotesFromPrompt() },
+                    secondary: { [weak self] in self?.detector.userSaidNotNow() })
+    }
+
+    private func askStillTakingNotes(_ c: CallCandidate?) {
+        let content = PillContent(
+            kind: .stillTakingNotes,
+            title: Copy.stillTitle,
+            subtitle: Copy.stillSubtitle,
+            announcement: Copy.stillAnnouncement,
+            icon: nil,
+            secondaryLabel: Copy.stop,
+            secondaryHint: Copy.menuStop,
+            primaryLabel: Copy.keepGoing,
+            primaryHint: Copy.stillTitle)
+        prompt.show(content, primary: { [weak self] in
+            guard let self else { return }
+            self.detector.userKeepGoing(now: self.now)
+        }, secondary: { [weak self] in
+            self?.stopRecording(.user)
+        })
+    }
+
+    private func askToWiden(_ app: String) {
+        // Never cover "Still taking notes?"; with no answer the recorder
+        // falls back to mic only, the safe choice.
+        guard prompt.kind != .stillTakingNotes else { return }
+        let content = PillContent(
+            kind: .askToWiden,
+            title: Copy.widenTitle(app),
+            subtitle: Copy.widenSubtitle,
+            announcement: Copy.widenAnnouncement(app),
+            icon: nil,
+            secondaryLabel: Copy.micOnly,
+            secondaryHint: Copy.micOnlyChosen,
+            primaryLabel: Copy.recordAllSound,
+            primaryHint: Copy.widenedByUser)
+        prompt.show(content, primary: { [weak self] in self?.recorder.widenToAllSound() },
+                    secondary: { [weak self] in self?.recorder.keepMicOnly() })
     }
 
     // MARK: Actions
 
     private func ensureNotesWindow() -> VaaniWindowController {
-        if let w = notesWindow { return w }
+        if let w = notesWindow, w.crashNotice == nil { return w }
+        notesWindow?.tearDown()
         let w = VaaniWindowController(bridge: bridge)
         w.onStopRequested = { [weak self] in self?.stopRecording(.webRequested) }
+        w.onPageStateChange = { [weak self] in self?.statusBar.refresh() }
+        w.onClosed = { [weak self] in self?.notesWindowClosed() }
         notesWindow = w
         return w
     }
 
+    private func openVaani() {
+        ensureNotesWindow().showAndFocus()
+    }
+
+    /// Closed with nothing to deliver: unload the page so it cannot keep
+    /// running (or listening) in the background (audit M-02). With a session
+    /// still buffered, the page stays loaded (hidden) to receive the audio.
+    private func notesWindowClosed() {
+        guard !recorder.isRecording, bridge.current == nil else { return }
+        notesWindow?.tearDown()
+        notesWindow = nil
+        statusBar.refresh()
+    }
+
+    private func recordingStateChanged() {
+        notesWindow?.setRecording(recorder.isRecording)
+        statusBar.refresh()
+    }
+
     private func takeNotesFromPrompt() {
-        prompt.hide()
         guard let candidate = detector.userTookNotes(now: now) else { return }
         startRecording(candidate)
     }
 
     private func takeNotesNow() {
         guard !recorder.isRecording else { return }
-        prompt.hide()
+        prompt.hide(ifShowing: .callDetected)
         let live = detector.currentLiveCall()
         detector.manualRecordingStarted(now: now, attachTo: live)
         startRecording(live)
@@ -162,15 +254,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 detector.recordingEnded(now: now)
                 showMicrophoneAlert()
             }
-            statusBar.refresh()
+            recordingStateChanged()
         }
     }
 
     private func stopRecording(_ reason: StopReason) {
+        prompt.hide(ifShowing: .stillTakingNotes)
+        prompt.hide(ifShowing: .askToWiden)
         guard recorder.isRecording else { return }
         recorder.stop(reason: reason)
         detector.recordingEnded(now: now)
-        statusBar.refresh()
+        recordingStateChanged()
     }
 
     private func showMicrophoneAlert() {
@@ -208,7 +302,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } catch {
             let alert = NSAlert()
             alert.messageText = Copy.loginItemFailed
-            alert.runModal()
+            _ = alert.runModal()
         }
         statusBar.refresh()
     }
