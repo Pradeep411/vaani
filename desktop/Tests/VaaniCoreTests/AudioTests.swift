@@ -107,6 +107,17 @@ final class AudioTests: XCTestCase {
         XCTAssertEqual(m.activeSources, [.mic])
     }
 
+    func testMixerReactivatesSource() {
+        let m = AudioMixer(sources: [.mic, .app])
+        m.deactivate(.app)
+        m.append(.app, [1])                 // dropped while inactive
+        m.activate(.app)
+        m.append(.mic, [0.25])
+        m.append(.app, [0.25])
+        XCTAssertEqual(m.drain(), [0.5])
+        XCTAssertEqual(m.activeSources, [.mic, .app])
+    }
+
     func testMixerCapsMemory() {
         let m = AudioMixer(sources: [.mic], maxQueuedFrames: 10)
         m.append(.mic, [Float](repeating: 0.1, count: 25))

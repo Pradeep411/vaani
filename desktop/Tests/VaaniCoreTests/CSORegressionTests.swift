@@ -228,7 +228,7 @@ final class CSORegressionTests: XCTestCase {
         XCTAssertEqual(t.sent.first?["nonce"] as? String, s.pageNonce)
         XCTAssertFalse(s.handle(.stop(sessionID: "S"), nonce: nil, now: 1), "a script without the nonce cannot stop")
         XCTAssertTrue(s.handle(.stop(sessionID: "S"), nonce: s.pageNonce, now: 1))
-        XCTAssertTrue(NativeToWeb.dispatchScript.contains("_deliver(msg)"))
+        XCTAssertTrue(NativeToWeb.dispatchScript.contains("_deliver(msg, token)"))
         XCTAssertFalse(NativeToWeb.dispatchScript.contains("dispatchEvent"), "no window-wide event any more")
     }
 
