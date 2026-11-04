@@ -35,7 +35,7 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Vaani records your voice during calls so the Vaani web app can make your meeting notes. Audio stays on this Mac except what you send to the AI service you chose.</string>
 	<key>NSAudioCaptureUsageDescription</key>
-	<string>Vaani records the sound of your call app so your notes include the other people on the call. Vaani does not record your screen.</string>
+	<string>Vaani records the sound of your call app so your notes include the other people on the call. For some calls, or when you choose it, Vaani records all Mac sound instead and tells you first. Vaani does not record your screen.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Vaani is free and open source.</string>
 </dict>

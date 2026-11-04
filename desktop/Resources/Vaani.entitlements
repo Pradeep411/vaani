@@ -2,11 +2,21 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Hardened runtime exception: the only one Vaani asks for. Lets the app
-	     use the microphone (and is what the System Audio Recording tap runs
-	     under). No JIT, no unsigned memory, no library-validation opt-out,
-	     no Apple Events, no camera, no location, no address book. -->
+	<!-- App Sandbox on (security audit M-04). The web app's keys and notes
+	     then live in ~/Library/Containers/io.github.pradeep411.vaani.desktop,
+	     which macOS protects from other apps. -->
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<!-- Microphone (sandbox and hardened runtime use the same key). -->
 	<key>com.apple.security.device.audio-input</key>
+	<true/>
+	<!-- Outgoing connections, used only by the notes web view to load
+	     https://pradeep411.github.io/vaani/ and what that page fetches. -->
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<!-- Files the user picks in a Save or Open panel (notes export, file
+	     import, "Add app" in Ignored apps). Nothing else on disk. -->
+	<key>com.apple.security.files.user-selected.read-write</key>
 	<true/>
 </dict>
 </plist>
