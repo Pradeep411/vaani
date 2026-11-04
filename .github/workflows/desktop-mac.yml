@@ -33,6 +33,11 @@ on:
       - "desktop/**"
       - ".github/workflows/desktop-mac.yml"
   workflow_dispatch:
+    inputs:
+      diagnostic:
+        description: "Also build the NO-SANDBOX diagnostic app (Mac testing only, never hand out)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -69,20 +74,49 @@ jobs:
       - name: Unit tests (VaaniCore, pure Swift; also compiles the app target)
         run: swift test 2>&1 | tee test.log
 
-      - name: Bridge reference module tests (Node)
-        run: node --test web-bridge/vaani-desktop-bridge.test.mjs
+      - name: Bridge tests (Node; module, shipped user script, CSO probes)
+        run: |
+          node --test web-bridge/vaani-desktop-bridge.test.mjs
+          node --test web-bridge/cso-probe-nonce.test.mjs
+          node --test web-bridge/cso-probe-ready-race.test.mjs
+          node --test web-bridge/cso-probe-nonce-v3.test.mjs
 
       - name: Build Vaani.app (release, arm64, App Sandbox on, ad-hoc signed)
         run: bash scripts/build-app.sh 2>&1 | tee build.log
 
-      - name: Build diagnostic variant (sandbox off, for Mac testing only)
-        run: SANDBOX=0 bash scripts/build-app.sh 2>&1 | tee build-nosandbox.log
+      - name: Build script refuses bad SANDBOX values and signing the diagnostic build
+        run: |
+          # Each must fail for the RIGHT reason: check the refusal message,
+          # not just a nonzero exit.
+          for v in yes true 2 on; do
+            if OUTPUT="$(SANDBOX="$v" bash scripts/build-app.sh 2>&1)"; then
+              echo "::error::SANDBOX=$v was accepted"; exit 1
+            fi
+            if ! grep -q "SANDBOX must be exactly 1" <<<"$OUTPUT"; then
+              echo "::error::SANDBOX=$v failed without the expected refusal message"; echo "$OUTPUT"; exit 1
+            fi
+          done
+          if OUTPUT="$(SANDBOX=0 SIGN_IDENTITY="Developer ID Application: test" bash scripts/build-app.sh 2>&1)"; then
+            echo "::error::diagnostic build accepted a signing identity"; exit 1
+          fi
+          if ! grep -q "Refusing to sign the diagnostic" <<<"$OUTPUT"; then
+            echo "::error::diagnostic signing failed without the expected refusal message"; echo "$OUTPUT"; exit 1
+          fi
+
+      - name: Build diagnostic variant (manual runs only, sandbox off, Mac testing only)
+        if: github.event_name == 'workflow_dispatch' && inputs.diagnostic
+        run: |
+          SANDBOX=0 bash scripts/build-app.sh 2>&1 | tee build-nosandbox.log
+          APP=build-nosandbox/Vaani-DIAGNOSTIC-no-sandbox.app
+          test "$(plutil -extract CFBundleIdentifier raw "$APP/Contents/Info.plist")" = "io.github.pradeep411.vaani.desktop.diagnostic"
+          test "$(plutil -extract CFBundleDisplayName raw "$APP/Contents/Info.plist")" = "Vaani DIAGNOSTIC"
+          test "$(plutil -extract VaaniDiagnosticBuild raw "$APP/Contents/Info.plist")" = "true"
 
       - name: Fail if any delegate method does not match its protocol
         # A WebKit/AppKit delegate method that only "nearly matches" is never
         # called; for the navigation policy that would be a security hole.
         run: |
-          if grep -E "nearly matches (optional )?requirement" test.log build.log build-nosandbox.log; then
+          if grep -E "nearly matches (optional )?requirement" test.log build.log build-nosandbox.log 2>/dev/null; then
             echo "::error::A delegate method signature does not match its protocol."
             exit 1
           fi
@@ -93,6 +127,10 @@ jobs:
           codesign -dv --verbose=2 build/Vaani.app
           codesign -d --entitlements - --xml build/Vaani.app
           test -f build/Vaani.app/Contents/Resources/vaani-userscript.js
+          test "$(plutil -extract CFBundleIdentifier raw build/Vaani.app/Contents/Info.plist)" = "io.github.pradeep411.vaani.desktop"
+          if plutil -extract VaaniDiagnosticBuild raw build/Vaani.app/Contents/Info.plist >/dev/null 2>&1; then
+            echo "::error::normal build carries the diagnostic flag"; exit 1
+          fi
           file build/Vaani.app/Contents/MacOS/Vaani | tee /dev/stderr | grep -q arm64
           # The native layer must not contain any network client code.
           if nm -u build/Vaani.app/Contents/MacOS/Vaani | grep -E "URLSession|NSURLConnection|CFNetwork|nw_connection"; then
@@ -126,8 +164,8 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      - name: Upload diagnostic no-sandbox app (not for pull requests)
-        if: github.event_name != 'pull_request'
+      - name: Upload diagnostic no-sandbox app (manual runs only)
+        if: github.event_name == 'workflow_dispatch' && inputs.diagnostic
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: Vaani-macOS-NOSANDBOX-diagnostic-${{ matrix.os }}
@@ -174,11 +212,18 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
           security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
 
-      - name: Build and sign with Developer ID
+      - name: Build and sign with Developer ID (normal sandboxed build only)
         if: env.HAS_SIGNING == 'true'
         env:
           SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
-        run: bash scripts/build-app.sh
+          SANDBOX: "1"
+        run: |
+          bash scripts/build-app.sh
+          # Never sign the diagnostic app (re-audit D-01).
+          if plutil -extract VaaniDiagnosticBuild raw build/Vaani.app/Contents/Info.plist >/dev/null 2>&1; then
+            echo "::error::refusing to sign a diagnostic build"; exit 1
+          fi
+          test "$(plutil -extract CFBundleIdentifier raw build/Vaani.app/Contents/Info.plist)" = "io.github.pradeep411.vaani.desktop"
 
       - name: Notarize and staple
         if: env.HAS_SIGNING == 'true'
