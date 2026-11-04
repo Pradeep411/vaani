@@ -10,6 +10,13 @@
 //              Every macOS file is wrapped in `#if os(macOS)`, so on Linux
 //              this target compiles to a stub that only prints a message.
 //
+// Language mode: Swift 5 for all targets (tools 5.9 default, stated below).
+// The Mac code is written to also be clean under Swift 6 strict concurrency
+// rules where it matters (no @MainActor state touched from @Sendable or C
+// callbacks without MainActor.assumeIsolated), but Swift 5 mode is what keeps
+// AppKit/WebKit's Objective-C delegate signatures matching on both the
+// Xcode 15 and Xcode 16 SDKs.
+//
 import PackageDescription
 
 let package = Package(
@@ -36,5 +43,6 @@ let package = Package(
             dependencies: ["VaaniCore"],
             path: "Tests/VaaniCoreTests"
         )
-    ]
+    ],
+    swiftLanguageVersions: [.v5]
 )
