@@ -31,7 +31,7 @@ footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);color:v
 <body>
 <main>
 <h1>Privacy</h1>
-<p class="sub">Vaani web app and Vaani Chrome extension. Last updated 2 November 2026.</p>
+<p class="sub">Vaani web app and Vaani Chrome extension. Last updated 3 November 2026.</p>
 
 <p><b>Short version:</b> Vaani has no account, no server and no tracking. Your notes stay in your browser.</p>
 
@@ -45,9 +45,10 @@ footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);color:v
 
 <h2>The Vaani app</h2>
 <ul>
-<li><b>Speech to text</b> uses your browser’s speech engine. In Chrome and Edge the browser sends the audio to Google or Microsoft to do this. Safari uses Apple’s engine. Vaani never receives your audio.</li>
-<li><b>Hear everyone on a call:</b> if you turn this on and share a call’s tab, its sound is mixed with your microphone inside your browser and passed to the same speech engine, so the other people’s voices go there too. Nothing is saved as audio.</li>
-<li><b>Notes</b> are written on your device by default. If you add your own AI key (Sarvam AI, OpenAI, Anthropic or Google), text, never audio, goes to that provider whenever Vaani writes notes, answers a question, recaps your week, translates or drafts a follow-up. Ask and Recap send the notes they search. Your key is stored only in your browser.</li>
+<li><b>Speech to text</b> uses your browser’s speech engine unless you add a Sarvam AI key. In Chrome and Edge the browser sends the audio to Google or Microsoft to do this. Safari uses Apple’s engine. Vaani never receives your audio.</li>
+<li><b>With a Sarvam AI key set</b>, Sarvam AI does the speech to text: the meeting audio is sent from your browser straight to Sarvam AI (api.sarvam.ai), in pieces of about 25 seconds, to be transcribed, together with your “Names and words” list (up to 50 names and terms) so they are spelled right. Nothing goes to Vaani. The audio is held only in your browser’s memory, never saved, and dropped once it is transcribed. You can switch speech to text back to “This browser” in Settings. Sarvam AI’s own privacy policy applies to what it receives.</li>
+<li><b>Hear everyone on a call:</b> if you turn this on and share a call’s tab, its sound is mixed with your microphone inside your browser and passed to the same speech engine (or to Sarvam AI, with a Sarvam AI key), so the other people’s voices go there too. Nothing is saved as audio.</li>
+<li><b>Notes</b> are written on your device by default. If you add your own AI key (Sarvam AI, OpenAI, Anthropic or Google), text goes to that provider whenever Vaani writes notes, answers a question, recaps your week, translates or drafts a follow-up. OpenAI, Anthropic and Google get text only; a Sarvam AI key also sends the meeting audio to Sarvam AI for speech to text, as above. Ask and Recap send the notes they search. Your “Names and words” list goes along with the notes text so names are spelled right. Your key is stored only in your browser.</li>
 <li><b>Saved notes</b> live only in this browser’s storage (local storage, or IndexedDB when that is full). Clearing your browser data deletes them.</li>
 <li><b>Insights</b> are worked out in your browser from the notes you saved. Nothing is sent anywhere to make them.</li>
 <li><b>Google Calendar, only if you connect it:</b> Vaani reads your next 36 hours of events straight from Google into this browser. Nothing goes to any Vaani server. Disconnect any time. Access is read-only and the token is kept in memory only. Titles, times and call links are kept here for 36 hours, and removed the next time you open Vaani after that. Attendee names stay on this device. A note you take for an event keeps its title, which goes to your AI provider like any note title if you use your own key. That note also keeps the event’s attendee names and event id; backups leave both out unless you turn on “Include attendee names in backups” in Settings. Disconnecting deletes the saved events and asks Google to remove Vaani’s access. If the sign-in has expired, Vaani asks Google for a short-lived token only to revoke it. If Google can’t do that without your sign-in, Vaani tells you, and you can remove access yourself in your Google Account under Security, Third-party connections (myaccount.google.com/connections).</li>

@@ -29,7 +29,7 @@ Meetings in India switch languages mid-sentence. Most AI note-takers are paid, E
 
 - **Free.** No plan, no trial, no credit card.
 - **Speaks your language.** 22 languages, and it handles Hinglish-style mixing.
-- **Private.** Your audio, transcripts and notes never reach us. They stay in your browser. Where sign-in is switched on, a free account keeps only your email, name and sign-ins, plus simple usage stats if you say yes.
+- **Private.** Your audio, transcripts and notes never reach us. They stay in your browser. (With a Sarvam AI key set, the meeting audio goes from your browser to Sarvam AI to be transcribed, never to us.) Where sign-in is switched on, a free account keeps only your email, name and sign-ins, plus simple usage stats if you say yes.
 - **One tap.** A red button. Tap, talk, get notes. That's the whole app.
 
 A free, open-source alternative to paid note-takers and dictation apps like Granola, Otter and Wispr Flow, built for how people actually talk.
@@ -104,7 +104,7 @@ Vaani never needs an API key. It picks the best engine available, in this order:
 
 | Engine | Cost | Where it runs | What you get |
 |---|---|---|---|
-| **Your own AI key** (Sarvam AI, OpenAI, Claude or Gemini) | Your key | The provider you choose (text only) | The best notes, any language, Ask and Translate everywhere |
+| **Your own AI key** (Sarvam AI, OpenAI, Claude or Gemini) | Your key | The provider you choose (text; a Sarvam AI key also gets the audio, for speech to text) | The best notes, any language, Ask and Translate everywhere |
 | **On-device AI built into Chrome** | Free | Your computer | Smart notes, Ask and Translate with no key (Chrome on a laptop or desktop that supports it) |
 | **Vaani's basic engine** | Free | Your device, works offline | Summary, action items and decisions picked out of your words |
 
@@ -115,15 +115,25 @@ Add a key in **Settings → Notes engine**. It is saved only in your browser and
 - OpenAI: [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
 - Anthropic Claude: [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys)
 
+## Speech to text: your browser, or Sarvam AI with your key
+
+By default your browser turns speech into text. It listens for one language at a time, so a meeting in Kannada, Hindi or Tamil mixed with English can come out almost empty when it is set to English.
+
+Save a **Sarvam AI** key and Vaani uses Sarvam AI's speech to text instead (`saaras:v4`, code-mixed output, the language detected automatically when you pick English). Vaani records the audio in your browser and sends it straight to Sarvam AI in pieces of about 25 seconds; the words appear as each piece comes back. The audio is kept only in memory, never saved, and dropped once it is transcribed. Your "Names and words" list (up to 50 names and terms) is sent to Sarvam AI with the audio as key terms, so names come out right; it also goes to your notes provider with the text. You can switch back in **Settings → Speech to text → This browser**.
+
+Speaker labels are not offered yet: Sarvam AI does them only in its Batch API, which uploads files to cloud storage on another host, and Vaani stays a single page that talks to nothing but the services you choose.
+
+If a recording longer than 3 minutes has almost no words (under 25 words, or under 4 a minute), Vaani does not ask an AI to write notes from it. It tells you how little it heard, the likely reason, and how to fix it.
+
 ## Privacy: what runs where
 
 We'd rather be precise than make big promises.
 
 | Step | Where it happens |
 |---|---|
-| Speech to text | **Your browser's speech engine.** Chrome and Edge send the audio to Google or Microsoft to do this. Safari uses Apple's engine. With *Hear everyone on a call* on, the other people's voices go there too. Vaani itself never receives your audio. |
+| Speech to text | **Your browser's speech engine**, unless you set a Sarvam AI key. Chrome and Edge send the audio to Google or Microsoft to do this. Safari uses Apple's engine. **With a Sarvam AI key set, the meeting audio is sent from your browser to Sarvam AI for transcription, with your Names and words list, and nothing goes to Vaani.** Vaani asks once before it starts sending audio to Sarvam AI for a key saved before v2.3. With *Hear everyone on a call* on, the other people's voices go there too. Vaani itself never receives your audio. |
 | Notes (free engines) | **On your device.** |
-| AI (your own key) | **Text goes to the provider you picked** whenever Vaani writes notes, answers a question, recaps your week, translates or drafts a follow-up. Ask and Recap send the notes they search. Never the audio. |
+| AI (your own key) | **Text goes to the provider you picked** whenever Vaani writes notes, answers a question, recaps your week, translates or drafts a follow-up. Ask and Recap send the notes they search. OpenAI, Claude and Gemini never get the audio; a Sarvam AI key also does speech to text (above). |
 | Saved notes | **Only in this browser** (local storage, or IndexedDB when that is full). Clearing browser data deletes them. |
 | Insights | **On your device**, from your saved notes. |
 | Google Calendar (only if you connect it) | **Straight from Google into this browser.** Read-only. The token stays in memory; event titles, times and links are kept for 36 hours, and removed the next time you open Vaani after that. Attendee names stay on this device, and stay out of backups unless you turn them on. |
@@ -142,7 +152,7 @@ Please tell people when you are taking notes. It's polite, and in many places it
 
 English (India, US, UK), Hindi, Kannada, Tamil, Telugu, Marathi, Bengali, Gujarati, Malayalam, Punjabi, Urdu, Spanish, French, German, Arabic, Portuguese, Russian, Chinese, Japanese, Indonesian.
 
-Speech recognition comes from your browser. **Chrome supports all 22**; support in Safari and Edge varies by language. Pick "English (India)" for Hinglish.
+Speech recognition comes from your browser. **Chrome supports all 22**; support in Safari and Edge varies by language. Pick "English (India)" for Hinglish. For Indian languages mixed with English, a Sarvam AI key works far better (see above): it covers English and the Indian languages in this list.
 
 ## Works best in
 
@@ -169,7 +179,7 @@ Vaani is one HTML file. No build step, no dependencies.
 - [x] Chrome extension that pops up when a Meet, Teams or Zoom call starts
 - [ ] Mac and Windows app for the Zoom and Teams desktop apps
 - [ ] Speaker names ("Priya", "Arjun") in the transcript
-- [ ] Sarvam speech-to-text for higher accuracy in Indian languages (with your key)
+- [x] Sarvam speech-to-text for higher accuracy in Indian languages (with your key)
 - [ ] Export to Notion, Google Docs and Slack
 - [ ] More languages: Odia, Assamese and more
 

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-5/ITveRsfFZ8rds2orX+Q5W519Uo6RbB6WUYAWbI/1k=' https://accounts.google.com/gsi/client https://www.gstatic.com/firebasejs/12.19.0/; style-src 'self' https://accounts.google.com/gsi/style; img-src 'self'; connect-src https://api.sarvam.ai https://api.openai.com https://api.anthropic.com https://generativelanguage.googleapis.com https://www.googleapis.com/calendar/v3/ https://accounts.google.com/gsi/ https://oauth2.googleapis.com/revoke https://identitytoolkit.googleapis.com/v1/ https://securetoken.googleapis.com/v1/ https://firestore.googleapis.com/v1/projects/vaani-accounts/; frame-src https://accounts.google.com/gsi/; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-uuMYDjU1wN7np2lpFpmJ2cQsVpHNZgFh0Ay1qIoiC6o=' https://accounts.google.com/gsi/client https://www.gstatic.com/firebasejs/12.19.0/; style-src 'self' https://accounts.google.com/gsi/style; img-src 'self'; connect-src https://api.sarvam.ai https://api.openai.com https://api.anthropic.com https://generativelanguage.googleapis.com https://www.googleapis.com/calendar/v3/ https://accounts.google.com/gsi/ https://oauth2.googleapis.com/revoke https://identitytoolkit.googleapis.com/v1/ https://securetoken.googleapis.com/v1/ https://firestore.googleapis.com/v1/projects/vaani-accounts/; frame-src https://accounts.google.com/gsi/; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Vaani: Free AI Meeting Notes for Meet, Zoom and Teams in 22 Languages</title>
 <meta name="description" content="Just talk. Vaani takes the notes. Free meeting notes and dictation in 22 languages, right in your browser. No bot in your call.">
@@ -83,7 +83,7 @@
 
     <section class="view v-making" id="vMaking" hidden>
       <span class="think" aria-hidden="true"><i></i><i></i><i></i></span>
-      <h2>Writing your notes</h2>
+      <h2 id="makingH">Writing your notes</h2>
       <p id="makingSub"></p>
     </section>
 
@@ -170,6 +170,13 @@
     </div>
     <p class="hint" id="keyHint"></p>
     <div class="status" id="aiStatus">Checking this browser…</div>
+    <span class="form-l" id="sttL">Speech to text</span>
+    <div class="seg" id="sttSeg" role="group" aria-labelledby="sttL" data-on="0" hidden>
+      <span class="thumb" aria-hidden="true"></span>
+      <button type="button" data-stt="sarvam" aria-pressed="true">Sarvam AI</button>
+      <button type="button" data-stt="browser" aria-pressed="false">This browser</button>
+    </div>
+    <p class="hint" id="sttHint"></p>
     <label class="form-l" for="outLang">Write notes in</label>
     <select class="field" id="outLang"></select>
     <span class="form-l">Appearance</span>
@@ -183,15 +190,26 @@
   </div>
 </div>
 
+<!-- v2.3: one-time speech-to-text choice for a Sarvam AI key saved before v2.3 -->
+<div class="scrim" id="sttChoice" hidden>
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="sttChoiceH" aria-describedby="sttChoiceP">
+    <h2 id="sttChoiceH" tabindex="-1">Use Sarvam AI for speech to text?</h2>
+    <p class="sub" id="sttChoiceP">Sarvam AI can turn speech into text with your key. Your meeting audio and your Names and words list then go from this browser to Sarvam AI. With “Hear everyone on a call” on, other people’s voices go too. Nothing goes to Vaani.</p>
+    <button class="done-btn" id="sttUse" type="button">Use Sarvam AI</button>
+    <button class="btn-wide" id="sttKeep" type="button">Keep this browser</button>
+    <button class="cancel" data-close type="button">Cancel</button>
+  </div>
+</div>
+
 <!-- Privacy -->
 <div class="scrim" id="privSheet" hidden>
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="privH">
     <h2 id="privH">Where your words go</h2>
-    <p class="sub">Your words stay on this device. Here is every stop, plainly.</p>
+    <p class="sub">Your notes stay on this device. Here is every stop, plainly.</p>
     <div class="facts">
-      <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg><span><b>Your browser turns speech into text.</b> Chrome and Edge send the audio to Google or Microsoft to do this; Safari uses Apple’s engine. With “Hear everyone on a call” on, the other people’s voices go there too. Vaani itself never receives your audio.</span></div>
+      <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg><span><b>Speech to text.</b> Without a Sarvam AI key, your browser does it: Chrome and Edge send the audio to Google or Microsoft; Safari uses Apple’s engine. With a Sarvam AI key, the meeting audio goes from this browser straight to Sarvam AI, in pieces of about 25 seconds, to be turned into text, together with your Names and words list so names come out right. With “Hear everyone on a call” on, the other people’s voices go there too. Nothing goes to Vaani: the audio is held only in memory and dropped once it is transcribed.</span></div>
       <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span><b>Notes stay on this device.</b> Everything you save lives in this browser’s storage (local storage, or IndexedDB when that is full). Clearing browser data deletes it.</span></div>
-      <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg><span><b>The built-in notes engine runs on your device.</b> If you add your own AI key in Settings, text (never audio) goes to that provider whenever Vaani writes notes, answers a question, recaps your week, translates or drafts a follow-up. Ask and Recap send the notes they search.</span></div>
+      <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg><span><b>The built-in notes engine runs on your device.</b> If you add your own AI key in Settings, text goes to that provider whenever Vaani writes notes, answers a question, recaps your week, translates or drafts a follow-up. Ask and Recap send the notes they search. OpenAI, Claude and Gemini get text only; a Sarvam AI key also turns on Sarvam AI’s speech to text, so Sarvam AI gets the audio too.</span></div>
       <div class="fact" id="privCal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span><b>Google Calendar, only if you connect it.</b> Vaani reads your next 36 hours of events straight from Google into this browser. None of it goes to a Vaani account or database. Disconnect any time. Attendee names stay on this device; an event’s title becomes the note’s title, which goes to your AI provider like any note title if you use your own key. A note you take for an event keeps the attendee names; backups leave them out unless you turn them on in Settings. Disconnect deletes the saved events and asks Google to remove Vaani’s access. If Google can’t, Vaani tells you, and you can remove it in your Google Account under Security, Third-party connections.</span></div>
       <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M17 11a3 3 0 1 0 0-6M21.5 20a5.5 5.5 0 0 0-4.5-5.4"/></svg><span><b>Tell people you are taking notes.</b> It’s polite, and in many places it’s the law.</span></div>
     </div>
@@ -247,7 +265,7 @@
   /* ---------- data ---------- */
   var LANGS=[["en-IN","English (India)"],["en-US","English (US)"],["en-GB","English (UK)"],["hi-IN","Hindi (हिन्दी)"],["kn-IN","Kannada (ಕನ್ನಡ)"],["ta-IN","Tamil (தமிழ்)"],["te-IN","Telugu (తెలుగు)"],["mr-IN","Marathi (मराठी)"],["bn-IN","Bengali (বাংলা)"],["gu-IN","Gujarati (ગુજરાતી)"],["ml-IN","Malayalam (മലയാളം)"],["pa-IN","Punjabi (ਪੰਜਾਬੀ)"],["ur-PK","Urdu (اردو)"],["es-ES","Spanish"],["fr-FR","French"],["de-DE","German"],["ar-SA","Arabic"],["pt-BR","Portuguese"],["ru-RU","Russian"],["zh-CN","Chinese"],["ja-JP","Japanese"],["id-ID","Indonesian"],["it-IT","Italian"],["ko-KR","Korean"]];
   var OUT=[["English","en"],["Hindi","hi"],["Kannada","kn"],["Tamil","ta"],["Telugu","te"],["Marathi","mr"],["Bengali","bn"],["Gujarati","gu"],["Malayalam","ml"],["Punjabi","pa"],["Urdu","ur"],["Spanish","es"],["French","fr"],["German","de"],["Arabic","ar"],["Portuguese","pt"],["Chinese","zh"],["Japanese","ja"]];
-  var FMT="Format in markdown. First line: '# ' and a short title of at most 6 words. Then use only the sections named for this meeting, in that order, leaving out any that are genuinely empty. Every point is a short, plain '- ' bullet (under 20 words); no tables, no bold labels, no filler. Under '## Action items' write one bullet per task as '- Owner: task, by deadline', using the real name of whoever took it on ('Team' if nobody did; drop the deadline if none was said). Be faithful to the transcript, which may mix languages; never invent owners, dates, numbers, decisions or facts. Anything asked but not settled is a question, not a decision.";
+  var FMT="Format in markdown. First line: '# ' and a short title of at most 6 words. Then use only the sections named for this meeting, in that order, leaving out any that are genuinely empty. Every point is a short, plain '- ' bullet (under 20 words); no tables, no bold labels, no filler. Under '## Action items' write one bullet per task as '- Owner: task, by deadline', using the real name of whoever took it on ('Team' if nobody did; drop the deadline if none was said). Be faithful to the transcript, which may mix languages; never invent owners, dates, numbers, decisions or facts. Anything asked but not settled is a question, not a decision. Summarise only what is said in the transcript: never infer or guess topics, goals, dates, deadlines, owners, decisions or action items that nobody said. If the transcript is short, broken or unclear, say so in one bullet and write only what it supports; leave a section out rather than fill it. Never write a section called 'You marked'.";
   var TMPL={
     auto:{label:"Auto-detect type",sys:""},management:{label:"Management meeting",sys:"This is a management meeting. Sections: '## Highlights' (the 3 most important points), '## Discussed' (one bullet per topic and where it landed), '## Decided', '## Action items', '## Risks and blockers'."},sales:{label:"Sales call",sys:"This is a sales call. Sections: '## Deal snapshot' (who, what they need, stage, budget and timeline if said), '## Pain points', '## Objections' (with how each was answered), '## Commitments' (what each side promised), '## Action items' (the steps to close), '## Next step' (next touchpoint and date)."},client:{label:"Client call",sys:"This is a client call. Sections: '## Summary' (2 short sentences), '## What the client wants', '## Concerns', '## What we promised', '## Action items', '## Next meeting'."},developer:{label:"Developer or tech",sys:"This is a developer or technical meeting; write for engineers. Sections: '## Summary' (2 short sentences), '## Technical decisions', '## Action items' (name the feature, component or file in each task), '## Bugs and blockers', '## Specs mentioned' (exact numbers, versions, APIs, sizes as said), '## Open technical questions'."},founder:{label:"Founders or leadership",sys:"This is a founders or leadership meeting. Sections: '## Highlights' (the 3 most important points), '## Strategic decisions', '## Numbers' (revenue, costs, targets and dates exactly as said), '## Action items', '## Risks', '## To revisit'."},cx:{label:"Customer support or CX",sys:"This is a customer experience or support call. Sections: '## Customer issue', '## Impact', '## Root cause' (only if found), '## Resolution', '## Action items', '## Follow-up with customer'."},daily:{label:"Daily team call",sys:"This is a daily team call. Sections: '## Updates' (one bullet per person: done, doing next), '## Blockers', '## Action items'."},general:{label:"General meeting",sys:"Sections: '## Summary' (2 short sentences), '## Discussed', '## Decided', '## Action items', '## Open questions'."},interview:{label:"Interview",sys:"These are interview notes. Sections: '## Summary' (ends with a clear hire or no-hire lean), '## Strengths', '## Concerns', '## Action items'."},oneonone:{label:"One-on-one",sys:"These are one-on-one notes. Sections: '## Discussed', '## Feedback', '## Agreed', '## Action items'."},lecture:{label:"Lecture or class",sys:"These are study notes. Sections: '## Big idea', '## Key concepts' (each briefly explained), '## To revisit', '## Action items' (what to study or do)."}
 
@@ -270,7 +288,7 @@
   tmplSel.value=load("vaani.tmpl","auto");if(!tmplSel.value)tmplSel.value="general";
   outLang.value=load("vaani.outLang","English");
   function syncPills(){$("#langText").textContent=langSel.options[langSel.selectedIndex].text;$("#tmplText").textContent=TMPL[tmplSel.value].label;}
-  langSel.addEventListener("change",function(){save("vaani.lang",langSel.value);syncPills();});
+  langSel.addEventListener("change",function(){save("vaani.lang",langSel.value);syncPills();syncRecBtn();});
   tmplSel.addEventListener("change",function(){save("vaani.tmpl",tmplSel.value);syncPills();});
   syncPills();
   var isMac=/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent);
@@ -323,29 +341,62 @@
 
   /* ---------- recording ---------- */
   var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  var rec=null,listening=false,want=false,segs=[],interim="",startedAt=0,timerInt=null;
+  var rec=null,listening=false,want=false,segs=[],interim="",startedAt=0,timerInt=null,sttOn=false,sttPre=[],lastVoice=null;
   function two(n){return (n<10?"0":"")+n;}
   function fmt(s){return two(Math.floor(s/60))+":"+two(s%60);}
   function elapsed(){return Math.floor((Date.now()-startedAt)/1000);}
   if(!SR){$("#recBtn").disabled=true;$("#recLabel").textContent="Open Vaani in Chrome, Edge or Safari to record. Your saved notes still work here.";}
+  /* v2.3: with a Sarvam AI key, Sarvam AI does speech to text (stt.js); the browser's speech recognition is the free fallback */
+  function sttUsable(){return !!(window.VaaniSTT&&VaaniSTT.usable(langSel.value));}
+  function canRecord(){return !!SR||sttUsable();}
+  function syncRecBtn(){if(SR)return;var ok=sttUsable();$("#recBtn").disabled=!ok;if(!ok)$("#recLabel").textContent="Open Vaani in Chrome, Edge or Safari to record. Your saved notes still work here.";}
+  function langName(l){return (LANGS.filter(function(x){return x[0]===l;})[0]||[0,l])[1];}
+  function recMetaText(){var k=mode==="meeting"?(tmplSel.value==="auto"?"Meeting":TMPL[tmplSel.value].label):"Quick note";
+    if(sttOn)return k+(VaaniSTT.codeFor(langSel.value)==="unknown"?", any language":" in "+langName(langSel.value))+", by Sarvam AI"+(callTrack?", whole call":"");
+    return k+" in "+langSel.options[langSel.selectedIndex].text+(callTrack?", whole call":"");}
 
-  var callOn=load("vaani.call","0")==="1",callTrack=null,callStreams=[],callAc=null;var Q=new URLSearchParams(location.search),SRC=Q.get("src");if(!/^(meet|teams|zoom|installed|ext)$/.test(SRC||""))SRC=null;var CALLSRC=/^(meet|teams|zoom)$/.test(SRC||"");if(CALLSRC)callOn=true;function syncCall(){$("#callChip").setAttribute("aria-pressed",callOn?"true":"false");}$("#callChip").addEventListener("click",function(){callOn=!callOn;save("vaani.call",callOn?"1":"0");syncCall();if(callOn)toast("When you start, pick your call tab and turn on Share tab audio");});syncCall();if(SRC||!window.chrome)$("#extLink").hidden=true;if(SRC==="installed"){$("#heroSub").textContent="Vaani is in Chrome now. Join a Meet, Teams or Zoom call and it will offer to take notes.";}else if(CALLSRC){setMode("meeting");var nm={meet:"Google Meet",teams:"Teams",zoom:"Zoom"}[SRC];$("#heroSub").textContent=(nm?"Ready for your "+nm+" call. ":"")+"Tap the red button, pick the call tab and turn on Share tab audio.";}function stopCall(){callStreams.forEach(function(st){st.getTracks().forEach(function(t){t.stop();});});callStreams=[];if(callAc){try{callAc.close();}catch(e){}callAc=null;}callTrack=null;}function getCall(){return navigator.mediaDevices.getDisplayMedia({video:true,audio:{suppressLocalAudioPlayback:false},systemAudio:"include",selfBrowserSurface:"exclude",preferCurrentTab:false}).then(function(ds){callStreams.push(ds);if(!ds.getAudioTracks().length){stopCall();toast("No call sound was shared, so Vaani hears only you. Next time turn on Share tab audio.");return;}return navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}}).then(function(mic){callStreams.push(mic);callAc=new (window.AudioContext||window.webkitAudioContext)();var d=callAc.createMediaStreamDestination();callAc.createMediaStreamSource(ds).connect(d);callAc.createMediaStreamSource(mic).connect(d);callTrack=d.stream.getAudioTracks()[0];ds.getVideoTracks().forEach(function(v){v.addEventListener("ended",function(){if(listening)toast("Call sharing stopped. Vaani keeps listening to you.");});});});}).catch(function(){stopCall();toast("Recording just your microphone");});}function startRec(){if(listening)return;if(window.VaaniHook&&VaaniHook("beforeStart",{})===false)return;if(mode==="meeting"&&callOn&&!callTrack&&!listening&&navigator.mediaDevices&&navigator.mediaDevices.getDisplayMedia){getCall().then(startRec0);return;}startRec0();}function startRec0(){
-    if(!SR){toast("This browser can't turn speech into text");return;}
+  var callOn=load("vaani.call","0")==="1",callTrack=null,callStreams=[],callAc=null;var Q=new URLSearchParams(location.search),SRC=Q.get("src");if(!/^(meet|teams|zoom|installed|ext)$/.test(SRC||""))SRC=null;var CALLSRC=/^(meet|teams|zoom)$/.test(SRC||"");if(CALLSRC)callOn=true;function syncCall(){$("#callChip").setAttribute("aria-pressed",callOn?"true":"false");}$("#callChip").addEventListener("click",function(){callOn=!callOn;save("vaani.call",callOn?"1":"0");syncCall();if(callOn)toast("When you start, pick your call tab and turn on Share tab audio");});syncCall();if(SRC||!window.chrome)$("#extLink").hidden=true;if(SRC==="installed"){$("#heroSub").textContent="Vaani is in Chrome now. Join a Meet, Teams or Zoom call and it will offer to take notes.";}else if(CALLSRC){setMode("meeting");var nm={meet:"Google Meet",teams:"Teams",zoom:"Zoom"}[SRC];$("#heroSub").textContent=(nm?"Ready for your "+nm+" call. ":"")+"Tap the red button, pick the call tab and turn on Share tab audio.";}function stopCall(){callStreams.forEach(function(st){st.getTracks().forEach(function(t){t.stop();});});callStreams=[];if(callAc){try{callAc.close();}catch(e){}callAc=null;}callTrack=null;}function getCall(){return navigator.mediaDevices.getDisplayMedia({video:true,audio:{suppressLocalAudioPlayback:false},systemAudio:"include",selfBrowserSurface:"exclude",preferCurrentTab:false}).then(function(ds){callStreams.push(ds);if(!ds.getAudioTracks().length){stopCall();toast("No call sound was shared, so Vaani hears only you. Next time turn on Share tab audio.");return;}return navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}}).then(function(mic){callStreams.push(mic);callAc=new (window.AudioContext||window.webkitAudioContext)();var d=callAc.createMediaStreamDestination();callAc.createMediaStreamSource(ds).connect(d);callAc.createMediaStreamSource(mic).connect(d);callTrack=d.stream.getAudioTracks()[0];ds.getVideoTracks().forEach(function(v){v.addEventListener("ended",function(){if(listening)toast("Call sharing stopped. Vaani keeps listening to you.");});});});}).catch(function(){stopCall();toast("Recording just your microphone");});}function startRec(){if(listening)return;if(window.VaaniSTT&&VaaniSTT.busy()){toast("Vaani is still transcribing the last recording");return;}if(window.VaaniHook&&VaaniHook("beforeStart",{})===false)return;if(sttUsable()&&load("vaani.stt",null)===null){openSttChoice();return;}if(mode==="meeting"&&callOn&&!callTrack&&!listening&&navigator.mediaDevices&&navigator.mediaDevices.getDisplayMedia){getCall().then(startRec0);return;}startRec0();}function startRec0(){
+    var useS=sttUsable();
+    if(!SR&&!useS){toast("This browser can't turn speech into text");return;}
     if(listening)return;
-    segs=[];interim="";lyShown=0;lyInterim=null;$("#lyrics").innerHTML="";
-    try{
-      rec=new SR();rec.lang=langSel.value;rec.continuous=true;rec.interimResults=true;
-      rec.onresult=onResult;
-      rec.onerror=function(e){if(e.error==="not-allowed"||e.error==="service-not-allowed"){want=false;cleanup();view("idle");toast("Allow the microphone in the address bar, then try again");}};
-      rec.onend=function(){if(want){try{if(callTrack&&callTrack.readyState==="live")rec.start(callTrack);else rec.start();}catch(e){}}};
+    segs=[];interim="";lyShown=0;lyInterim=null;$("#lyrics").innerHTML="";voiceReset();sttPre=[];
+    if(useS){startedAt=Date.now();sttOn=true;want=true;listening=true;sttStart();}
+    else try{
+      newSR();
       want=true;if(callTrack)rec.start(callTrack);else rec.start();listening=true;
     }catch(e){toast("Couldn't start the microphone");return;}
     startedAt=Date.now();$("#timer").textContent="00:00";
     timerInt=setInterval(function(){$("#timer").textContent=fmt(elapsed());},1000);
-    $("#recMeta").textContent=(mode==="meeting"?(tmplSel.value==="auto"?"Meeting":TMPL[tmplSel.value].label):"Quick note")+" in "+langSel.options[langSel.selectedIndex].text+(callTrack?", whole call":"");
+    $("#recMeta").textContent=recMetaText();
     renderLyrics();view("rec");startViz();if(window.VaaniHook)VaaniHook("start",{});
     try{if(navigator.vibrate)navigator.vibrate(10);}catch(e){}
   }
+  /* M1: a Sarvam key saved before v2.3 was for text only. Nothing is recorded until the person chooses, once. */
+  /* focus starts on the heading, never on the button that turns audio upload on (one Enter must not opt in) */
+  function openSttChoice(){openSheet("#sttChoice");setTimeout(function(){$("#sttChoiceH").focus();},80);}
+  $("#sttUse").addEventListener("click",function(){save("vaani.stt","sarvam");closeSheets();syncRecBtn();if(!listening)startRec();else if(switchToSarvam())toast("Sarvam AI is transcribing from now on");});
+  $("#sttKeep").addEventListener("click",function(){save("vaani.stt","browser");closeSheets();syncRecBtn();if(!listening)startRec();});
+  function newSR(){
+      rec=new SR();rec.lang=langSel.value;rec.continuous=true;rec.interimResults=true;
+      rec.onresult=onResult;
+      rec.onerror=function(e){if(e.error==="not-allowed"||e.error==="service-not-allowed"){want=false;cleanup();view("idle");toast("Allow the microphone in the address bar, then try again");}};
+      rec.onend=function(){if(want){try{if(callTrack&&callTrack.readyState==="live")rec.start(callTrack);else rec.start();}catch(e){}}};
+  }
+  function sttStart(){
+    VaaniSTT.start({track:callTrack,lang:langSel.value,t0:startedAt,onSegs:sttSegs,onState:function(st){if(window.VaaniHook)VaaniHook("stt",st);}}).catch(function(e){
+      if(!sttOn||!listening)return;VaaniSTT.reset();sttOn=false;
+      if(e&&e.name==="NotAllowedError"){want=false;cleanup();view("idle");toast("Allow the microphone in the address bar, then try again");return;}
+      /* Sarvam's recorder could not start here: carry on with the browser's speech recognition */
+      if(SR){try{newSR();if(callTrack)rec.start(callTrack);else rec.start();$("#recMeta").textContent=recMetaText();renderLyrics();toast("Sarvam AI couldn't start here. Using this browser's speech recognition.");return;}catch(x){}}
+      want=false;cleanup();view("idle");toast("Couldn't start the microphone");});
+  }
+  /* Sarvam AI's words arrive in pieces, in recording order */
+  function sttSegs(a){if(!sttOn||!a.length)return;var from=segs.length;a.forEach(function(s){segs.push(s);});renderLyrics();if(window.VaaniHook)VaaniHook("result",{fin:a.map(function(s){return s.x;}).join(" "),interim:"",stt:true,from:from});}
+  /* the browser heard nothing useful: listen for another language from now on (one tap in the warning) */
+  function setRecLang(l){if(!LANGS.some(function(x){return x[0]===l;}))return;langSel.value=l;save("vaani.lang",l);syncPills();if(listening&&!sttOn&&rec){rec.lang=l;try{rec.stop();}catch(e){}}if(listening)$("#recMeta").textContent=recMetaText();}
+  /* switch a running browser recording over to Sarvam AI, keeping what was heard so far */
+  function switchToSarvam(){if(!listening||sttOn||!sttUsable())return false;want=false;if(rec){rec.onend=null;rec.onresult=null;try{rec.stop();}catch(e){}rec=null;}
+    if(interim){segs.push({t:fmt(elapsed()),x:interim});interim="";renderLyrics();}sttPre=segs.slice();sttOn=true;want=true;sttStart();$("#recMeta").textContent=recMetaText();renderLyrics();return true;}
   function onResult(ev){
     var fin="",tmp="";
     for(var i=ev.resultIndex;i<ev.results.length;i++){var r=ev.results[i];if(r.isFinal)fin+=r[0].transcript;else tmp+=r[0].transcript;}
@@ -355,7 +406,7 @@
   var lyShown=0,lyInterim=null;
   function renderLyrics(){
     var el=$("#lyrics");
-    if(!segs.length&&!interim){el.innerHTML='<p class="empty-ly">Listening. Start talking whenever you are ready.</p>';lyShown=0;lyInterim=null;return;}
+    if(!segs.length&&!interim){el.innerHTML='<p class="empty-ly">'+(sttOn?"Listening. Words appear about every 25 seconds.":"Listening. Start talking whenever you are ready.")+'</p>';lyShown=0;lyInterim=null;return;}
     var em=el.querySelector(".empty-ly");if(em)em.remove();
     while(lyShown<segs.length){var s=segs[lyShown],p=document.createElement("p");p.className="ly";p.innerHTML='<time>'+esc(s.t)+'</time>'+esc(s.x);
       if(lyInterim)el.insertBefore(p,lyInterim);else el.appendChild(p);lyShown++;}
@@ -367,17 +418,33 @@
   function cleanup(){if(window.VaaniHook)VaaniHook("cleanup",{});want=false;listening=false;if(rec){try{rec.stop();}catch(e){}}clearInterval(timerInt);stopViz();stopCall();}
   function stopRec(){
     if(!listening)return;
-    var dur=elapsed(),wasCall=!!callTrack;cleanup();
+    var dur=elapsed(),wasCall=!!callTrack;
+    if(sttOn){stopStt(dur,wasCall);return;}
+    lastVoice={known:vz.known,secs:vz.tot/1000};cleanup();
     if(interim){segs.push({t:fmt(dur),x:interim});interim="";}
     var w=words(segs.map(function(s){return s.x;}).join(" "));
     if(!w){view("idle");toast("Vaani didn't catch any words. Check your microphone and try again.");return;}
     var n={id:Date.now(),kind:mode,date:new Date().toISOString(),dur:dur,lang:langSel.value,tmpl:tmplSel.value,segs:segs.slice(),title:titleFrom(segs[0].x),md:"",done:{},words:w};if(wasCall)n.call=true;
-    if(window.VaaniHook)VaaniHook("beforeSave",n);upsert(n);currentId=n.id;
+    if(window.VaaniHook)VaaniHook("beforeSave",n);upsert(n);currentId=n.id;lastVoice.id=n.id;
     makeNotes(n);
+  }
+  /* Sarvam AI: stop recording, release the microphone, wait for the last pieces, then make notes */
+  function stopStt(dur,wasCall){
+    listening=false;want=false;clearInterval(timerInt);stopViz();
+    view("making");$("#makingH").textContent="Transcribing the last part";$("#makingSub").textContent="Sarvam AI is turning the last few seconds into text.";
+    VaaniSTT.stop().then(function(){stopCall();return VaaniSTT.finish();}).then(function(r){
+      sttOn=false;segs=sttPre.concat(r.segs);sttPre=[];interim="";cleanup();VaaniSTT.reset();
+      if(r.drop){view("idle");toast("Recording discarded");return;}
+      var w=words(segs.map(function(s){return s.x;}).join(" "));
+      if(!w){view("idle");toast("Sarvam AI didn't catch any words. Check your microphone and try again.");return;}
+      var n={id:Date.now(),kind:mode,date:new Date().toISOString(),dur:dur,lang:r.lang||langSel.value,tmpl:tmplSel.value,segs:segs.slice(),title:titleFrom(segs[0].x),md:"",done:{},words:w,stt:"sarvam"};if(wasCall)n.call=true;if(r.gap)n.gap=r.gap;
+      if(window.VaaniHook)VaaniHook("beforeSave",n);upsert(n);currentId=n.id;
+      makeNotes(n);
+    },function(){sttOn=false;cleanup();VaaniSTT.reset();view("idle");toast("Something went wrong while transcribing. Please try again.");});
   }
   $("#recBtn").addEventListener("click",startRec);
   $("#stopBtn").addEventListener("click",stopRec);
-  $("#newBtn").addEventListener("click",function(){app.classList.remove("list-open");if(listening)return;currentId=null;view("idle");});
+  $("#newBtn").addEventListener("click",function(){app.classList.remove("list-open");if(listening||(window.VaaniSTT&&VaaniSTT.busy()))return;currentId=null;view("idle");});
   $("#tbNew").addEventListener("click",function(){currentId=null;view("idle");});
   document.addEventListener("keydown",function(e){
     if((e.metaKey||e.ctrlKey)&&(e.key==="j"||e.key==="J")){e.preventDefault();if(listening)stopRec();else if(!$("#vIdle").hidden||!$("#vNote").hidden){closeSheets();view("idle");startRec();}}
@@ -385,18 +452,24 @@
   });
 
   /* live level meter in the pill */
-  var ac=null,an=null,ms=null,raf=0;
+  var ac=null,an=null,ms=null,raf=0,lv=null,vzInt=0,vz={known:false,tot:0,log:[],last:0};
+  /* how many seconds the microphone heard speech-level sound: the "isn't catching words" check and thin-note reasons */
+  function voiceReset(){vz={known:false,tot:0,log:[],last:0};}
+  function voiceSample(){if(!lv)return;var b=new Float32Array(lv.fftSize);lv.getFloatTimeDomainData(b);var s=0;for(var i=0;i<b.length;i++)s+=b[i]*b[i];
+    var on=Math.sqrt(s/b.length)>0.015,now=Date.now(),dt=vz.last?Math.min(2000,now-vz.last):0;vz.last=now;vz.known=true;if(on)vz.tot+=dt;vz.log.push([now,on?dt:0]);while(vz.log.length&&now-vz.log[0][0]>120000)vz.log.shift();}
+  function voicedSecs(win){if(!win)return vz.tot/1000;var now=Date.now();return vz.log.reduce(function(a,x){return now-x[0]<=win?a+x[1]:a;},0)/1000;}
   function startViz(){
     var wv=$("#wv");wv.classList.add("css");
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)return;
     navigator.mediaDevices.getUserMedia({audio:true}).then(function(st){
       if(!listening){st.getTracks().forEach(function(t){t.stop();});return;}
       ms=st;ac=new (window.AudioContext||window.webkitAudioContext)();var src=ac.createMediaStreamSource(st);an=ac.createAnalyser();an.fftSize=64;src.connect(an);
+      try{lv=ac.createAnalyser();lv.fftSize=2048;src.connect(lv);vz.last=Date.now();vzInt=setInterval(voiceSample,250);}catch(e){lv=null;}
       wv.classList.remove("css");var bars=$$("i",wv),buf=new Uint8Array(an.frequencyBinCount);
       (function f(){raf=requestAnimationFrame(f);an.getByteFrequencyData(buf);bars.forEach(function(b,i){var v=buf[2+i*3]/255;b.style.transform="scaleY("+Math.max(.18,Math.min(1,v*1.4)).toFixed(2)+")";});})();
     }).catch(function(){});
   }
-  function stopViz(){cancelAnimationFrame(raf);if(ms){ms.getTracks().forEach(function(t){t.stop();});ms=null;}if(ac){try{ac.close();}catch(e){}ac=null;}an=null;}
+  function stopViz(){clearInterval(vzInt);vzInt=0;lv=null;cancelAnimationFrame(raf);if(ms){ms.getTracks().forEach(function(t){t.stop();});ms=null;}if(ac){try{ac.close();}catch(e){}ac=null;}an=null;}
 
   /* ---------- engines ---------- */
   function provider(){return load("vaani.provider","auto");}
@@ -451,8 +524,19 @@
           var b=basicNotes(n).split("\n## ").slice(2).map(function(x){return "## "+x;}).join("\n");
           if(!sum||sum.indexOf(stamped(n).slice(0,40))>=0||/not available/i.test(String(sum).slice(0,80)))throw new Error("bad-sm");return "# "+n.title+"\n## Summary\n"+sum+(b?"\n"+b:"");});});});
   }
+  /* v2.3: never invent notes. A recording over 3 minutes with under 25 words, or under 4 words a minute (40 per 10
+     minutes), is too thin to summarise: no model is called, and the note says so plainly, with the likely reason. */
+  function thinOf(n){var d=+n.dur||0;if(d<=180)return null;var w=+n.words||words(plain(n)),need=Math.max(25,Math.round(d/60*4));return w<need?{w:w,d:d}:null;}
+  function thinNote(n,th){
+    var lv0=lastVoice&&lastVoice.id===n.id?lastVoice:null;
+    n.thin=n.stt==="sarvam"?"sarvam":lv0&&lv0.known&&lv0.secs<Math.max(20,th.d*0.1)?"quiet":"lang";
+    n.title="Too few words to summarise";
+    n.md="# "+n.title+"\n## What Vaani heard\nVaani heard only "+th.w+(th.w===1?" word":" words")+" in "+Math.round(th.d/60)+" minutes, so there’s nothing reliable to summarise. "+(th.w===1?"The word it caught is":"The words it caught are")+" in the Transcript tab.";
+    n.engine="";n.done={};if(window.VaaniHook)VaaniHook("made",n);upsert(n);showNote(n,true);
+  }
   function makeNotes(n){
-    view("making");
+    var th=thinOf(n);if(th){thinNote(n,th);return;}
+    view("making");$("#makingH").textContent="Writing your notes";
     var ms=$("#makingSub");if(remoteReady())ms.textContent="Using "+PNAME[provider()]+".";else{ms.textContent="Using Vaani’s basic engine.";lmAvail().then(function(a){if(a==="available")ms.textContent="Using the AI built into this browser.";});}
     var sys,prompt,basic;
     if(n.kind==="meeting"){sys="You are an expert meeting note-taker. Write in "+outLang.value+". "+tmplOf(n.tmpl).sys+" "+FMT;prompt="Transcript:\n"+stamped(n);basic=function(){return tmo(summarizerNotes(n),12000).catch(function(){return basicNotes(n);});};}
@@ -512,9 +596,10 @@
     $("#noteBody").hidden=t!=="notes";$("#trBody").hidden=t!=="transcript";}
   $("#noteSeg").addEventListener("click",function(e){var b=e.target.closest("[data-tab]");if(b)setTab(b.getAttribute("data-tab"));});
   function showNote(n,fresh){
+    if(window.VaaniSTT&&VaaniSTT.busy()&&app.getAttribute("data-view")==="making"){toast("Vaani is still transcribing the last recording.");return;}
     currentId=n.id;var d=new Date(n.date);
     var saved=Math.max(1,Math.round((n.words||words(plain(n)))/40));
-    $("#noteKicker").textContent=fresh?(n.kind==="meeting"?"Notes ready. You saved about "+saved+" min of typing.":"Note ready. You saved about "+saved+" min of typing."):dayLabel(d)+", "+timeLabel(d);
+    $("#noteKicker").textContent=n.thin?"":fresh?(n.kind==="meeting"?"Notes ready. You saved about "+saved+" min of typing.":"Note ready. You saved about "+saved+" min of typing."):dayLabel(d)+", "+timeLabel(d);
     $("#noteTitle").textContent=n.title||"Untitled";
     var langName=(LANGS.filter(function(l){return l[0]===n.lang;})[0]||[0,""])[1];
     $("#noteMeta").textContent=(n.kind==="meeting"?(hasTmpl(n.tmpl)&&n.tmpl!=="auto"?TMPL[n.tmpl].label:"Meeting"):"Quick note")+", "+(typeof n.dur==="number"?(n.dur<60?"under a minute":fmt(n.dur)):"")+(langName?", "+langName:"");
@@ -537,10 +622,14 @@
   function cur(){return currentId&&getNote(currentId);}
   var opener=null;
   function sheetOpen(){return $$(".scrim:not(.ask-scrim)").some(function(s){return !s.hidden;});}
-  function openSheet(id){if(!sheetOpen()){var a=document.activeElement;opener=a&&a!==document.body?a:null;}$$(".scrim").forEach(function(s){s.hidden=true;});$(id).hidden=false;if(window.VaaniHook)VaaniHook("sheet",id);var f=$(id).querySelector("button,select,input");if(f)setTimeout(function(){f.focus();},60);}
-  function closeSheets(){var was=sheetOpen();$$(".scrim").forEach(function(s){s.hidden=true;});var o=opener;opener=null;if(was&&o&&document.contains(o)&&o.getClientRects().length&&!o.closest(".scrim"))try{o.focus({preventScroll:true});}catch(e){}else if(was&&document.activeElement&&document.activeElement.closest&&document.activeElement.closest(".scrim"))document.activeElement.blur();}
+  function openSheet(id){if(!sheetOpen()){var a=document.activeElement;opener=a&&a!==document.body?a:null;}$$(".scrim").forEach(function(s){s.hidden=true;});$(id).hidden=false;app.inert=true;if(window.VaaniHook)VaaniHook("sheet",id);var f=$(id).querySelector("button,select,input");if(f)setTimeout(function(){f.focus();},60);}
+  function closeSheets(){var was=sheetOpen();$$(".scrim").forEach(function(s){s.hidden=true;});app.inert=false;var o=opener;opener=null;if(was&&o&&document.contains(o)&&o.getClientRects().length&&!o.closest(".scrim"))try{o.focus({preventScroll:true});}catch(e){}else if(was&&$("#listBtn")&&$("#listBtn").getClientRects().length)$("#listBtn").focus();else if(was&&document.activeElement&&document.activeElement.closest&&document.activeElement.closest(".scrim"))document.activeElement.blur();}
   $$(".scrim").forEach(function(s){s.addEventListener("click",function(e){if(e.target===s||e.target.closest("[data-close]"))closeSheets();});});
-  document.addEventListener("click",function(e){var b=e.target.closest("[data-open]");if(!b)return;var w=b.getAttribute("data-open");if(w!=="settings"&&w!=="privacy")return;app.classList.remove("list-open");if(w==="settings")openSettings();else openSheet("#privSheet");});
+  /* sheets opened or closed by other code (home.js, calendar.js) keep the app's inert state in step */
+  /* sign-off S3: a sheet removed from the page (not just hidden) also releases the app */
+  try{new MutationObserver(function(ms){for(var i=0;i<ms.length;i++){var m=ms[i],t=m.target;if(t.classList&&t.classList.contains("scrim")){app.inert=sheetOpen();return;}
+    for(var j=0;j<m.removedNodes.length;j++){var r=m.removedNodes[j];if(r.nodeType===1&&(r.classList.contains("scrim")||r.querySelector(".scrim"))){app.inert=sheetOpen();return;}}}}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:["hidden"]});}catch(e){}
+  document.addEventListener("click",function(e){var b=e.target.closest("[data-open]");if(!b)return;var w=b.getAttribute("data-open");if(w!=="settings"&&w!=="privacy")return;app.classList.remove("list-open");if(w==="settings")openSettings(b.getAttribute("data-prov"));else openSheet("#privSheet");});
   $("#shNative").hidden=!navigator.share;
   $("#tbShare").addEventListener("click",function(){if(cur())openSheet("#shareSheet");});
   $("#tbCopy").addEventListener("click",function(){var n=cur();if(n)copyText(shareText(n),"Copied. Paste it anywhere.");});
@@ -590,12 +679,26 @@
 
   /* ---------- settings ---------- */
   var HINTS={auto:"Free. Notes are written in this browser, by its built-in AI when it has one and by Vaani’s basic engine everywhere else. Speech to text is done by your browser: Chrome sends the audio to Google, and Edge to Microsoft.",
-    sarvam:'Get a key at <a href="https://dashboard.sarvam.ai" target="_blank" rel="noopener">dashboard.sarvam.ai</a>. Best for Hindi, Kannada, Tamil and other Indian languages.',
+    sarvam:'Get a key at <a href="https://dashboard.sarvam.ai" target="_blank" rel="noopener">dashboard.sarvam.ai</a>. Best for Hindi, Kannada, Tamil and other Indian languages. This key also turns on Sarvam AI’s speech to text, so the meeting audio goes to Sarvam AI.',
     openai:'Get a key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>.',
     anthropic:'Get a key at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>.',
     gemini:'Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a>.'};
   var provSel=$("#provSel"),keyInp=$("#keyInp");
-  function syncProv(){var p=provSel.value;$("#keyWrap").hidden=p==="auto";keyInp.value=keyFor(p);$("#keyHint").innerHTML=HINTS[p]+(p!=="auto"?" Your key is kept only in this browser and sent only to that provider. Use a key with a monthly spend limit.":"");$("#keyRm").hidden=p==="auto"||!keyFor(p);}
+  function syncProv(){var p=provSel.value;$("#keyWrap").hidden=p==="auto";keyInp.value=keyFor(p);$("#keyHint").innerHTML=HINTS[p]+(p!=="auto"?" Your key is kept only in this browser and sent only to that provider. Use a key with a monthly spend limit.":"");$("#keyRm").hidden=p==="auto"||!keyFor(p);if(sttSetup&&p==="sarvam")$("#keyHint").appendChild(document.createTextNode(" When you press Done, notes go back to "+(PNAME[sttSetup]||"the free built-in engine")+". This key is used only for speech to text."));syncStt();}
+  /* speech to text: Sarvam AI when a Sarvam key is saved (or being typed), unless switched to this browser */
+  function syncStt(){var has=!!keyFor("sarvam")||(provSel.value==="sarvam"&&!!keyInp.value.trim()),on=load("vaani.stt","sarvam")!=="browser",ok=!window.VaaniSTT||VaaniSTT.codeFor(langSel.value)!==null,seg=$("#sttSeg");
+    /* a key saved before v2.3 and no choice yet: neither option is shown as chosen; Record asks first */
+    var unset=load("vaani.stt",null)===null&&!!keyFor("sarvam")&&!(provSel.value==="sarvam"&&keyInp.value.trim()&&keyInp.value.trim()!==keyFor("sarvam"));
+    seg.hidden=!has;seg.setAttribute("data-on",unset?"none":on?0:1);
+    /* sign-off n2: before the choice, the key hint doesn't say the key turns speech to text on */
+    var kh=$("#keyHint"),A="This key also turns on Sarvam AI’s speech to text, so the meeting audio goes to Sarvam AI.",B="This key can also do speech to text. See Speech to text below.";if(provSel.value==="sarvam")kh.innerHTML=kh.innerHTML.split(unset?A:B).join(unset?B:A);$$("#sttSeg button").forEach(function(b){b.setAttribute("aria-pressed",!unset&&(b.getAttribute("data-stt")==="sarvam")===on?"true":"false");});
+    $("#sttHint").textContent=!has?"Your browser listens for one language at a time. For Kannada, Hindi and other Indian languages, especially mixed with English, choose Sarvam AI above and add its key. Vaani then sends the meeting audio to Sarvam AI to be transcribed."
+      :unset?"Not chosen yet. Vaani will ask the next time you record. With Sarvam AI, the meeting audio and your Names and words list go from this browser to Sarvam AI."
+      :!on?"Your browser turns speech into text (Chrome sends the audio to Google). It listens for one language at a time."
+      :!ok?langName(langSel.value)+" isn’t one of Sarvam AI’s languages, so this browser does speech to text for it."
+      :"Sarvam AI turns the meeting audio into text: Indian languages and English, mixed or not. The audio goes from this browser straight to Sarvam AI in pieces of about 25 seconds, with your Names and words list so names come out right. Nothing goes to Vaani.";}
+  $("#sttSeg").addEventListener("click",function(e){var b=e.target.closest("[data-stt]");if(!b)return;save("vaani.stt",b.getAttribute("data-stt"));syncStt();syncRecBtn();});
+  keyInp.addEventListener("input",function(){if(provSel.value==="sarvam")syncStt();});
   $("#keyRm").addEventListener("click",function(e){var p=provSel.value,old=keyFor(p),H=window.VaaniHome;remove("vaani.key."+p);keyInp.value="";syncProv();var msg="Removed your "+PNAME[p]+" key";if(H&&H.actToast){H.actToast(msg,"Undo",function(){var typed=keyFor(p)||(provSel.value===p&&keyInp.value.trim());if(typed||!old){old="";return;}save("vaani.key."+p,old);old="";syncProv();$("#keyRm").focus();},function(){old="";if(!document.activeElement||document.activeElement===document.body)keyInp.focus();});var ub=document.querySelector(".vtoast button");if(ub&&e&&e.detail===0)ub.focus({preventScroll:true});else keyInp.focus();}else toast(msg+" from this browser");});
   function checkStatus(){
     var el=$("#aiStatus");el.textContent="Checking this browser…";
@@ -607,15 +710,20 @@
       else el.innerHTML="<b>This browser uses Vaani’s basic engine.</b> It is free and works offline. For smarter notes without a key, open Vaani in Chrome on a computer, or add a key above.";
     });
   }
-  function openSettings(){provSel.value=provider();syncProv();checkStatus();openSheet("#setSheet");}
+  /* S3: Settings opened to set up Sarvam AI's speech to text keeps the notes engine as it is, and says so */
+  var sttSetup=null;
+  function openSettings(p){sttSetup=p==="sarvam"&&provider()!=="sarvam"?provider():null;provSel.value=p&&PNAME[p]?p:provider();syncProv();checkStatus();openSheet("#setSheet");if(p&&PNAME[p])setTimeout(function(){keyInp.focus();},80);}
   provSel.addEventListener("change",syncProv);
-  $("#setDone").addEventListener("click",function(){var p=provSel.value;save("vaani.provider",p);if(p!=="auto")save("vaani.key."+p,keyInp.value.trim());save("vaani.outLang",outLang.value);closeSheets();
+  $("#setDone").addEventListener("click",function(){var p=provSel.value,oldS=keyFor("sarvam"),keep=sttSetup&&p==="sarvam"?sttSetup:null;sttSetup=null;save("vaani.provider",keep||p);if(p!=="auto")save("vaani.key."+p,keyInp.value.trim());
+    /* a new Sarvam key saved here, under the hint that says the audio goes to Sarvam AI: that is the choice, so it isn't asked again */
+    if(p==="sarvam"&&keyInp.value.trim()&&keyInp.value.trim()!==oldS&&load("vaani.stt",null)===null)save("vaani.stt","sarvam");save("vaani.outLang",outLang.value);syncRecBtn();closeSheets();
+    if(keep){toast(keyInp.value.trim()?"Sarvam AI does speech to text now. Notes are still written by "+(PNAME[keep]||"the free built-in engine")+".":"Add a key to use Sarvam AI");return;}
     toast(p==="auto"?"Using the free built-in engine":(keyInp.value.trim()?PNAME[p]+" is ready":"Add a key to use "+PNAME[p]));});
 
-  /* ---------- start ---------- */window.Vaani={notes:notes,getNote:getNote,upsert:upsert,setNotes:setNotes,showNote:showNote,view:view,startRec:startRec,stopRec:stopRec,setMode:setMode,getMode:function(){return mode;},generate:generate,toast:toast,esc:esc,il:il,parseMd:parseMd,dayLabel:dayLabel,timeLabel:timeLabel,words:words,load:load,save:save,loadJSON:loadJSON,saveJSON:saveJSON,TMPL:TMPL,PNAME:PNAME,remoteReady:remoteReady,provider:provider,openSheet:openSheet,closeSheets:closeSheets,shareText:shareText,copyText:copyText,APP_URL:APP_URL,makeNotes:makeNotes,titleFrom:titleFrom,plain:plain,stamped:stamped,fmt:fmt,basicNotes:basicNotes,elapsed:elapsed,isListening:function(){return listening;},getSegs:function(){return segs;},getInterim:function(){return interim;},getStartedAt:function(){return startedAt;},cur:cur,getCurrentId:function(){return currentId;},setCurrentId:function(i){currentId=i;},langSel:langSel,tmplSel:tmplSel,outLang:outLang,SRC:SRC,getCallOn:function(){return callOn;},renderSaved:renderSaved,isMac:isMac,LANGS:LANGS,openSettings:openSettings,lmAvail:lmAvail,setCallOn:function(v){callOn=!!v;syncCall();},hasCallTrack:function(){return !!callTrack;},isCallSrc:CALLSRC,ownerSplit:ownerSplit,hasTmpl:hasTmpl,hasSR:!!SR,remove:remove,storeFailing:storeFailing,basicClean:basicClean,savedWords:savedWords,sortNotes:function(a){return a.sort(function(x,y){return new Date(y.date)-new Date(x.date);});}};
+  /* ---------- start ---------- */window.Vaani={notes:notes,getNote:getNote,upsert:upsert,setNotes:setNotes,showNote:showNote,view:view,startRec:startRec,stopRec:stopRec,setMode:setMode,getMode:function(){return mode;},generate:generate,toast:toast,esc:esc,il:il,parseMd:parseMd,dayLabel:dayLabel,timeLabel:timeLabel,words:words,load:load,save:save,loadJSON:loadJSON,saveJSON:saveJSON,TMPL:TMPL,PNAME:PNAME,remoteReady:remoteReady,provider:provider,openSheet:openSheet,closeSheets:closeSheets,shareText:shareText,copyText:copyText,APP_URL:APP_URL,makeNotes:makeNotes,titleFrom:titleFrom,plain:plain,stamped:stamped,fmt:fmt,basicNotes:basicNotes,elapsed:elapsed,isListening:function(){return listening;},getSegs:function(){return segs;},getInterim:function(){return interim;},getStartedAt:function(){return startedAt;},cur:cur,getCurrentId:function(){return currentId;},setCurrentId:function(i){currentId=i;},langSel:langSel,tmplSel:tmplSel,outLang:outLang,SRC:SRC,getCallOn:function(){return callOn;},renderSaved:renderSaved,isMac:isMac,LANGS:LANGS,openSettings:openSettings,lmAvail:lmAvail,canRecord:canRecord,openSttChoice:openSttChoice,syncRecBtn:syncRecBtn,sttActive:function(){return sttOn;},setRecLang:setRecLang,switchToSarvam:switchToSarvam,voicedSecs:voicedSecs,voiceKnown:function(){return vz.known;},hasSarvamKey:function(){return !!keyFor("sarvam");},langName:langName,setCallOn:function(v){callOn=!!v;syncCall();},hasCallTrack:function(){return !!callTrack;},isCallSrc:CALLSRC,ownerSplit:ownerSplit,hasTmpl:hasTmpl,hasSR:!!SR,remove:remove,storeFailing:storeFailing,basicClean:basicClean,savedWords:savedWords,sortNotes:function(a){return a.sort(function(x,y){return new Date(y.date)-new Date(x.date);});}};
   view("idle");
   if("serviceWorker" in navigator&&location.protocol==="https:"){navigator.serviceWorker.register("sw.js").catch(function(){});}
 })();
 </script>
-<script src="home.js"></script><script src="insights.js"></script><script src="calendar.js"></script></body>
+<script src="stt.js"></script><script src="home.js"></script><script src="insights.js"></script><script src="calendar.js"></script></body>
 </html>

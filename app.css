@@ -3,6 +3,8 @@
 /* Three weights in running use: 400 text and controls, 600 owners, titles and heads, 700 the display greeting and note titles */
 /* Hallmark · dismissed 29 · the sidebar blur is the iOS and macOS source-list material over the paper, not a glow or wash behind text */
 /* Hallmark · answered F7 · every pill here is a control or a live status chip: nudge, folder suggestion, owner filter, the recording island */
+/* Hallmark · dismissed 73 · transcript lines above the clipped .lyrics box are not painted; .lyrics starts at the header's bottom edge with overflow hidden */
+/* Hallmark · waive 39b · the Mark this button is one 67px tap target with its icon over its label · the record screen keeps the iOS icon-over-label control beside Stop */
 /* Hallmark · answered F4 · Meeting and Quick note are one segmented control with a single sliding thumb, not two filled buttons */
 /* Vaani app stylesheet. Replaces the inline <style> in index.html (disabled by patch). One system for every screen:
    a date gutter, an axis and a node on the left, content on the right ("the line"). Colour literals live only in the token blocks. */
@@ -12,7 +14,7 @@
   color-scheme:light;
   --bg:#FFFFFF;--bg2:#F2F2F7;--card:#FFFFFF;--card2:#FFFFFF;--sheet:#F2F2F7;--side:rgba(242,242,247,0.86);
   --label:#000000;--label2:#6C6C70;--label3:#737378;--sep:rgba(60,60,67,0.18);
-  --fill:rgba(118,118,128,0.12);--fill2:rgba(118,118,128,0.2);
+  --fill:rgba(118,118,128,0.12);--fill2:rgba(118,118,128,0.2);--fill-card:var(--fill);
   --tint:#0A66D8;--tint-soft:rgba(10,102,216,0.12);--on-tint:#FFFFFF;--tint-fill:#0A66D8;
   --red:#FF3B30;--red-ink:#D70015;--red-soft:rgba(255,59,48,0.12);--ring:#D1D1D6;--past:#8E8E93;--ck-edge:#8E8E93;
   --amber:#9A5200;--amber-soft:rgba(255,159,10,0.16);--amber-bar:#FF9F0A;--wave:#FF9F0A;
@@ -46,7 +48,7 @@
   color-scheme:dark;
   --bg:#000000;--bg2:#000000;--card:#1C1C1E;--card2:#2C2C2E;--sheet:#1C1C1E;--side:rgba(28,28,30,0.86);
   --label:#FFFFFF;--label2:#AEAEB2;--label3:#98989D;--sep:rgba(84,84,88,0.6);
-  --fill:rgba(118,118,128,0.24);--fill2:rgba(118,118,128,0.32);
+  --fill:rgba(118,118,128,0.24);--fill2:rgba(118,118,128,0.32);--fill-card:var(--card2);
   --tint:#4D97FF;--tint-soft:rgba(77,151,255,0.2);
   --red:#FF453A;--red-ink:#FF6961;--red-soft:rgba(255,69,58,0.18);--ring:#48484A;--past:#7C7C80;
   --amber:#FFB340;--amber-soft:rgba(255,179,64,0.18);--amber-bar:#FFB340;
@@ -73,7 +75,7 @@
     color-scheme:dark;
     --bg:#000000;--bg2:#000000;--card:#1C1C1E;--card2:#2C2C2E;--sheet:#1C1C1E;--side:rgba(28,28,30,0.86);
     --label:#FFFFFF;--label2:#AEAEB2;--label3:#98989D;--sep:rgba(84,84,88,0.6);
-    --fill:rgba(118,118,128,0.24);--fill2:rgba(118,118,128,0.32);
+    --fill:rgba(118,118,128,0.24);--fill2:rgba(118,118,128,0.32);--fill-card:var(--card2);
     --tint:#4D97FF;--tint-soft:rgba(77,151,255,0.2);
     --red:#FF453A;--red-ink:#FF6961;--red-soft:rgba(255,69,58,0.18);--ring:#48484A;--past:#7C7C80;
     --amber:#FFB340;--amber-soft:rgba(255,179,64,0.18);--amber-bar:#FFB340;
@@ -201,6 +203,7 @@ kbd,.kbd{font-family:var(--font);font-size:12px;font-weight:400;padding:2px var(
 .seg button:active{opacity:.7}
 .seg .thumb{position:absolute;top:2px;bottom:2px;left:2px;width:calc(50% - 2px);border-radius:7px;background:var(--thumb);box-shadow:var(--shadow-thumb);transition:transform .45s var(--spring)}
 .seg[data-on="1"] .thumb{transform:translateX(100%)}
+.seg[data-on="none"] .thumb{opacity:0}
 .hm-now .seg{width:208px}
 .seg3{grid-template-columns:repeat(3,minmax(0,1fr));width:100%}
 .seg3 .thumb{width:calc(33.333% - 1.4px)}
@@ -221,6 +224,10 @@ kbd,.kbd{font-family:var(--font);font-size:12px;font-weight:400;padding:2px var(
 .pill-clear{position:relative;z-index:1;width:24px;height:24px;margin-right:calc(var(--space-2) * -1);border-radius:50%;display:grid;place-items:center;color:var(--tint)}
 .pill-clear:hover{background:var(--fill)}
 .hm-call{display:flex;align-items:center;gap:var(--space-4);margin-top:var(--space-3);min-width:0}
+.hm-steer{margin-top:var(--space-4);padding-top:var(--space-4);box-shadow:inset 0 .5px 0 var(--sep);font-size:14px;line-height:20px;color:var(--label2)}
+.hm-steer p{max-width:62ch}
+.hm-steer div{display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:var(--space-3)}
+.hm-steer .btn-f{background:var(--fill-card)}
 .call-chip{display:inline-flex;align-items:center;gap:var(--space-2);height:36px;padding:0;border-radius:999px;background:none;color:var(--label2);font-size:14px;font-weight:400;transition:color .15s var(--spring)}
 .call-chip:hover{color:var(--label)}
 .call-chip svg{width:16px;height:16px}
@@ -432,11 +439,24 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
 .rf-side:hover>span:first-child{background:var(--fill2)}
 .rf-side.on>span:first-child{background:var(--amber-soft);color:var(--amber)}
 .rf-hint{font-size:13px;color:var(--label2);text-align:center;margin-top:var(--space-2)}
+/* v2.3: words heard, and the calm warning when speech is heard but no words arrive */
+.rec-health{margin-top:var(--space-1);font-size:13px;line-height:18px;color:var(--label2);font-variant-numeric:tabular-nums;align-self:stretch;max-width:760px;margin-inline:auto;width:100%}
+.rec-warn{align-self:stretch;max-width:760px;width:100%;margin:var(--space-3) auto 0;padding:var(--space-3) var(--space-4);border-radius:14px;background:var(--amber-soft);font-size:15px;line-height:21px;color:var(--label)}
+.rec-warn b{font-weight:600}
+.rw-act{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2);margin-top:var(--space-3)}
+.rw-act .pill-select select,.rw-act .btn-f{background:var(--card)}
+.rw-act .pill-select select:hover,.rw-act .btn-f:hover{background:var(--bg2)}
 
 /* ================= making ================= */
-.v-making{justify-content:center;gap:var(--space-4);animation:fadeIn .35s var(--spring) backwards}
-.v-making h2{font-size:22px;font-weight:600}
-.v-making p{font-size:15px;color:var(--label2);text-align:center;max-width:36ch}
+.v-making{justify-content:center;gap:var(--space-4);padding-inline:var(--space-4);animation:fadeIn .35s var(--spring) backwards}
+.v-making h2{font-size:22px;font-weight:600;text-align:center}
+.v-making p{font-size:15px;color:var(--label2);text-align:center;max-width:46ch}
+/* the one-time speech-to-text choice: the second option is the grey fill on a card (4.5:1 in both themes) */
+#sttChoice .btn-wide{background:var(--fill-card)}
+#sttChoice .btn-wide:hover{background:var(--fill2)}
+#sttChoice h2:focus{outline:none}
+.stt-ask .btn-f{min-height:44px;border-radius:12px;padding:0 var(--space-5)}
+.stt-ask{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:var(--space-2);max-width:420px}
 
 /* ================= note view ================= */
 .v-note{background:var(--bg);align-items:stretch;position:relative;animation:sheet .45s var(--spring) backwards}
@@ -467,6 +487,11 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
 .inline-act{display:flex;flex-wrap:wrap;gap:var(--space-2);padding:var(--space-2) 0 0 calc(var(--gut) + var(--axis) + var(--space-1))}
 .peak{margin:var(--space-8) 0 0 calc(var(--gut) + var(--axis) + var(--space-1));padding:var(--space-4) 0;box-shadow:inset 0 .5px 0 var(--sep),inset 0 -.5px 0 var(--sep);font-size:15px;line-height:22px}
 .peak div{display:flex;gap:var(--space-2);margin-top:var(--space-3)}
+/* v2.3: a recording with too few words gets the likely reason and a fix, never invented notes */
+.thin-fix{margin:var(--space-6) 0 0 calc(var(--gut) + var(--axis) + var(--space-1));padding:var(--space-4) 0;box-shadow:inset 0 .5px 0 var(--sep),inset 0 -.5px 0 var(--sep);font-size:15px;line-height:22px;max-width:62ch}
+.thin-fix p + p{margin-top:var(--space-2)}
+.thin-fix b{font-weight:600}
+.tf-act{display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:var(--space-3)}
 .card{color:var(--label);background:var(--card2);border-radius:14px;overflow:hidden;margin-left:calc(var(--gut) + var(--axis) + var(--space-1))}
 .row{display:flex;gap:var(--space-3);align-items:flex-start;width:100%;padding:var(--space-3) var(--space-4);font-size:16px;line-height:1.45;text-align:left;white-space:normal}
 .row b{font-weight:600}
@@ -582,6 +607,8 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
 /* ================= phone ================= */
 @media (max-width:899px){
   :root{--gutter:var(--space-4);--gut:0px;--axis:28px}
+  /* the record screen is one viewport tall, so the Stop button stays on screen however long the transcript gets */
+  .app[data-view="rec"] .main{height:100vh;height:100dvh}
   .desk-only{display:none!important}
   .bar{position:sticky;top:0;z-index:9;background:var(--glass);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);box-shadow:inset 0 -.5px 0 var(--sep)}
   .app[data-view="rec"] .bar,.app[data-view="making"] .bar{background:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
