@@ -11,8 +11,19 @@ public struct DetectionSettings: Codable, Equatable, Sendable {
     public var knownAppDebounce: TimeInterval = 3
     /// How long any other app must hold the mic before we ask.
     public var otherAppDebounce: TimeInterval = 20
-    /// Stop notes when the call app has used neither mic nor speaker this long.
+    /// Stop notes when the call app has not used the microphone this long.
     public var autoStopAfter: TimeInterval = 60
+    /// A native call app playing sound (a muted user still hearing the call)
+    /// keeps the call "on" for at most this long after its last mic use.
+    /// Browsers never count sound as "on".
+    public var outputGraceAfterInput: TimeInterval = 300
+    /// Ask "Still taking notes?" after this long on a call session.
+    public var maxSessionLength: TimeInterval = 7200
+    /// Ask "Still taking notes?" this often for "Take notes now" sessions
+    /// and when the app cannot tell which app holds the mic.
+    public var manualCheckInterval: TimeInterval = 3600
+    /// Stop if "Still taking notes?" gets no answer this long.
+    public var stillThereTimeout: TimeInterval = 120
     /// No prompts at all for this long after a recording ends.
     public var cooldownAfterRecording: TimeInterval = 60
     /// If an app lets go of the mic for this long, its next use is a new call.
@@ -40,6 +51,10 @@ public struct DetectionSettings: Codable, Equatable, Sendable {
         s.knownAppDebounce = min(max(s.knownAppDebounce, 1), 120)
         s.otherAppDebounce = min(max(s.otherAppDebounce, 3), 600)
         s.autoStopAfter = min(max(s.autoStopAfter, 15), 1800)
+        s.outputGraceAfterInput = min(max(s.outputGraceAfterInput, 0), 1800)
+        s.maxSessionLength = min(max(s.maxSessionLength, 1800), 14400)
+        s.manualCheckInterval = min(max(s.manualCheckInterval, 900), 14400)
+        s.stillThereTimeout = min(max(s.stillThereTimeout, 30), 600)
         s.cooldownAfterRecording = min(max(s.cooldownAfterRecording, 0), 1800)
         s.newCallGap = min(max(s.newCallGap, 3), 600)
         s.promptHideGrace = min(max(s.promptHideGrace, 1), 60)
@@ -58,6 +73,7 @@ public struct DetectionSettings: Codable, Equatable, Sendable {
     // setting never wipes the user's ignore list.
     private enum CodingKeys: String, CodingKey {
         case enabled, ignoredBundleIDs, knownAppDebounce, otherAppDebounce, autoStopAfter,
+             outputGraceAfterInput, maxSessionLength, manualCheckInterval, stillThereTimeout,
              cooldownAfterRecording, newCallGap, promptHideGrace, promptTimeout, captureAllSystemAudio
     }
 
@@ -69,6 +85,10 @@ public struct DetectionSettings: Codable, Equatable, Sendable {
         knownAppDebounce = (try? c.decode(Double.self, forKey: .knownAppDebounce)) ?? d.knownAppDebounce
         otherAppDebounce = (try? c.decode(Double.self, forKey: .otherAppDebounce)) ?? d.otherAppDebounce
         autoStopAfter = (try? c.decode(Double.self, forKey: .autoStopAfter)) ?? d.autoStopAfter
+        outputGraceAfterInput = (try? c.decode(Double.self, forKey: .outputGraceAfterInput)) ?? d.outputGraceAfterInput
+        maxSessionLength = (try? c.decode(Double.self, forKey: .maxSessionLength)) ?? d.maxSessionLength
+        manualCheckInterval = (try? c.decode(Double.self, forKey: .manualCheckInterval)) ?? d.manualCheckInterval
+        stillThereTimeout = (try? c.decode(Double.self, forKey: .stillThereTimeout)) ?? d.stillThereTimeout
         cooldownAfterRecording = (try? c.decode(Double.self, forKey: .cooldownAfterRecording)) ?? d.cooldownAfterRecording
         newCallGap = (try? c.decode(Double.self, forKey: .newCallGap)) ?? d.newCallGap
         promptHideGrace = (try? c.decode(Double.self, forKey: .promptHideGrace)) ?? d.promptHideGrace

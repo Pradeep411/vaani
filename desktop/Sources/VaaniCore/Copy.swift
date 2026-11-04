@@ -5,12 +5,31 @@ import Foundation
 public enum Copy {
     // Prompt
     public static let promptQuestion = "Take notes with Vaani?"
+    /// Shown instead of promptQuestion when this call would be recorded with
+    /// all Mac sound (FaceTime, unknown apps, or the setting is on).
+    public static let promptQuestionAllSound = "Take notes? Records your mic and all Mac sound."
     public static let takeNotes = "Take notes"
     public static let notNow = "Not now"
     public static func takeNotesHint(_ app: String) -> String { "Starts notes for this \(app) call." }
     public static let notNowHint = "Hides this until your next call."
     public static func promptAnnouncement(_ c: CallCandidate) -> String {
         "\(c.kind.headline) in \(c.displayName). Take notes with Vaani?"
+    }
+
+    // "Still taking notes?" check (long sessions)
+    public static let stillTitle = "Still taking notes?"
+    public static let stillSubtitle = "Vaani stops in 2 minutes if you do not answer."
+    public static let stop = "Stop"
+    public static let keepGoing = "Keep going"
+    public static let stillAnnouncement = "Vaani is still taking notes. Keep going or stop?"
+
+    // Asking before recording all Mac sound
+    public static func widenTitle(_ app: String) -> String { "Vaani cannot hear \(app) directly." }
+    public static let widenSubtitle = "Record all Mac sound for this call?"
+    public static let micOnly = "Mic only"
+    public static let recordAllSound = "Record all sound"
+    public static func widenAnnouncement(_ app: String) -> String {
+        "Vaani cannot hear \(app) directly. Record all Mac sound for this call, or mic only?"
     }
 
     // Menu bar
@@ -23,6 +42,7 @@ public enum Copy {
     }
     public static let menuStop = "Stop taking notes"
     public static let menuTakeNotesNow = "Take notes now"
+    public static let menuTakeNotesNowAllSound = "Take notes now, with all Mac sound"
     public static let menuOpenVaani = "Open Vaani"
     public static let menuDetect = "Detect calls automatically"
     public static let menuIgnored = "Ignored apps…"
@@ -43,6 +63,14 @@ public enum Copy {
     public static let pageNotReady =
         "The Vaani web app has not connected yet. Your audio is kept on this Mac until it does."
     public static let openSettings = "Open System Settings"
+    public static let systemWideFromStart = "Recording your mic and all Mac sound."
+    public static let widenedByUser = "Recording your mic and all Mac sound for this call."
+    public static let micOnlyChosen = "Recording your mic only for this call."
+    public static let gapNotice = "The start of this call is no longer kept on this Mac. Notes cover the rest."
+    public static let pageMicInUse = "The Vaani notes window is using your microphone."
+    public static let pageCrashed = "The notes window stopped working. Choose Open Vaani to try again."
+    public static let windowTitle = "Vaani"
+    public static let windowTitleRecording = "Vaani, taking notes"
 
     // Settings window
     public static let settingsTitle = "Vaani settings"
@@ -64,6 +92,10 @@ public enum Copy {
          statusRecordingLabel, micOnlyTapFailed, micOnlyOldMac, tapSilent, micDenied, pageNotReady,
          openSettings, settingsTitle, ignoredHeading, ignoredExplainer, addApp, remove, restoreDefaults,
          captureAllTitle, captureAllExplainer, loginItemFailed,
+         promptQuestionAllSound, stillTitle, stillSubtitle, stop, keepGoing, stillAnnouncement,
+         widenTitle("Zoom"), widenSubtitle, micOnly, recordAllSound, widenAnnouncement("Zoom"),
+         menuTakeNotesNowAllSound, systemWideFromStart, widenedByUser, micOnlyChosen, gapNotice,
+         pageMicInUse, pageCrashed, windowTitle, windowTitleRecording,
          takeNotesHint("Zoom"), menuRecording("Zoom", minutes: 0), menuRecording(nil, minutes: 12)]
     }
 }

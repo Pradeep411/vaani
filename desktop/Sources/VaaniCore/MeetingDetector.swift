@@ -76,10 +76,19 @@ public enum PromptHideReason: Equatable, Sendable {
     case detectionTurnedOff
 }
 
+public enum AutoStopReason: Equatable, Sendable {
+    /// The call app stopped using the microphone (the call ended).
+    case callEnded(CallCandidate)
+    /// "Still taking notes?" got no answer.
+    case noAnswer
+}
+
 public enum DetectorEvent: Equatable, Sendable {
     case showPrompt(CallCandidate)
     case hidePrompt(PromptHideReason)
-    case autoStop(CallCandidate)
+    /// Long session: ask "Still taking notes?" (stops if unanswered).
+    case askStillTakingNotes(CallCandidate?)
+    case autoStop(AutoStopReason)
 }
 
 public enum DetectorState: Equatable {
@@ -103,7 +112,9 @@ public final class MeetingDetector {
         var candidate: CallCandidate
         var firstInputAt: TimeInterval
         var lastInputAt: TimeInterval
-        /// Last time the app used mic or speaker (for auto-stop).
+        /// Last time the call counted as "still on" (for auto-stop). Mic use
+        /// always counts. Speaker use counts only for native call apps and
+        /// only shortly after the last mic use (security audit H-01).
         var lastAliveAt: TimeInterval
         var dismissedForThisCall: Bool
     }
@@ -112,6 +123,11 @@ public final class MeetingDetector {
     private var cooldownUntil: TimeInterval = -.infinity
     private var autoStopSent = false
     private var lastNow: TimeInterval = 0
+    /// "Still taking notes?" schedule for the current recording.
+    private var nextCheckAt: TimeInterval = .infinity
+    private var checkAskedAt: TimeInterval?
+
+    public static let fallbackFamilyID = "unknown"
 
     public init(settings: DetectionSettings, selfPID: Int32, nameResolver: AppNameResolving = NoNameResolver()) {
         self.settings = settings.sanitized()
@@ -130,15 +146,25 @@ public final class MeetingDetector {
                                  isKnownCallApp: true, bundleID: app.bundleIDs.first, pids: [p.pid],
                                  priority: app.priority)
         }
-        let name = nameResolver.displayName(bundleID: p.bundleID, pid: p.pid)
-            ?? AppCatalog.fallbackName(forBundleID: p.bundleID)
+        // Names come from app bundles on disk: strip control and bidi
+        // characters and cap the length before they go anywhere (audit L-06).
+        let name = SafeText.label(nameResolver.displayName(bundleID: p.bundleID, pid: p.pid))
+            ?? SafeText.label(AppCatalog.fallbackName(forBundleID: p.bundleID))
+            ?? "Another app"
         let family = (p.bundleID?.isEmpty == false) ? "bundle:\(p.bundleID!.lowercased())" : "pid:\(p.pid)"
         return CallCandidate(familyID: family, displayName: name, kind: .other, isKnownCallApp: false,
-                             bundleID: p.bundleID, pids: [p.pid], priority: 0)
+                             bundleID: SafeText.label(p.bundleID, maxLength: 255), pids: [p.pid], priority: 0)
     }
 
     private func debounce(for c: CallCandidate) -> TimeInterval {
         c.isKnownCallApp ? settings.knownAppDebounce : settings.otherAppDebounce
+    }
+
+    /// Speaker use keeps a call "on" only for native call apps (a muted Zoom
+    /// user still hears the call), never for browsers (a YouTube tab is not
+    /// a call), and only for a bounded time after the last mic use.
+    private func outputCountsAsAlive(_ c: CallCandidate) -> Bool {
+        c.isKnownCallApp && c.kind != .browser
     }
 
     // MARK: Update
@@ -151,11 +177,11 @@ public final class MeetingDetector {
 
         // 1. Who is using the mic / speaker right now, grouped by app family.
         var inputFamilies: [String: CallCandidate] = [:]
-        var aliveFamilies = Set<String>()
+        var outputFamilies: [String: CallCandidate] = [:]
         if let processes = input.processes {
             for p in processes where p.runningInput || p.runningOutput {
                 guard let c = classify(p) else { continue }
-                if p.runningOutput || p.runningInput { aliveFamilies.insert(c.familyID) }
+                if p.runningOutput { outputFamilies[c.familyID] = c }
                 if p.runningInput {
                     if var existing = inputFamilies[c.familyID] {
                         existing.pids.append(contentsOf: c.pids)
@@ -165,12 +191,13 @@ public final class MeetingDetector {
                     }
                 }
             }
-        } else if input.micRunningSomewhere {
-            // Fallback: we only know that *something* uses the mic.
-            let c = CallCandidate(familyID: "unknown", displayName: "Another app", kind: .other,
+        } else if input.micRunningSomewhere && !isRecording {
+            // Fallback: we only know that *something* uses the mic. While
+            // Vaani records, its own mic keeps this true, so it says nothing
+            // about the other app (audit H-01).
+            let c = CallCandidate(familyID: Self.fallbackFamilyID, displayName: "Another app", kind: .other,
                                   isKnownCallApp: false, bundleID: nil, pids: [], priority: 0)
             inputFamilies[c.familyID] = c
-            aliveFamilies.insert(c.familyID)
         }
 
         // 2. Update per-family call tracks.
@@ -185,8 +212,11 @@ public final class MeetingDetector {
                                    dismissedForThisCall: false)
             }
         }
-        for id in aliveFamilies where inputFamilies[id] == nil {
-            tracks[id]?.lastAliveAt = now
+        for (id, c) in outputFamilies where inputFamilies[id] == nil {
+            guard var t = tracks[id], outputCountsAsAlive(c),
+                  now - t.lastInputAt <= settings.outputGraceAfterInput else { continue }
+            t.lastAliveAt = now
+            tracks[id] = t
         }
         // Forget calls that ended long ago (but never the one being recorded).
         let recordingFamily: String? = {
@@ -223,11 +253,25 @@ public final class MeetingDetector {
             }
 
         case .recording(let c, _):
-            guard let c, !autoStopSent else { break }
-            let lastAlive = tracks[c.familyID]?.lastAliveAt ?? -.infinity
-            if now - lastAlive >= settings.autoStopAfter {
-                autoStopSent = true
-                events.append(.autoStop(c))
+            guard !autoStopSent else { break }
+            // a) The call app let go of the microphone.
+            if let c, c.familyID != Self.fallbackFamilyID {
+                let lastAlive = tracks[c.familyID]?.lastAliveAt ?? -.infinity
+                if now - lastAlive >= settings.autoStopAfter {
+                    autoStopSent = true
+                    events.append(.autoStop(.callEnded(c)))
+                    break
+                }
+            }
+            // b) Hard ceiling: "Still taking notes?", stop if unanswered.
+            if let asked = checkAskedAt {
+                if now - asked >= settings.stillThereTimeout {
+                    autoStopSent = true
+                    events.append(.autoStop(.noAnswer))
+                }
+            } else if now >= nextCheckAt {
+                checkAskedAt = now
+                events.append(.askStillTakingNotes(c))
             }
         }
         return events
@@ -247,6 +291,19 @@ public final class MeetingDetector {
         }.first?.candidate
     }
 
+    /// Time until the next "Still taking notes?" for a session.
+    private func checkInterval(for c: CallCandidate?) -> TimeInterval {
+        guard let c, c.familyID != Self.fallbackFamilyID else { return settings.manualCheckInterval }
+        return settings.maxSessionLength
+    }
+
+    private func beginRecording(_ c: CallCandidate?, now: TimeInterval) {
+        autoStopSent = false
+        checkAskedAt = nil
+        nextCheckAt = now + checkInterval(for: c)
+        state = .recording(c, startedAt: now)
+    }
+
     // MARK: User and app actions
 
     /// "Take notes" on the prompt. Returns the call being recorded.
@@ -254,8 +311,7 @@ public final class MeetingDetector {
     public func userTookNotes(now: TimeInterval) -> CallCandidate? {
         guard case .prompting(let c, _) = state else { return nil }
         tracks[c.familyID]?.dismissedForThisCall = true
-        autoStopSent = false
-        state = .recording(c, startedAt: now)
+        beginRecording(c, now: now)
         return c
     }
 
@@ -267,12 +323,20 @@ public final class MeetingDetector {
     }
 
     /// Recording started from the menu ("Take notes now") with no prompt.
-    /// If exactly one call app is live, it is attached for auto-stop.
+    /// If a call app is live, it is attached for auto-stop.
     public func manualRecordingStarted(now: TimeInterval, attachTo candidate: CallCandidate? = nil) {
         if let c = candidate { tracks[c.familyID]?.dismissedForThisCall = true }
-        autoStopSent = false
-        state = .recording(candidate, startedAt: now)
+        beginRecording(candidate, now: now)
     }
+
+    /// "Keep going" on the "Still taking notes?" check.
+    public func userKeepGoing(now: TimeInterval) {
+        guard case .recording(let c, _) = state, checkAskedAt != nil, !autoStopSent else { return }
+        checkAskedAt = nil
+        nextCheckAt = now + checkInterval(for: c)
+    }
+
+    public var isAskingStillTakingNotes: Bool { checkAskedAt != nil }
 
     public func recordingEnded(now: TimeInterval) {
         if case .recording(let c, _) = state, let c {
@@ -280,13 +344,15 @@ public final class MeetingDetector {
         }
         cooldownUntil = now + settings.cooldownAfterRecording
         autoStopSent = false
+        checkAskedAt = nil
+        nextCheckAt = .infinity
         state = .idle
     }
 
     /// The live call app with the most priority, for "Take notes now".
     public func currentLiveCall() -> CallCandidate? {
         tracks.values
-            .filter { lastNow - $0.lastInputAt <= 2 }
+            .filter { lastNow - $0.lastInputAt <= 2 && $0.candidate.familyID != Self.fallbackFamilyID }
             .sorted { $0.candidate.priority > $1.candidate.priority }
             .first?.candidate
     }

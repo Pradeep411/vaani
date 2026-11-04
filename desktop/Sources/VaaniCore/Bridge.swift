@@ -8,8 +8,9 @@ public enum BridgeConfig {
     public static let startURL = URL(string: "https://pradeep411.github.io/vaani/?src=desktop")!
     /// window.webkit.messageHandlers.<handlerName>.postMessage(...)
     public static let handlerName = "vaaniDesktop"
-    /// window.addEventListener(<eventName>, e => e.detail)
-    public static let eventName = "vaani-desktop"
+    /// Name of the document-start user script shipped in the app bundle. It
+    /// defines window.__VAANI_DESKTOP__ with connect(cb) / _deliver(msg).
+    public static let userScriptName = "vaani-userscript"
     public static let protocolVersion = 1
     /// Largest message the page may send to native, in bytes of JSON.
     public static let maxInboundBytes = 8 * 1024
@@ -75,8 +76,10 @@ public enum NavigationPolicy {
         }
         guard let url = r.url, let scheme = url.scheme?.lowercased() else { return .cancel }
         if scheme == "about" {
+            // Blank and srcdoc iframes only; the top page can never be blanked
+            // (security audit L-04).
             let s = url.absoluteString.lowercased()
-            return (s == "about:blank" || s == "about:srcdoc") ? .allow : .cancel
+            return (!r.isMainFrame && (s == "about:blank" || s == "about:srcdoc")) ? .allow : .cancel
         }
         if isAllowedPage(url) { return .allow }
         if r.isMainFrame, r.userInitiated, externalSchemes.contains(scheme) {
@@ -138,6 +141,12 @@ public enum WebToNative: Equatable {
     case resume(sessionID: String, fromSeq: Int)
 }
 
+/// A page message plus the per-load nonce the page got in `hello`.
+public struct ParsedWebMessage: Equatable {
+    public var message: WebToNative
+    public var nonce: String?
+}
+
 public enum BridgeParser {
     public static func isValidSessionID(_ s: String) -> Bool {
         guard (1...64).contains(s.count) else { return false }
@@ -153,9 +162,18 @@ public enum BridgeParser {
     }
 
     /// Returns nil for anything unexpected. Unknown types are ignored, not errors.
-    public static func parse(_ body: Any) -> WebToNative? {
-        guard let dict = body as? [String: Any],
-              JSONSerialization.isValidJSONObject(dict),
+    public static func parse(_ body: Any) -> ParsedWebMessage? {
+        guard let dict = body as? [String: Any], let message = parseMessage(dict) else { return nil }
+        var nonce: String?
+        if let n = dict["nonce"] {
+            guard let ns = n as? String, isValidSessionID(ns) else { return nil }
+            nonce = ns
+        }
+        return ParsedWebMessage(message: message, nonce: nonce)
+    }
+
+    private static func parseMessage(_ dict: [String: Any]) -> WebToNative? {
+        guard JSONSerialization.isValidJSONObject(dict),
               let json = try? JSONSerialization.data(withJSONObject: dict),
               json.count <= BridgeConfig.maxInboundBytes else { return nil }
         guard int(dict["v"]) == BridgeConfig.protocolVersion, let type = dict["type"] as? String else { return nil }
@@ -182,7 +200,11 @@ public enum BridgeParser {
 // MARK: - Native -> web
 
 public enum CaptureMode: String, Sendable {
+    /// Mic plus the call app's own sound.
     case micAndApp = "mic+app"
+    /// Mic plus all Mac sound (except Vaani). The user is told before or as
+    /// this starts (security audit M-01).
+    case micAndSystem = "mic+system"
     case micOnly = "mic-only"
 }
 
@@ -193,6 +215,14 @@ public enum NoticeCode: String, Sendable {
     case tapSilent = "tap-silent"
     /// The microphone permission is off.
     case micDenied = "mic-denied"
+    /// Recording all Mac sound for this session (said before it starts or
+    /// after the user chose it).
+    case systemWide = "system-wide"
+    /// The user chose mic only for this session.
+    case micOnly = "mic-only"
+    /// The page asked for audio older than Vaani still keeps; `firstSeq`
+    /// says where the kept audio starts.
+    case gap = "gap"
 }
 
 public enum StopReason: String, Sendable {
@@ -201,6 +231,8 @@ public enum StopReason: String, Sendable {
     case webRequested = "web-requested"
     case error
     case quit
+    /// "Still taking notes?" got no answer.
+    case noAnswer = "no-answer"
 }
 
 public struct SessionInfo: Equatable, Sendable {
@@ -224,10 +256,14 @@ public struct SessionInfo: Equatable, Sendable {
 }
 
 public enum NativeToWeb {
-    case hello
-    case sessionStart(SessionInfo)
+    /// `nonce` is per page load; the page must echo it on every message
+    /// except `ready` (security audit L-05).
+    case hello(nonce: String)
+    /// `firstSeq`: the oldest chunk Vaani still keeps for this session
+    /// (security audit L-03).
+    case sessionStart(SessionInfo, firstSeq: Int)
     case audioChunk(sessionID: String, seq: Int, data: Data)
-    case notice(sessionID: String?, code: NoticeCode, message: String)
+    case notice(sessionID: String?, code: NoticeCode, message: String, firstSeq: Int? = nil)
     case sessionStop(sessionID: String, reason: StopReason, lastSeq: Int, totalFrames: Int)
 
     private static let iso: ISO8601DateFormatter = {
@@ -241,25 +277,29 @@ public enum NativeToWeb {
     public var payload: [String: Any] {
         let v = BridgeConfig.protocolVersion
         switch self {
-        case .hello:
+        case .hello(let nonce):
             return ["v": v, "type": "hello", "protocol": v, "platform": "macos",
-                    "nativeVersion": VaaniIdentity.version,
+                    "nativeVersion": VaaniIdentity.version, "nonce": nonce,
                     "audio": Self.audioFormat]
-        case .sessionStart(let s):
-            var source: [String: Any] = ["app": s.appName, "kind": s.kind.rawValue]
-            if let b = s.bundleID { source["bundleId"] = b }
+        case .sessionStart(let s, let firstSeq):
+            // Untrusted local text: cleaned here as well (audit L-06). The page
+            // must still render it with textContent.
+            var source: [String: Any] = ["app": SafeText.label(s.appName) ?? "Another app", "kind": s.kind.rawValue]
+            if let b = SafeText.label(s.bundleID, maxLength: 255) { source["bundleId"] = b }
             var p: [String: Any] = ["v": v, "type": "session.start", "sessionId": s.id,
                                     "startedAt": Self.iso.string(from: s.startedAt),
                                     "source": source, "capture": s.capture.rawValue,
+                                    "firstSeq": max(firstSeq, 0),
                                     "audio": Self.audioFormat]
             if let n = s.notice { p["notice"] = n }
             return p
         case .audioChunk(let sid, let seq, let data):
             return ["v": v, "type": "audio.chunk", "sessionId": sid, "seq": seq,
                     "frames": data.count / 2, "data": data.base64EncodedString()]
-        case .notice(let sid, let code, let message):
+        case .notice(let sid, let code, let message, let firstSeq):
             var p: [String: Any] = ["v": v, "type": "capture.notice", "code": code.rawValue, "message": message]
             if let sid { p["sessionId"] = sid }
+            if let firstSeq { p["firstSeq"] = firstSeq }
             return p
         case .sessionStop(let sid, let reason, let lastSeq, let totalFrames):
             return ["v": v, "type": "session.stop", "sessionId": sid, "reason": reason.rawValue,
@@ -275,7 +315,8 @@ public enum NativeToWeb {
     ]
 
     /// The only script native ever runs in the page. The message travels as
-    /// the `msg` argument of callAsyncJavaScript.
+    /// the `msg` argument of callAsyncJavaScript and goes only to the single
+    /// callback registered with __VAANI_DESKTOP__.connect (audit L-05).
     public static let dispatchScript =
-        "window.dispatchEvent(new CustomEvent('\(BridgeConfig.eventName)', { detail: msg })); return true;"
+        "const b = window.__VAANI_DESKTOP__; return !!(b && b._deliver(msg));"
 }

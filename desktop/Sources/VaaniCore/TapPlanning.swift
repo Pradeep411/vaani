@@ -15,8 +15,14 @@ public enum TapPlan: Equatable {
 
 public enum TapPlanner {
     /// Families whose far-end audio is usually played by a system daemon, not
-    /// by the app process, so an app-only tap would hear nothing.
+    /// by the app process, so an app-only tap would hear nothing. These are
+    /// recorded system-wide and the user is told so before recording.
     public static let systemWideFamilies: Set<String> = ["facetime"]
+
+    /// Processes shared by many apps (every WebKit app has a GPU process).
+    /// They are tapped only when they are the ones holding the call's mic,
+    /// so a Safari call does not tap Mail or other web views (audit M-01).
+    public static let sharedBundleIDs: [String] = ["com.apple.WebKit.GPU"]
 
     /// - Parameters:
     ///   - candidate: the call being recorded (nil for "Take notes now").
@@ -38,8 +44,13 @@ public enum TapPlanner {
             patterns = []
         }
         var ids = processes.filter { p in
-            guard p.pid != selfPID, let b = p.bundleID else { return false }
-            return patterns.contains { bundleID(b, matches: $0) }
+            guard p.pid != selfPID, let b = p.bundleID, patterns.contains(where: { bundleID(b, matches: $0) }) else {
+                return false
+            }
+            if sharedBundleIDs.contains(where: { bundleID(b, matches: $0) }) {
+                return candidate.pids.contains(p.pid)
+            }
+            return true
         }.map(\.objectID)
         if ids.isEmpty {
             // Unknown app without a bundle ID: fall back to its process IDs.
@@ -51,27 +62,32 @@ public enum TapPlanner {
 
 /// Watches the tap for the silent-failure case: Core Audio returns no error
 /// when the "System Audio Recording" permission is off, it just delivers zeros.
+///
+/// Security audit M-01: the app never widens to all Mac sound on its own.
+/// It only *asks* (`askToWiden`), and only when the app-only tap has never
+/// delivered a single non-zero sample this session. Once real sound has been
+/// heard, a silent stretch is just silence.
 public final class TapHealthMonitor {
     public enum Verdict: Equatable {
         case healthy
         case waiting
-        /// App-only tap heard nothing while the app was playing sound:
-        /// widen to all Mac sound (a helper process may own the audio).
-        case widenToSystemWide
-        /// Even the wide tap is silent while something plays: most likely the
-        /// permission is off. Show the one-line notice once.
+        /// App-only tap has heard nothing at all while the app was playing
+        /// sound. Ask the user: record all Mac sound, or mic only?
+        case askToWiden
+        /// A system-wide tap has heard nothing at all while something played:
+        /// most likely the permission is off. Show the one-line notice once.
         case likelyNoPermission
     }
 
     public let silenceLimit: TimeInterval
-    private var lastSoundAt: TimeInterval
+    private let startedAt: TimeInterval
     private var playingSince: TimeInterval?
     private var reported = false
-    private(set) public var everHeardSound = false
+    public private(set) var everHeardSound = false
 
     public init(startedAt: TimeInterval, silenceLimit: TimeInterval = 10) {
         self.silenceLimit = silenceLimit
-        self.lastSoundAt = startedAt
+        self.startedAt = startedAt
     }
 
     /// Exact zeros mean "nothing delivered"; real audio always has some noise.
@@ -80,31 +96,21 @@ public final class TapHealthMonitor {
     }
 
     public func observe(samples: [Float], now: TimeInterval) {
-        if Self.hasSound(samples) {
-            lastSoundAt = now
-            everHeardSound = true
-        }
+        if Self.hasSound(samples) { everHeardSound = true }
     }
 
-    /// - Parameter targetPlaying: the tapped app (or anything, for a wide tap)
+    /// - Parameter targetPlaying: the tapped app (or, for a wide tap, any app)
     ///   is currently sending audio to the speakers.
     public func verdict(now: TimeInterval, targetPlaying: Bool, isSystemWide: Bool) -> Verdict {
-        if reported { return .healthy }
+        if everHeardSound || reported { return .healthy }
         guard targetPlaying else {
             playingSince = nil
-            return everHeardSound ? .healthy : .waiting
+            return .waiting
         }
         let since = playingSince ?? now
         playingSince = since
-        let silentFor = now - max(lastSoundAt, since)
-        guard silentFor >= silenceLimit else { return everHeardSound ? .healthy : .waiting }
-        if !isSystemWide {
-            // Reset the clock for the widened tap.
-            lastSoundAt = now
-            playingSince = nil
-            return .widenToSystemWide
-        }
+        guard now - max(startedAt, since) >= silenceLimit else { return .waiting }
         reported = true
-        return .likelyNoPermission
+        return isSystemWide ? .likelyNoPermission : .askToWiden
     }
 }
