@@ -1,0 +1,186 @@
+# Vaani desktop (macOS): build, unit-test, bundle an UNSIGNED .app, upload it.
+#
+# Placement: in the vaani repo this file goes to .github/workflows/desktop-mac.yml
+# at the REPO ROOT, and the Swift package lives in desktop/ (working-directory
+# below). Nothing here pushes, deploys or publishes.
+#
+# Optional job "sign-and-notarize" runs only when ALL of these repository
+# secrets exist (add them later, with an Apple Developer account):
+#   MACOS_CERTIFICATE_P12      base64 of a "Developer ID Application" .p12
+#   MACOS_CERTIFICATE_PASSWORD password of that .p12
+#   MACOS_SIGN_IDENTITY        e.g. "Developer ID Application: Name (TEAMID)"
+#   NOTARY_API_KEY_P8          base64 of an App Store Connect API key (.p8)
+#   NOTARY_KEY_ID              that key's ID
+#   NOTARY_ISSUER_ID           the issuer ID
+name: Desktop macOS
+
+on:
+  push:
+    paths:
+      - "desktop/**"
+      - ".github/workflows/desktop-mac.yml"
+  pull_request:
+    paths:
+      - "desktop/**"
+      - ".github/workflows/desktop-mac.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-mac-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash            # gives -eo pipefail, so "| tee" keeps failures
+    working-directory: desktop
+
+jobs:
+  build:
+    name: Build and test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Toolchain
+        run: |
+          sw_vers
+          xcodebuild -version
+          swift --version
+
+      - name: Unit tests (VaaniCore, pure Swift)
+        run: swift test 2>&1 | tee test.log
+
+      - name: Bridge reference module tests (Node)
+        run: node --test web-bridge/vaani-desktop-bridge.test.mjs
+
+      - name: Build Vaani.app (release, arm64, ad-hoc signed)
+        run: bash scripts/build-app.sh 2>&1 | tee build.log
+
+      - name: Fail if any delegate method does not match its protocol
+        # A WebKit/AppKit delegate method that only "nearly matches" is never
+        # called; for the navigation policy that would be a security hole.
+        run: |
+          if grep -E "nearly matches (optional )?requirement" build.log; then
+            echo "::error::A delegate method signature does not match its protocol."
+            exit 1
+          fi
+
+      - name: Inspect the bundle
+        run: |
+          plutil -p build/Vaani.app/Contents/Info.plist
+          codesign -dv --verbose=2 build/Vaani.app
+          codesign -d --entitlements - --xml build/Vaani.app
+          file build/Vaani.app/Contents/MacOS/Vaani | tee /dev/stderr | grep -q arm64
+          # The native layer must not contain any network client code.
+          if nm -u build/Vaani.app/Contents/MacOS/Vaani | grep -E "URLSession|NSURLConnection|CFNetwork|nw_connection"; then
+            echo "::error::Native binary references a network API."
+            exit 1
+          fi
+
+      - name: Launch smoke test (8 s, no crash on start)
+        continue-on-error: true
+        run: |
+          build/Vaani.app/Contents/MacOS/Vaani &
+          PID=$!
+          sleep 8
+          if kill -0 "$PID" 2>/dev/null; then
+            echo "Vaani is running after 8 s"
+            kill "$PID"
+          else
+            wait "$PID" || true
+            echo "::warning::Vaani exited during launch on ${{ matrix.os }}"
+            exit 1
+          fi
+
+      - name: Upload unsigned app
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: Vaani-macOS-unsigned-${{ matrix.os }}
+          path: desktop/build/Vaani-macOS-arm64.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  sign-and-notarize:
+    name: Sign and notarize (optional)
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: macos-15
+    timeout-minutes: 45
+    env:
+      HAS_SIGNING: ${{ secrets.MACOS_CERTIFICATE_P12 != '' && secrets.MACOS_CERTIFICATE_PASSWORD != '' && secrets.MACOS_SIGN_IDENTITY != '' && secrets.NOTARY_API_KEY_P8 != '' && secrets.NOTARY_KEY_ID != '' && secrets.NOTARY_ISSUER_ID != '' }}
+    steps:
+      - name: Skip when signing secrets are not set
+        if: env.HAS_SIGNING != 'true'
+        working-directory: .
+        run: echo "::notice::Signing secrets are not set, so only the unsigned build was made."
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        if: env.HAS_SIGNING == 'true'
+        with:
+          persist-credentials: false
+
+      - name: Import signing certificate into a temporary keychain
+        if: env.HAS_SIGNING == 'true'
+        env:
+          MACOS_CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+        run: |
+          KEYCHAIN="$RUNNER_TEMP/vaani-signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -base64 24)"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 3600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          printf '%s' "$MACOS_CERTIFICATE_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -P "$MACOS_CERTIFICATE_PASSWORD" -f pkcs12 -k "$KEYCHAIN" -T /usr/bin/codesign
+          rm -f "$RUNNER_TEMP/cert.p12"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+
+      - name: Build and sign with Developer ID
+        if: env.HAS_SIGNING == 'true'
+        env:
+          SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+        run: bash scripts/build-app.sh
+
+      - name: Notarize and staple
+        if: env.HAS_SIGNING == 'true'
+        env:
+          NOTARY_API_KEY_P8: ${{ secrets.NOTARY_API_KEY_P8 }}
+          NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
+        run: |
+          KEY="$RUNNER_TEMP/notary.p8"
+          printf '%s' "$NOTARY_API_KEY_P8" | base64 --decode > "$KEY"
+          xcrun notarytool submit build/Vaani-macOS-arm64.zip \
+            --key "$KEY" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID" --wait --timeout 30m
+          rm -f "$KEY"
+          xcrun stapler staple build/Vaani.app
+          spctl --assess --type execute --verbose=4 build/Vaani.app
+          rm -f build/Vaani-macOS-arm64.zip
+          ditto -c -k --keepParent build/Vaani.app build/Vaani-macOS-arm64-signed.zip
+
+      - name: Upload signed app
+        if: env.HAS_SIGNING == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: Vaani-macOS-signed
+          path: desktop/build/Vaani-macOS-arm64-signed.zip
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Remove temporary keychain and keys
+        if: always() && env.HAS_SIGNING == 'true'
+        working-directory: .
+        run: |
+          security delete-keychain "$RUNNER_TEMP/vaani-signing.keychain-db" 2>/dev/null || true
+          rm -f "$RUNNER_TEMP/cert.p12" "$RUNNER_TEMP/notary.p8"
