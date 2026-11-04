@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Vaani</string>
+	<key>CFBundleExecutable</key>
+	<string>Vaani</string>
+	<key>CFBundleIdentifier</key>
+	<string>io.github.pradeep411.vaani.desktop</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>Vaani</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.productivity</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>14.2</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSSupportsAutomaticTermination</key>
+	<false/>
+	<key>NSSupportsSuddenTermination</key>
+	<false/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Vaani records your voice during calls so the Vaani web app can make your meeting notes. Audio stays on this Mac except what you send to the AI service you chose.</string>
+	<key>NSAudioCaptureUsageDescription</key>
+	<string>Vaani records the sound of your call app so your notes include the other people on the call. Vaani does not record your screen.</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Vaani is free and open source.</string>
+</dict>
+</plist>

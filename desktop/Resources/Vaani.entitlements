@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Hardened runtime exception: the only one Vaani asks for. Lets the app
+	     use the microphone (and is what the System Audio Recording tap runs
+	     under). No JIT, no unsigned memory, no library-validation opt-out,
+	     no Apple Events, no camera, no location, no address book. -->
+	<key>com.apple.security.device.audio-input</key>
+	<true/>
+</dict>
+</plist>
