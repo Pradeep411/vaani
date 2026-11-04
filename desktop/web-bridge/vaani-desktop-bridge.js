@@ -5,6 +5,13 @@
 // slot then locks). It does nothing outside the Vaani macOS app, so it is
 // safe to ship to every browser.
 //
+// The per-load nonce and the delivery token are handled entirely by the
+// app's user script: this module never sees them. The lock, the sealed nonce
+// and the token stop passive listeners, stray scripts and fake deliveries.
+// They do not stop a script that patches globals this code or the rest of
+// the web app uses while processing audio: such a script can still read the
+// audio, even if it loads later. Keep third-party scripts out where you can.
+//
 // Every string that comes from the desktop app (source.app, source.bundleId,
 // message, notice) is untrusted text: render it with textContent, never
 // innerHTML.
@@ -19,6 +26,12 @@ export const HANDLER_NAME = 'vaaniDesktop';
 export const PROTOCOL = 1;
 
 const SESSION_ID = /^[A-Za-z0-9-]{1,64}$/;
+// Captured when this module loads (before third-party scripts, per the rule
+// above), so a later wrapper around window.atob does not see audio.
+const decodeBase64 = globalThis.atob.bind(globalThis);
+// Same for String.prototype.charCodeAt (re-audit F-01 probe). This closes
+// these two hooks only; other globals the web app uses stay hookable.
+const charCodeAt = Function.prototype.call.bind(String.prototype.charCodeAt);
 
 /** True only inside the Vaani macOS app, on the real Vaani page, top frame. */
 export function isDesktopApp(win = globalThis.window) {
@@ -29,7 +42,7 @@ export function isDesktopApp(win = globalThis.window) {
     const flag = win.__VAANI_DESKTOP__;
     const handler = win.webkit && win.webkit.messageHandlers && win.webkit.messageHandlers[HANDLER_NAME];
     return !!(flag && flag.protocol === PROTOCOL && typeof flag.connect === 'function'
-      && handler && typeof handler.postMessage === 'function');
+      && typeof flag._deliver === 'function' && handler && typeof handler.postMessage === 'function');
   } catch (_) {
     return false;
   }
@@ -37,11 +50,11 @@ export function isDesktopApp(win = globalThis.window) {
 
 /** base64 PCM s16le -> Int16Array (explicit little-endian). */
 export function decodePCM16(base64) {
-  const bin = atob(base64);
+  const bin = decodeBase64(base64);
   const out = new Int16Array(bin.length >> 1);
   for (let i = 0; i < out.length; i++) {
-    const lo = bin.charCodeAt(2 * i);
-    const hi = bin.charCodeAt(2 * i + 1);
+    const lo = charCodeAt(bin, 2 * i);
+    const hi = charCodeAt(bin, 2 * i + 1);
     const u = lo | (hi << 8);
     out[i] = u >= 0x8000 ? u - 0x10000 : u;
   }
@@ -83,13 +96,8 @@ export function encodeWav(chunks, sampleRate = 16000) {
  */
 export function connectDesktopBridge(handlers = {}, win = globalThis.window) {
   if (!isDesktopApp(win)) return null;
-  const handler = win.webkit.messageHandlers[HANDLER_NAME];
-  let nonce = null;                // per page load, from "hello"
-  const post = (msg) => {
-    const out = Object.assign({ v: PROTOCOL }, msg);
-    if (nonce) out.nonce = nonce;
-    handler.postMessage(out);
-  };
+  let capability = null;           // { post } from the user script; adds the nonce
+  const post = (msg) => { if (capability) capability.post(msg); };
   const sessions = new Map(); // sessionId -> { nextSeq, resumeAsked }
   const call = (name, ...args) => {
     const fn = handlers[name];
@@ -103,7 +111,6 @@ export function connectDesktopBridge(handlers = {}, win = globalThis.window) {
     if (m.sessionId !== undefined && !(typeof m.sessionId === 'string' && SESSION_ID.test(m.sessionId))) return;
     switch (m.type) {
       case 'hello':
-        if (typeof m.nonce === 'string' && SESSION_ID.test(m.nonce)) nonce = m.nonce;
         call('onHello', m);
         break;
       case 'session.start': {
@@ -154,9 +161,10 @@ export function connectDesktopBridge(handlers = {}, win = globalThis.window) {
     }
   }
 
-  // First caller wins; if something else already connected, refuse.
-  if (!win.__VAANI_DESKTOP__.connect(onMessage)) return null;
-  post({ type: 'ready', protocol: PROTOCOL });
+  // First caller wins; if something else already connected, refuse. The
+  // user script sends `ready` itself when connect() succeeds.
+  capability = win.__VAANI_DESKTOP__.connect(onMessage);
+  if (!capability || typeof capability.post !== 'function') return null;
 
   return {
     /** Ask the desktop app to stop recording (the web Stop button). */

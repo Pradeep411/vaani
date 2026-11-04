@@ -12,21 +12,26 @@ import {
   connectDesktopBridge, isDesktopApp, decodePCM16, pcm16ToFloat32, encodeWav,
 } from './vaani-desktop-bridge.js';
 
-const USER_SCRIPT = readFileSync(fileURLToPath(new URL('../Resources/vaani-userscript.js', import.meta.url)), 'utf8');
+const RAW_USER_SCRIPT = readFileSync(fileURLToPath(new URL('../Resources/vaani-userscript.js', import.meta.url)), 'utf8');
+// What the app does before injecting (UserScriptBuilder.build): put a random
+// per-web-view token in place of the placeholder.
+const TOKEN = '0123456789abcdef0123456789abcdef';
+const USER_SCRIPT = RAW_USER_SCRIPT.replace('__VAANI_DELIVER_TOKEN__', TOKEN);
 
-function fakeWindow({ origin = 'https://pradeep411.github.io', pathname = '/vaani/', userScript = true, handler = true, top } = {}) {
+function fakeWindow({ origin = 'https://pradeep411.github.io', pathname = '/vaani/', userScript = true, handler = true, top, script = USER_SCRIPT } = {}) {
   const posted = [];
   const win = { location: { origin, pathname, search: '?src=desktop' }, posted };
   win.top = top === undefined ? win : top;
-  if (handler) win.webkit = { messageHandlers: { vaaniDesktop: { postMessage: (m) => posted.push(m) } } };
-  if (userScript) vm.runInNewContext(USER_SCRIPT, { window: win, location: win.location, Object });
+  // JSON round trip: what WebKit's message serialization hands to native.
+  if (handler) win.webkit = { messageHandlers: { vaaniDesktop: { postMessage: (m) => posted.push(JSON.parse(JSON.stringify(m))) } } };
+  if (userScript) vm.runInNewContext(script, { window: win, location: win.location });
   return win;
 }
 
-// What the app does: callAsyncJavaScript(dispatchScript, { msg }).
+// What the app does: callAsyncJavaScript(dispatchScript, { msg, token }).
 const deliver = (win, msg) => {
   const b = win.__VAANI_DESKTOP__;
-  return !!(b && b._deliver(msg));
+  return !!(b && b._deliver(msg, TOKEN));
 };
 const b64 = (int16) => Buffer.from(new Uint8Array(new Int16Array(int16).buffer)).toString('base64');
 
@@ -52,7 +57,7 @@ test('L-05: first caller wins; later scripts cannot listen', () => {
   let legit = 0;
   assert.ok(connectDesktopBridge({ onHello: () => legit++ }, win));
   let spy = 0;
-  assert.equal(win.__VAANI_DESKTOP__.connect(() => spy++), false, 'slot is locked');
+  assert.equal(win.__VAANI_DESKTOP__.connect(() => spy++), null, 'slot is locked');
   assert.equal(connectDesktopBridge({}, win), null, 'a second module instance is refused');
   deliver(win, { v: 1, type: 'hello', nonce: 'n-1' });
   assert.equal(legit, 1);
@@ -108,6 +113,45 @@ test('ignores malformed or foreign messages', () => {
     deliver(win, bad);
   }
   assert.equal(calls, 0);
+});
+
+test('N-02: the nonce stays inside the user script', () => {
+  const win = fakeWindow();
+  let hello = null;
+  const bridge = connectDesktopBridge({ onHello: (m) => { hello = m; } }, win);
+  assert.equal(deliver(win, { v: 1, type: 'hello', protocol: 1, nonce: 'SECRET-1' }), true);
+  assert.equal(hello.nonce, undefined, 'the page never sees the nonce');
+  assert.equal(Object.getPrototypeOf(hello), null, 'delivered as a null-prototype copy');
+  assert.equal(JSON.stringify(win.__VAANI_DESKTOP__).includes('SECRET'), false);
+  assert.equal(Object.keys(win.__VAANI_DESKTOP__).includes('nonce'), false);
+  bridge.stop('s1');
+  assert.deepEqual(win.posted.at(-1), { v: 1, type: 'stop', sessionId: 's1', nonce: 'SECRET-1' },
+    'native still gets it, added by the user script');
+  // A page message that carries its own "nonce" field cannot override it.
+  bridge.stop();
+  assert.equal(win.posted.at(-1).nonce, 'SECRET-1');
+});
+
+test('N-03: connect() sends ready; hello with nobody connected reports false', () => {
+  const win = fakeWindow();
+  assert.equal(deliver(win, { v: 1, type: 'hello', nonce: 'early' }), false, 'native resets its handshake');
+  assert.equal(win.posted.length, 0);
+  connectDesktopBridge({}, win);
+  assert.deepEqual(win.posted, [{ v: 1, type: 'ready', protocol: 1 }]);
+});
+
+test('F-01: _deliver refuses calls without the token; unreplaced script defines nothing', () => {
+  assert.equal(fakeWindow({ script: RAW_USER_SCRIPT }).__VAANI_DESKTOP__, undefined, 'placeholder left in: bridge closed');
+  const win = fakeWindow();
+  let got = 0;
+  const bridge = connectDesktopBridge({ onHello: () => got++, onSessionStart: () => got++ }, win);
+  for (const t of [undefined, '', 'guess', '__VAANI_DELIVER_TOKEN__', TOKEN.toUpperCase()]) {
+    assert.equal(win.__VAANI_DESKTOP__._deliver({ v: 1, type: 'hello', nonce: 'EVIL' }, t), false);
+  }
+  assert.equal(got, 0, 'no fake message reached the web app');
+  deliver(win, { v: 1, type: 'hello', nonce: 'REAL' });
+  bridge.stop();
+  assert.equal(win.posted.at(-1).nonce, 'REAL', 'the real nonce was not overwritten');
 });
 
 // Ported from the CSO probe (cso-desktop/probes/bridge-probe.mjs), asserting the fixes.
