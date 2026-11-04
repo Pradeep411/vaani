@@ -177,6 +177,7 @@ final class AudioTests: XCTestCase {
         let c = CallCandidate(familyID: "chrome", displayName: "Chrome", kind: .browser, isKnownCallApp: true,
                               bundleID: chrome.bundleIDs.first, pids: [2], priority: 1)
         XCTAssertEqual(TapPlanner.plan(for: c, processes: procs, selfPID: 999, captureAll: false), .processes([101, 102]))
+        XCTAssertFalse(TapPlanner.plan(for: c, processes: procs, selfPID: 999, captureAll: false).isSystemWide)
         XCTAssertEqual(TapPlanner.plan(for: c, processes: procs, selfPID: 999, captureAll: true), .systemWideExcluding([104]))
         XCTAssertEqual(TapPlanner.plan(for: nil, processes: procs, selfPID: 999, captureAll: false), .systemWideExcluding([104]))
         let ft = CallCandidate(familyID: "facetime", displayName: "FaceTime", kind: .call, isKnownCallApp: true,
@@ -188,15 +189,17 @@ final class AudioTests: XCTestCase {
         XCTAssertTrue(TapPlanner.plan(for: gone, processes: procs, selfPID: 999, captureAll: false).isSystemWide)
     }
 
-    func testTapHealthEscalation() {
+    func testTapHealthAsksOnlyWhenNeverHeard() {
         let h = TapHealthMonitor(startedAt: 0, silenceLimit: 10)
         XCTAssertEqual(h.verdict(now: 5, targetPlaying: false, isSystemWide: false), .waiting)
         XCTAssertEqual(h.verdict(now: 6, targetPlaying: true, isSystemWide: false), .waiting)
-        XCTAssertEqual(h.verdict(now: 16, targetPlaying: true, isSystemWide: false), .widenToSystemWide)
-        XCTAssertEqual(h.verdict(now: 20, targetPlaying: true, isSystemWide: true), .waiting)
-        XCTAssertEqual(h.verdict(now: 29, targetPlaying: true, isSystemWide: true), .waiting)
-        XCTAssertEqual(h.verdict(now: 30, targetPlaying: true, isSystemWide: true), .likelyNoPermission)
-        XCTAssertEqual(h.verdict(now: 40, targetPlaying: true, isSystemWide: true), .healthy, "reported once")
+        XCTAssertEqual(h.verdict(now: 16, targetPlaying: true, isSystemWide: false), .askToWiden)
+        XCTAssertEqual(h.verdict(now: 40, targetPlaying: true, isSystemWide: false), .healthy, "asked once")
+        // A system-wide tap that never hears anything: permission notice once.
+        let w = TapHealthMonitor(startedAt: 100, silenceLimit: 10)
+        XCTAssertEqual(w.verdict(now: 105, targetPlaying: true, isSystemWide: true), .waiting)
+        XCTAssertEqual(w.verdict(now: 115, targetPlaying: true, isSystemWide: true), .likelyNoPermission)
+        XCTAssertEqual(w.verdict(now: 130, targetPlaying: true, isSystemWide: true), .healthy)
     }
 
     func testTapHealthHappyPath() {

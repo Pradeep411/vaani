@@ -238,16 +238,27 @@ final class DetectorTests: XCTestCase {
         let ev = run(d, [], from: 101, to: 200)
         XCTAssertEqual(ev.count, 1)
         XCTAssertEqual(ev.first?.0, 160) // last alive at 100
-        if case .autoStop(let c)? = ev.first?.1 { XCTAssertEqual(c.familyID, "teams") } else { XCTFail() }
+        if case .autoStop(.callEnded(let c))? = ev.first?.1 { XCTAssertEqual(c.familyID, "teams") } else { XCTFail() }
     }
 
-    func testMutedUserIsNotAutoStoppedWhileCallPlaysSound() {
+    func testMutedUserWithMicOpenIsNeverAutoStopped() {
+        // Zoom, Teams and Meet keep the mic device open while you are muted.
         let d = makeDetector()
         run(d, [proc("us.zoom.xos", pid: 10)], from: 0, to: 3)
         d.userTookNotes(now: 3)
-        // User mutes: Zoom stops input but keeps playing the other side.
-        let ev = run(d, [proc("us.zoom.xos", pid: 10, input: false, output: true)], from: 4, to: 400)
+        let ev = run(d, [proc("us.zoom.xos", pid: 10, input: true, output: true)], from: 4, to: 7000)
         XCTAssertTrue(ev.isEmpty)
+    }
+
+    func testNativeAppSoundCountsOnlyFiveMinutesAfterLastMicUse() {
+        let d = makeDetector()
+        run(d, [proc("us.zoom.xos", pid: 10)], from: 0, to: 3)
+        d.userTookNotes(now: 3)
+        // Zoom closes the mic but keeps playing sound: grace is 300 s after
+        // the last mic use (t=3), then 60 s of auto-stop.
+        let ev = run(d, [proc("us.zoom.xos", pid: 10, input: false, output: true)], from: 4, to: 1000)
+        XCTAssertEqual(ev.count, 1)
+        XCTAssertEqual(ev.first?.0, 363)
     }
 
     func testAutoStopResetsIfCallComesBack() {
@@ -269,10 +280,31 @@ final class DetectorTests: XCTestCase {
         XCTAssertEqual(ev.count, 1)
     }
 
-    func testManualRecordingWithoutAppNeverAutoStops() {
+    func testManualRecordingAsksEveryHourAndStopsIfUnanswered() {
         let d = makeDetector()
         d.manualRecordingStarted(now: 0)
-        XCTAssertTrue(run(d, [], from: 1, to: 500).isEmpty)
+        var ev = run(d, [], from: 1, to: 3600)
+        XCTAssertEqual(ev.map(\.1), [.askStillTakingNotes(nil)])
+        XCTAssertEqual(ev.first?.0, 3600)
+        d.userKeepGoing(now: 3650)
+        ev = run(d, [], from: 3651, to: 7249)
+        XCTAssertTrue(ev.isEmpty)
+        ev = run(d, [], from: 7250, to: 7400)
+        XCTAssertEqual(ev.map(\.1), [.askStillTakingNotes(nil), .autoStop(.noAnswer)])
+        XCTAssertEqual(ev.map(\.0), [7250, 7370])
+    }
+
+    func testCallSessionAsksAfterTwoHours() {
+        let d = makeDetector()
+        let zoom = [proc("us.zoom.xos", pid: 10)]
+        run(d, zoom, from: 0, to: 3)
+        d.userTookNotes(now: 3)
+        let ev = run(d, zoom, from: 4, to: 7400)
+        XCTAssertEqual(ev.count, 2)
+        XCTAssertEqual(ev.first?.0, 7203)
+        if case .askStillTakingNotes(let c)? = ev.first?.1 { XCTAssertEqual(c?.familyID, "zoom") } else { XCTFail() }
+        XCTAssertEqual(ev.last?.1, .autoStop(.noAnswer))
+        XCTAssertEqual(ev.last?.0, 7323)
     }
 
     // MARK: Fallback

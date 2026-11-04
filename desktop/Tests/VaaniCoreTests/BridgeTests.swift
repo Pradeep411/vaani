@@ -57,6 +57,8 @@ final class BridgeTests: XCTestCase {
         XCTAssertEqual(NavigationPolicy.decide(.init(url: u("file:///etc/hosts"), isMainFrame: true, userInitiated: true)), .cancel)
         XCTAssertEqual(NavigationPolicy.decide(.init(url: u("javascript:alert(1)"), isMainFrame: true, userInitiated: true)), .cancel)
         XCTAssertEqual(NavigationPolicy.decide(.init(url: u("about:blank"), isMainFrame: false)), .allow)
+        XCTAssertEqual(NavigationPolicy.decide(.init(url: u("about:srcdoc"), isMainFrame: false)), .allow)
+        XCTAssertEqual(NavigationPolicy.decide(.init(url: u("about:blank"), isMainFrame: true)), .cancel, "top page cannot be blanked")
         XCTAssertEqual(NavigationPolicy.decide(.init(url: u("about:config"), isMainFrame: true)), .cancel)
         XCTAssertEqual(NavigationPolicy.decide(.init(url: nil, isMainFrame: true)), .cancel)
 
@@ -89,12 +91,12 @@ final class BridgeTests: XCTestCase {
     // MARK: Parsing
 
     func testParseValidMessages() {
-        XCTAssertEqual(BridgeParser.parse(["v": 1, "type": "ready", "protocol": 1]), .ready(protocolVersion: 1))
-        XCTAssertEqual(BridgeParser.parse(["v": 1.0, "type": "ready", "protocol": 2.0]), .ready(protocolVersion: 2))
-        XCTAssertEqual(BridgeParser.parse(["v": 1, "type": "stop"]), .stop(sessionID: nil))
-        XCTAssertEqual(BridgeParser.parse(["v": 1, "type": "stop", "sessionId": "abc-1"]), .stop(sessionID: "abc-1"))
-        XCTAssertEqual(BridgeParser.parse(["v": 1, "type": "session.done", "sessionId": "abc"]), .sessionDone(sessionID: "abc"))
-        XCTAssertEqual(BridgeParser.parse(["v": 1, "type": "resume", "sessionId": "abc", "fromSeq": 7]), .resume(sessionID: "abc", fromSeq: 7))
+        XCTAssertEqual(BridgeParser.parse(["v": 1, "type": "ready", "protocol": 1])?.message, .ready(protocolVersion: 1))
+        XCTAssertEqual(BridgeParser.parse(["v": 1.0, "type": "ready", "protocol": 2.0])?.message, .ready(protocolVersion: 2))
+        XCTAssertEqual(BridgeParser.parse(["v": 1, "type": "stop"])?.message, .stop(sessionID: nil))
+        XCTAssertEqual(BridgeParser.parse(["v": 1, "type": "stop", "sessionId": "abc-1"])?.message, .stop(sessionID: "abc-1"))
+        XCTAssertEqual(BridgeParser.parse(["v": 1, "type": "session.done", "sessionId": "abc"])?.message, .sessionDone(sessionID: "abc"))
+        XCTAssertEqual(BridgeParser.parse(["v": 1, "type": "resume", "sessionId": "abc", "fromSeq": 7])?.message, .resume(sessionID: "abc", fromSeq: 7))
     }
 
     func testParseRejectsBadMessages() {
@@ -121,7 +123,7 @@ final class BridgeTests: XCTestCase {
         let start = Date(timeIntervalSince1970: 1_700_000_000)
         let info = SessionInfo(id: "s1", startedAt: start, appName: "Zoom", bundleID: "us.zoom.xos",
                                kind: .meeting, capture: .micOnly, notice: "Recording your mic only.")
-        let p = NativeToWeb.sessionStart(info).payload
+        let p = NativeToWeb.sessionStart(info, firstSeq: 0).payload
         XCTAssertEqual(p["type"] as? String, "session.start")
         XCTAssertEqual(p["v"] as? Int, 1)
         XCTAssertEqual(p["capture"] as? String, "mic-only")
@@ -136,7 +138,7 @@ final class BridgeTests: XCTestCase {
         let decoded = Data(base64Encoded: chunk["data"] as! String)!
         XCTAssertEqual(PCM16.decode(decoded), [16384, -16384])
 
-        for m in [NativeToWeb.hello,
+        for m in [NativeToWeb.hello(nonce: "n1"),
                   .notice(sessionID: nil, code: .tapUnavailable, message: "x"),
                   .sessionStop(sessionID: "s1", reason: .callEnded, lastSeq: 3, totalFrames: 16_000)] {
             XCTAssertTrue(JSONSerialization.isValidJSONObject(m.payload))
@@ -157,14 +159,21 @@ final class BridgeTests: XCTestCase {
         SessionInfo(id: id, startedAt: Date(), appName: "Zoom", bundleID: "us.zoom.xos", kind: .meeting, capture: .micAndApp)
     }
 
+    private func makeSession(_ t: RecordingTransport, keep: TimeInterval = 600, batch: Int = 200) -> BridgeSession {
+        var n = 0
+        return BridgeSession(transport: t, keepAfterStop: keep, replayBatch: batch, makeNonce: { n += 1; return "nonce-\(n)" })
+    }
+
     func testAudioIsHeldUntilPageIsReadyThenReplayed() {
         let t = RecordingTransport()
-        let b = BridgeSession(transport: t)
+        let b = makeSession(t)
         b.start(info())
         b.push([Float](repeating: 0.1, count: 8_000))     // two chunks before page is ready
         XCTAssertTrue(t.sent.isEmpty)
-        b.handle(.ready(protocolVersion: 1), now: 1)
+        b.handle(.ready(protocolVersion: 1), nonce: nil, now: 1)
         XCTAssertEqual(t.types, ["hello", "session.start", "audio.chunk", "audio.chunk"])
+        XCTAssertEqual(t.sent[0]["nonce"] as? String, b.pageNonce)
+        XCTAssertEqual(t.sent[1]["firstSeq"] as? Int, 0)
         XCTAssertEqual(t.sent.compactMap { $0["seq"] as? Int }, [0, 1])
         b.push([Float](repeating: 0.1, count: 4_000))     // live
         XCTAssertEqual(t.types.last, "audio.chunk")
@@ -173,8 +182,8 @@ final class BridgeTests: XCTestCase {
 
     func testStopFlushesTailAndReloadReplaysEverything() {
         let t = RecordingTransport()
-        let b = BridgeSession(transport: t)
-        b.handle(.ready(protocolVersion: 1), now: 0)
+        let b = makeSession(t)
+        b.handle(.ready(protocolVersion: 1), nonce: nil, now: 0)
         b.start(info())
         b.notice(.tapUnavailable, Copy.micOnlyTapFailed)
         b.push([Float](repeating: 0.1, count: 5_000))
@@ -185,33 +194,40 @@ final class BridgeTests: XCTestCase {
         b.push([0.1])                                      // ignored after stop
         // Page reloads: it gets the whole session again, including the stop.
         t.sent.removeAll()
+        let oldNonce = b.pageNonce
         b.pageWillReload()
-        b.handle(.ready(protocolVersion: 1), now: 11)
+        XCTAssertNotEqual(b.pageNonce, oldNonce, "new nonce per page load")
+        b.handle(.ready(protocolVersion: 1), nonce: nil, now: 11)
         XCTAssertEqual(t.types, ["hello", "session.start", "capture.notice", "audio.chunk", "audio.chunk", "session.stop"])
-        // Resume from a sequence number.
+        // Resume from a sequence number needs the nonce.
         t.sent.removeAll()
-        b.handle(.resume(sessionID: "s1", fromSeq: 1), now: 12)
+        b.handle(.resume(sessionID: "s1", fromSeq: 1), nonce: oldNonce, now: 12)
+        XCTAssertTrue(t.sent.isEmpty, "old nonce refused")
+        b.handle(.resume(sessionID: "s1", fromSeq: 1), nonce: b.pageNonce, now: 12)
         XCTAssertEqual(t.types, ["audio.chunk", "session.stop"])
-        b.handle(.resume(sessionID: "other", fromSeq: 0), now: 12)
+        b.handle(.resume(sessionID: "other", fromSeq: 0), nonce: b.pageNonce, now: 30)
         XCTAssertEqual(t.types.count, 2, "wrong session id ignored")
     }
 
-    func testSessionDoneWipesAudioOnlyAfterStop() {
-        let b = BridgeSession(transport: RecordingTransport())
+    func testSessionDoneWipesAudioOnlyAfterStopAndWithNonce() {
+        let b = makeSession(RecordingTransport())
+        b.handle(.ready(protocolVersion: 1), nonce: nil, now: 0)
         b.start(info())
         b.push([Float](repeating: 0.1, count: 4_000))
-        b.handle(.sessionDone(sessionID: "s1"), now: 1)
-        XCTAssertGreaterThan(b.bufferedBytes, 0, "not wiped while still recording")
+        b.handle(.sessionDone(sessionID: "s1"), nonce: b.pageNonce, now: 1)
+        XCTAssertGreaterThan(b.bufferedBytes, 0, "not released while still recording")
         b.stop(reason: .user, now: 2)
-        b.handle(.sessionDone(sessionID: "nope"), now: 3)
+        b.handle(.sessionDone(sessionID: "nope"), nonce: b.pageNonce, now: 3)
+        b.handle(.sessionDone(sessionID: "s1"), nonce: nil, now: 3)
+        b.handle(.sessionDone(sessionID: "s1"), nonce: "forged", now: 3)
         XCTAssertGreaterThan(b.bufferedBytes, 0)
-        b.handle(.sessionDone(sessionID: "s1"), now: 3)
+        b.handle(.sessionDone(sessionID: "s1"), nonce: b.pageNonce, now: 3)
         XCTAssertEqual(b.bufferedBytes, 0)
         XCTAssertNil(b.current)
     }
 
-    func testKeepWindowWipesAudio() {
-        let b = BridgeSession(transport: RecordingTransport(), keepAfterStop: 600)
+    func testKeepWindowReleasesAudio() {
+        let b = makeSession(RecordingTransport())
         b.start(info())
         b.push([Float](repeating: 0.1, count: 4_000))
         b.stop(reason: .callEnded, now: 100)
@@ -221,28 +237,64 @@ final class BridgeTests: XCTestCase {
         XCTAssertEqual(b.bufferedBytes, 0)
     }
 
-    func testWebStopRequest() {
-        let b = BridgeSession(transport: RecordingTransport())
-        XCTAssertFalse(b.handle(.stop(sessionID: nil), now: 0), "nothing to stop")
+    func testWebStopRequestNeedsNonce() {
+        let b = makeSession(RecordingTransport())
+        b.handle(.ready(protocolVersion: 1), nonce: nil, now: 0)
+        let n = b.pageNonce
+        XCTAssertFalse(b.handle(.stop(sessionID: nil), nonce: n, now: 0), "nothing to stop")
         b.start(info())
-        XCTAssertFalse(b.handle(.stop(sessionID: "other"), now: 0))
-        XCTAssertTrue(b.handle(.stop(sessionID: "s1"), now: 0))
-        XCTAssertTrue(b.handle(.stop(sessionID: nil), now: 0))
+        XCTAssertFalse(b.handle(.stop(sessionID: "s1"), nonce: nil, now: 0), "no nonce")
+        XCTAssertFalse(b.handle(.stop(sessionID: "other"), nonce: n, now: 0))
+        XCTAssertTrue(b.handle(.stop(sessionID: "s1"), nonce: n, now: 0))
+        XCTAssertTrue(b.handle(.stop(sessionID: nil), nonce: n, now: 0))
         b.stop(reason: .webRequested, now: 1)
-        XCTAssertFalse(b.handle(.stop(sessionID: nil), now: 2), "already stopped")
+        XCTAssertFalse(b.handle(.stop(sessionID: nil), nonce: n, now: 2), "already stopped")
     }
 
     func testNewSessionReplacesOld() {
         let t = RecordingTransport()
-        let b = BridgeSession(transport: t)
+        let b = makeSession(t)
         b.start(info("a"))
         b.push([Float](repeating: 0.1, count: 4_000))
         b.stop(reason: .user, now: 1)
         b.start(info("b"))
         XCTAssertEqual(b.nextSeq, 0)
         XCTAssertEqual(b.bufferedBytes, 0)
-        b.handle(.ready(protocolVersion: 1), now: 2)
+        b.handle(.ready(protocolVersion: 1), nonce: nil, now: 2)
         XCTAssertEqual(t.types, ["hello", "session.start"])
         XCTAssertEqual(t.sent.last?["sessionId"] as? String, "b")
+    }
+
+    func testReplayIsBatchedAndLiveChunksKeepOrder() {
+        let t = RecordingTransport()
+        let b = makeSession(t, batch: 3)
+        b.start(info())
+        b.push([Float](repeating: 0.1, count: 4_000 * 7))  // seq 0...6
+        b.handle(.ready(protocolVersion: 1), nonce: nil, now: 0)
+        XCTAssertEqual(t.sent.compactMap { $0["seq"] as? Int }, [0, 1, 2])
+        b.push([Float](repeating: 0.1, count: 4_000))      // seq 7 arrives mid-replay
+        XCTAssertEqual(t.sent.compactMap { $0["seq"] as? Int }, [0, 1, 2], "live chunk waits for the catch-up")
+        b.tick(now: 0.25)
+        b.tick(now: 0.5)
+        b.tick(now: 0.75)
+        XCTAssertEqual(t.sent.compactMap { $0["seq"] as? Int }, Array(0...7))
+        XCTAssertFalse(b.isReplaying)
+        b.push([Float](repeating: 0.1, count: 4_000))
+        XCTAssertEqual(t.sent.last?["seq"] as? Int, 8, "live again")
+    }
+
+    func testReadyWithinFiveSecondsIsDeferredNotLost() {
+        let t = RecordingTransport()
+        let b = makeSession(t)
+        b.start(info())
+        b.handle(.ready(protocolVersion: 1), nonce: nil, now: 0)
+        b.pageWillReload()
+        t.sent.removeAll()
+        b.handle(.ready(protocolVersion: 1), nonce: nil, now: 2)
+        XCTAssertTrue(t.sent.isEmpty)
+        b.tick(now: 4)
+        XCTAssertTrue(t.sent.isEmpty)
+        b.tick(now: 5)
+        XCTAssertEqual(t.types.first, "hello")
     }
 }
