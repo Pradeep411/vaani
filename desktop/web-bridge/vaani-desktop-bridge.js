@@ -1,7 +1,13 @@
 // Vaani desktop bridge, web side. Reference module for protocol v1.
 // Spec: desktop/WEB-BRIDGE-SPEC.md. Drop this file into the web app and call
-// connectDesktopBridge() once on start-up. It does nothing outside the
-// Vaani macOS app, so it is safe to ship to every browser.
+// connectDesktopBridge() once on start-up, BEFORE any third-party script
+// loads (the first caller of __VAANI_DESKTOP__.connect gets the audio; the
+// slot then locks). It does nothing outside the Vaani macOS app, so it is
+// safe to ship to every browser.
+//
+// Every string that comes from the desktop app (source.app, source.bundleId,
+// message, notice) is untrusted text: render it with textContent, never
+// innerHTML.
 //
 // Audio arrives as 16 kHz mono signed 16-bit little-endian PCM in 250 ms
 // chunks. Use pcm16ToFloat32() for Web Audio or encodeWav() to build a WAV
@@ -10,7 +16,6 @@
 export const DESKTOP_ORIGIN = 'https://pradeep411.github.io';
 export const DESKTOP_PATH_PREFIX = '/vaani/';
 export const HANDLER_NAME = 'vaaniDesktop';
-export const EVENT_NAME = 'vaani-desktop';
 export const PROTOCOL = 1;
 
 const SESSION_ID = /^[A-Za-z0-9-]{1,64}$/;
@@ -23,7 +28,8 @@ export function isDesktopApp(win = globalThis.window) {
     if (!win.location.pathname.startsWith(DESKTOP_PATH_PREFIX)) return false;
     const flag = win.__VAANI_DESKTOP__;
     const handler = win.webkit && win.webkit.messageHandlers && win.webkit.messageHandlers[HANDLER_NAME];
-    return !!(flag && flag.protocol === PROTOCOL && handler && typeof handler.postMessage === 'function');
+    return !!(flag && flag.protocol === PROTOCOL && typeof flag.connect === 'function'
+      && handler && typeof handler.postMessage === 'function');
   } catch (_) {
     return false;
   }
@@ -78,7 +84,12 @@ export function encodeWav(chunks, sampleRate = 16000) {
 export function connectDesktopBridge(handlers = {}, win = globalThis.window) {
   if (!isDesktopApp(win)) return null;
   const handler = win.webkit.messageHandlers[HANDLER_NAME];
-  const post = (msg) => handler.postMessage(Object.assign({ v: PROTOCOL }, msg));
+  let nonce = null;                // per page load, from "hello"
+  const post = (msg) => {
+    const out = Object.assign({ v: PROTOCOL }, msg);
+    if (nonce) out.nonce = nonce;
+    handler.postMessage(out);
+  };
   const sessions = new Map(); // sessionId -> { nextSeq, resumeAsked }
   const call = (name, ...args) => {
     const fn = handlers[name];
@@ -87,19 +98,28 @@ export function connectDesktopBridge(handlers = {}, win = globalThis.window) {
     }
   };
 
-  function onEvent(event) {
-    const m = event && event.detail;
+  function onMessage(m) {
     if (!m || typeof m !== 'object' || m.v !== PROTOCOL || typeof m.type !== 'string') return;
     if (m.sessionId !== undefined && !(typeof m.sessionId === 'string' && SESSION_ID.test(m.sessionId))) return;
     switch (m.type) {
       case 'hello':
+        if (typeof m.nonce === 'string' && SESSION_ID.test(m.nonce)) nonce = m.nonce;
         call('onHello', m);
         break;
-      case 'session.start':
+      case 'session.start': {
         if (!m.sessionId) return;
-        if (!sessions.has(m.sessionId)) sessions.set(m.sessionId, { nextSeq: 0, resumeAsked: false });
+        if (!sessions.has(m.sessionId)) {
+          // A page that joins late starts at the oldest chunk the app still keeps.
+          const first = Number.isInteger(m.firstSeq) && m.firstSeq >= 0 ? m.firstSeq : 0;
+          sessions.set(m.sessionId, { nextSeq: first, resumeAsked: false });
+          if (first > 0) {
+            call('onNotice', { v: PROTOCOL, type: 'capture.notice', sessionId: m.sessionId, code: 'gap',
+              message: 'The start of this call is no longer kept on this Mac. Notes cover the rest.' });
+          }
+        }
         call('onSessionStart', m);
         break;
+      }
       case 'audio.chunk': {
         const s = sessions.get(m.sessionId);
         if (!s || !Number.isInteger(m.seq) || typeof m.data !== 'string') return;
@@ -116,9 +136,16 @@ export function connectDesktopBridge(handlers = {}, win = globalThis.window) {
         call('onAudio', decodePCM16(m.data), m);
         break;
       }
-      case 'capture.notice':
-        if (typeof m.message === 'string') call('onNotice', m);
+      case 'capture.notice': {
+        if (typeof m.message !== 'string') return;
+        const s = m.sessionId && sessions.get(m.sessionId);
+        if (s && m.code === 'gap' && Number.isInteger(m.firstSeq) && m.firstSeq > s.nextSeq) {
+          s.nextSeq = m.firstSeq;                       // older audio is gone: move on
+          s.resumeAsked = false;
+        }
+        call('onNotice', m);
         break;
+      }
       case 'session.stop':
         if (sessions.has(m.sessionId)) call('onSessionStop', m);
         break;
@@ -127,7 +154,8 @@ export function connectDesktopBridge(handlers = {}, win = globalThis.window) {
     }
   }
 
-  win.addEventListener(EVENT_NAME, onEvent);
+  // First caller wins; if something else already connected, refuse.
+  if (!win.__VAANI_DESKTOP__.connect(onMessage)) return null;
   post({ type: 'ready', protocol: PROTOCOL });
 
   return {
@@ -135,13 +163,10 @@ export function connectDesktopBridge(handlers = {}, win = globalThis.window) {
     stop(sessionId) {
       post(sessionId ? { type: 'stop', sessionId } : { type: 'stop' });
     },
-    /** Notes are saved: the desktop app wipes its copy of the audio. */
+    /** Notes are saved: the desktop app releases its copy of the audio. */
     done(sessionId) {
       post({ type: 'session.done', sessionId });
       sessions.delete(sessionId);
-    },
-    disconnect() {
-      win.removeEventListener(EVENT_NAME, onEvent);
     },
   };
 }
