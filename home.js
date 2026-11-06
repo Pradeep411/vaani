@@ -16,7 +16,7 @@
   function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
   function J(k, d) { return V.loadJSON(k, d); }
   function SJ(k, v) { return V.saveJSON(k, v); }
-  function hueN(h) { h = Math.round(+h); return h >= 1 && h <= 8 ? h : 1; }
+  function hueN(h) { h = typeof h === "number" || typeof h === "string" ? Math.round(+h) : 0; return h >= 1 && h <= 8 ? h : 1; }
   function startOfDay(d) { var x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
   function daysBetween(a, b) { return Math.round((startOfDay(b) - startOfDay(a)) / DAY); }
   function stripMd(s) { return String(s || "").replace(/\*\*/g, "").replace(/__/g, "").trim(); }
@@ -102,10 +102,13 @@
   /* ================= data ================= */
   /* one parse per synchronous render; any save (the "change" hook) or the next tick starts fresh */
   var memo = null;
-  function allNotes() { if (!memo) { memo = V.sortNotes(V.notes()); setTimeout(function () { memo = null; }, 0); } return memo.slice(); }
+  /* H2: the part a tab handed over to the Vaani window (cont) is not a note of its own while that window takes the notes
+     (another tab holds the lock; null = not known yet). If the window never collects it, it shows as a normal note. */
+  function allNotes() { if (!memo) { memo = V.sortNotes(V.notes()).filter(function (n) { return !(n && n.cont && S.elseRec !== false); }); setTimeout(function () { memo = null; }, 0); } return memo.slice(); }
   function realNotes() { return allNotes().filter(function (n) { return !n.sample; }); }
   function realMeetings() { return realNotes().filter(function (n) { return n.kind === "meeting" && !n.of; }); }
-  function folders() { return J("vaani.folders", []).filter(function (f) { return f && typeof f.id === "string"; }).map(function (f) { f.hue = hueN(f.hue); f.name = String(f.name || "Folder"); return f; }); }
+  /* G8-I1 (gate 8): a folder name that is not text (corrupt storage) reads "Folder", never thrown on */
+  function folders() { var a = J("vaani.folders", []); if (!Array.isArray(a)) a = []; return a.filter(function (f) { return f && typeof f.id === "string"; }).map(function (f) { f.hue = hueN(f.hue); f.name = typeof f.name === "string" && f.name ? f.name : "Folder"; return f; }); }
   function setFolders(a) { SJ("vaani.folders", a); }
   function folderById(id) { return folders().filter(function (f) { return f.id === id; })[0]; }
   function dict() { return J("vaani.dict", []); }
@@ -115,7 +118,8 @@
   function visible(s) { return String(s == null ? "" : s).replace(INVIS, ""); }
 
   /* ---- action items: exactly the renderNoteBody rules, so keys "si.ii" match n.done ---- */
-  var ACT_RE = /action|to.?do|task|next step|kaam/i;
+  /* v2.4: "Tasks" (and older "Action items") are to-dos; a "Next action plan" is steps, not to-dos (index.html isActHead) */
+  var ACT_RE = { test: function (h) { return V.isActHead(h); } };
   /* the same owner rule as the note view (index.html ownerSplit): never split on a clock time, owners are short names */
   var ownerSplit = V.ownerSplit;
   var mdCache = {};
@@ -204,7 +208,10 @@
     if (/^(me|i|myself|main)$/.test(o)) return true;
     return !!me && (o === me || o === me.split(/\s+/)[0]);
   }
-  function isTeamOwner(o) { return /^(team|everyone|all|we|us|both)$/i.test(String(o || "").trim()); }
+  function isTeamOwner(o) { return /^(team|everyone|all|we|us|both|not said|unassigned|no owner)$/i.test(String(o || "").trim()); }
+  /* v2.4: the notes never invent an owner; a task nobody took on reads "Owner not said" */
+  function noOwner(o) { return /^(not said|unassigned|no owner)$/i.test(String(o || "").trim()); }
+  function ownerLabel(o) { return noOwner(o) ? "Owner not said" : o; }
   function openTodos(opts) {
     opts = opts || {};
     var reals = realNotes(), src = reals.length ? reals : allNotes();
@@ -277,11 +284,11 @@
   function callSrc(v) { return /^(meet|teams|zoom)$/.test(v || "") ? v : ""; }
 
   /* ================= state ================= */
-  var S = { page: "home", todoTab: "open", todoGroup: "meeting", owner: "", homeMine: false, folderSel: "", query: "", prev: "", marks: [] };
+  var S = { page: "home", todoTab: "open", todoGroup: "meeting", owner: "", homeMine: false, folderSel: "", query: "", prev: "", marks: [], elseRec: null };
   var onSheet = {};
   /* storage trouble, told plainly (see the storage layer in index.html) */
   var storeKept = true, storeTold = false;
-  function storeMsg() { return storeKept ? "Vaani can't save to this browser's storage because it is full. Your newest notes are kept in a second store on this device for now. Download a backup to be safe." : "Vaani can't save in this browser right now, so new notes will be lost when you close this tab. Download a backup now."; }
+  function storeMsg() { return storeKept ? "Vaani can’t save to this browser’s storage because it is full. Your newest notes are kept in a second store on this device for now. Download a backup to be safe." : "Vaani can’t save in this browser right now, so new notes will be lost when you close this tab. Download a backup now."; }
 
   /* ================= sidebar ================= */
   var side = $("#side");
@@ -372,7 +379,7 @@
     return '<div class="row-r hov' + (t.done ? " is-done" : "") + '" data-row="' + id + '">' +
       '<span class="ln-g' + (dg.late ? " late" : "") + '">' + esc(dg.g) + "</span>" +
       '<span class="ln-n"><button class="ck' + (t.done ? " done" : "") + '" data-tk="' + id + '" aria-pressed="' + (t.done ? "true" : "false") + '" aria-label="' + (t.done ? "Mark not done: " : "Mark done: ") + esc(t.task) + '">' + CK + "</button></span>" +
-      '<div class="ln-c"><span class="l1"><button class="owner" data-owner="' + esc(t.owner) + '" aria-label="Show to-dos for ' + esc(t.owner) + '">' + esc(t.owner) + ':</button> <span>' + esc(showTask(t)) + "</span></span>" +
+      '<div class="ln-c"><span class="l1"><button class="owner" data-owner="' + esc(t.owner) + '" aria-label="Show to-dos for ' + esc(ownerLabel(t.owner)) + '">' + esc(ownerLabel(t.owner)) + ':</button> <span>' + esc(showTask(t)) + "</span></span>" +
       '<button class="ln-link cover" data-note="' + esc(n.id) + '" data-key="' + esc(t.key) + '" aria-label="Open ' + esc(showTask(t)) + ' in ' + esc(n.title || "the note") + '"></button>' +
       '<span class="l2">' + l2.join("") + "</span></div>" +
       '<div class="ln-x">' + x + "</div></div>";
@@ -444,7 +451,7 @@
     opts.appendChild(fu);
     var clr = el("button", "pill-clear", ic("x")); clr.type = "button"; clr.id = "fuClear"; clr.setAttribute("aria-label", "Clear follow-up"); clr.hidden = true;
     opts.appendChild(clr);
-    var call = el("div", "hm-call"); call.appendChild($("#callChip")); call.appendChild($("#extLink"));
+    var call = el("div", "hm-call"); call.appendChild($("#extLink"));
     var steer = el("div", "hm-steer"); steer.id = "hmSteer"; steer.hidden = true;
     now.appendChild(top); now.appendChild(opts); now.appendChild(call); now.appendChild(steer);
     V.langSel.addEventListener("change", renderSteer);
@@ -465,8 +472,10 @@
     $("#hmTitle").textContent = meet ? "Record a meeting" : "Record a quick note";
     var lab = $("#recLabel");
     if (V.canRecord()) {
-      var srcMsg = V.isCallSrc ? ({ meet: "Ready for your Google Meet call. ", teams: "Ready for your Teams call. ", zoom: "Ready for your Zoom call. " }[V.SRC] || "") + "Tap the red button, pick the call tab and turn on Share tab audio." : "";
-      if (V.SRC === "installed") srcMsg = "Vaani is in Chrome now. Join a Meet, Teams or Zoom call and it will offer to take notes.";
+      /* N10: the extension and Mac-app lines are said once, here next to the red button (the hero keeps its lede) */
+      /* N3: while another tab records, Home doesn't invite a second recording */
+      var srcMsg = V.extWaiting() ? "Vaani is starting your notes…" : V.extFailed && V.extFailed() ? (V.extFailMsg ? V.extFailMsg() : V.EXTFAIL) : S.elseRec ? (elseSaving() ? "To record here, wait until your other tab is done." : "To record here, stop the other one first.") : V.isCallSrc ? ({ meet: "Ready for your Google Meet call. ", teams: "Ready for your Teams call. ", zoom: "Ready for your Zoom call. " }[V.SRC] || "") + "Tap the red button and Vaani takes the notes." : "";
+      if (V.SRC === "desktop" && V.deskLine) srcMsg = V.deskLine() || (V.deskReady && V.deskReady() ? "When a call starts, the Vaani app on your Mac asks to take notes." : V.desktopActive() ? "" : srcMsg);
       lab.innerHTML = srcMsg ? esc(srcMsg) : mqPhone.matches ? "Tap the red button to start" : 'Tap to start or press <span class="kbd">' + (V.isMac ? "⌘ J" : "Ctrl J") + "</span>";
     }
     var ms = realMeetings().slice(0, 25), sel = $("#fuSel");
@@ -493,12 +502,13 @@
       '<div><button type="button" class="btn-f" data-act="steerYes">Set up Sarvam AI</button><button type="button" class="btn-t" data-act="steerNo">Not now</button></div>';
   }
   function greeting() { var h = new Date().getHours(); return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening"; }
+  /* G8-4 (gate 8): a to-do nobody took on ("Not said") reads "The room was due Friday.", never "Not said’s room" */
   function digest() {
     var open = openTodos(), today = startOfDay(new Date()).getTime();
     var late = open.filter(function (t) { return t.due && t.due.getTime() < today; });
     var bits = [longDay(new Date()) + "."];
     if (open.length) bits.push(plural(open.length, "to-do is", "to-dos are").replace(/^(\d+)/, "<b>$1</b>") + " open.");
-    if (late.length) { var t = late[0]; bits.push(esc((isMine(t.owner) ? "Your " : t.owner + "’s ") + shortTask(t.task)) + " was due " + esc(weekdayLong(t.due)) + "."); }
+    if (late.length) { var t = late[0]; bits.push(esc((isMine(t.owner) ? "Your " : noOwner(t.owner) ? "The " : t.owner + "’s ") + shortTask(t.task)) + " was due " + esc(weekdayLong(t.due)) + "."); }
     else if (!open.length && realNotes().length) bits.push("Nothing open.");
     return bits.join(" ");
   }
@@ -548,7 +558,7 @@
     h += '</div><div class="ln-list" id="nextList" data-removable>';
     list.slice(0, 5).forEach(function (t) { h += todoRow(t, { showDue: true }); });
     h += "</div>";
-    if (!list.length) h += '<p class="empty">' + (anyTodo ? "Nothing open. Every action item is ticked." : "Action items from your meetings will line up here, soonest first.") + "</p>";
+    if (!list.length) h += '<p class="empty">' + (anyTodo ? "Nothing open. Every task is ticked." : "Vaani lines up the tasks from your meetings here, soonest first.") + "</p>";
     h += "</section>";
     }
     /* 3. this week */
@@ -556,7 +566,7 @@
     h += '<section class="ln" aria-labelledby="hWeek"><div class="ln-head"><h2 id="hWeek">This week</h2>' + (src.length ? '<button class="lnk" data-go2="notes">All notes</button>' : "") + '</div><div class="ln-list">';
     h += dayGroups(wk.slice(0, 12), { suggest: true });
     h += "</div>";
-    if (!wk.length) h += '<p class="empty">' + (src.length ? "No meetings this week. Older notes are in All notes." : "Your meetings will appear here.") + "</p>";
+    if (!wk.length) h += '<p class="empty">' + (src.length ? "No meetings this week. Older notes are in All notes." : "Vaani lists this week’s meetings here once it takes notes on one.") + "</p>";
     var mk = makeFolderHint();
     if (mk) h += '<p class="empty">You have ' + realMeetings().filter(function (n) { return n.tmpl === mk && !n.folder; }).length + " " + esc(typePlural(mk)) + ' with no folder. <button data-mkfolder="' + esc(mk) + '">Make a folder for them</button> <button class="quiet" data-mkno="' + esc(mk) + '">Not now</button></p>';
     h += "</section>";
@@ -569,15 +579,16 @@
     extHook("home", { first: first });
   }
   function weekBlock() {
-    var now = new Date(), ms = realNotes().filter(function (n) { return n.kind === "meeting" && !n.of && daysBetween(new Date(n.date), now) < 7; });
+    /* G7-I1 (gate 7): a stored date or number that is an object counts as nothing (never thrown on) */
+    var now = new Date(), ms = realNotes().filter(function (n) { return n.kind === "meeting" && !n.of && daysBetween(dOf(n), now) < 7; });
     if (ms.length < 2) return "";
     var secs = 0, words = 0, td = 0, tt = 0;
-    ms.forEach(function (n) { secs += +n.dur || 0; todosOf(n).forEach(function (t) { tt++; if (t.done) td++; }); });
-    realNotes().forEach(function (n) { if (!n.of && daysBetween(new Date(n.date), now) < 7) words += +n.words || 0; });
+    ms.forEach(function (n) { secs += numIn(n.dur) || 0; todosOf(n).forEach(function (t) { tt++; if (t.done) td++; }); });
+    realNotes().forEach(function (n) { if (!n.of && daysBetween(dOf(n), now) < 7) words += numIn(n.words) || 0; });
     var run = 0;
     for (var w = 0; w < 52; w++) {
       var a = new Date(now.getTime() - (w + 1) * 7 * DAY), b = new Date(now.getTime() - w * 7 * DAY);
-      if (realNotes().some(function (n) { var d = new Date(n.date); return d > a && d <= b; })) run++; else break;
+      if (realNotes().some(function (n) { var d = dOf(n); return d > a && d <= b; })) run++; else break;
     }
     function split(min) { min = Math.round(min); if (min < 60) return min + "<small> min</small>"; return Math.floor(min / 60) + "<small> h</small>" + (min % 60 ? " " + (min % 60) + "<small> min</small>" : ""); }
     var cells = [["" + ms.length, "Meetings"], [split(secs / 60), "Recorded"]];
@@ -593,15 +604,52 @@
     var last = +V.load("vaani.backupAt", "0") || 0, later = +V.load("vaani.backupLater", "0") || 0;
     return Date.now() - Math.max(last, later) > 30 * DAY;
   }
+  /* H1/H2: another Vaani tab holds the recording lock (the Vaani window beside the call, after a hand-over): the notes
+     there are live, not unfinished, so this tab never offers to make notes from them or to throw them away */
+  var MOVED = '<div class="hm-alert" role="status"><p><b>Your notes moved to the Vaani window beside your call.</b> Vaani is still taking notes there, and you get one note. Can’t see the window? Click the Vaani icon on the call tab.</p></div>';
+  var ELSEREC = '<div class="hm-alert" role="status"><p><b>Vaani is taking notes in another tab.</b> Stop there when the meeting ends.</p></div>';
+  /* G5-3 (gate 5): right after "Vaani stopped", while the other tab still saves its note */
+  var ELSESAVE = '<div class="hm-alert" role="status"><p><b>Your other tab is saving your notes.</b> They show here when it’s done.</p></div>';
+  function elseSaving() { return !!(S.elseSave && Date.now() - S.elseSave < 120000); }
+  function hasMoved() { return V.notes().some(function (n) { return n && n.cont; }); }
+  var alertSeq = 0;
   function renderAlert() {
-    var live = J("vaani.live", null), box = $("#hmAlert");
-    if (live && live.segs && live.segs.length && !V.isListening()) {
-      var mins = Math.max(1, Math.round((live.savedAt - live.startedAt) / 60000));
-      box.innerHTML = '<div class="hm-alert" role="status"><p>A <b>' + esc(durLabel(mins)) + "</b> recording didn't finish. Make notes from it.</p>" + '<button class="btn-f" data-act="recover">Make notes</button><button class="btn-t" data-act="discard">Discard</button></div>';
-    } else if (V.storeFailing()) {
-      box.innerHTML = '<div class="hm-alert" role="status"><p>' + esc(storeMsg()) + '</p><button class="btn-f" data-act="backup">Download a backup</button></div>';
-    } else box.innerHTML = "";
+    var live = liveJ(), box = $("#hmAlert"), seq = ++alertSeq, hasL = liveRec(live), moved = hasMoved();
+    function rest() {
+      if (V.storeFailing()) box.innerHTML = '<div class="hm-alert" role="status"><p>' + esc(storeMsg()) + '</p><button class="btn-f" data-act="backup">Download a backup</button></div>';
+      else box.innerHTML = "";
+    }
+    /* N4: the lock is cheap to ask, so it is always asked (a second tab shows the card before the first words come) */
+    if (V.isListening()) return rest();
+    V.otherRec(function (busy) {
+      if (seq !== alertSeq) return;
+      if (busy !== S.elseRec) { S.elseRec = busy; memo = null; setTimeout(refresh, 0); }
+      if (!busy) { S.elseSave = 0; var rl = cleanLive(J("vaani.live", null)); if (rl && V.liveUsed && V.liveUsed(rl.startedAt)) V.remove("vaani.live"); freeParts(live); }
+      /* G6-4 (gate 6): the "saving" card only once the other tab is still saving after 0.6 s (no card that flashes by) */
+      if (busy) { box.innerHTML = moved ? MOVED : elseSaving() ? (Date.now() - S.elseSave < 600 ? "" : ELSESAVE) : ELSEREC; watchElse(); return; }
+      if (hasL) {
+        var mins = Math.max(1, Math.round((live.savedAt - liveStart(live)) / 60000));
+        box.innerHTML = '<div class="hm-alert" role="status"><p>A <b>' + esc(durLabel(mins)) + "</b> recording didn’t finish. Make notes from it.</p>" + '<button class="btn-f" data-act="recover">Make notes</button><button class="btn-t" data-act="discard">Discard</button></div>';
+      } else rest();
+    });
   }
+  /* the card and the lists follow the lock: checked every 2 s while there is something to show, when this tab comes back
+     to the front, and when another tab saves (vaani.live, vaani.handed, the notes) */
+  var elseIv = 0, elseT = 0;
+  function elseTick() {
+    if (V.isListening()) return;
+    var want = hasMoved() || !!J("vaani.live", null) || S.elseRec;
+    if (!want) { S.elseRec = false; clearInterval(elseIv); elseIv = 0; return; }
+    V.otherRec(function (busy) { if (!busy) S.elseSave = 0; if (busy === S.elseRec) return; S.elseRec = busy; memo = null; refresh(); });
+  }
+  function watchElse() { if (!elseIv) elseIv = setInterval(elseTick, 2000); }
+  window.addEventListener("storage", function (e) {
+    if (!e.key || !/vaani\.(live|handed|history)$/.test(e.key)) return;
+    var now = Date.now(); if (now - elseT < 2000) return; elseT = now; watchElse(); setTimeout(elseTick, 50);
+  });
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) elseTick(); });
+  /* a click on a card that was drawn before the window started: checked again first */
+  function liveGuard(fn) { V.otherRec(function (busy) { if (busy) { V.toast(hasMoved() ? "Vaani is already taking notes in its window beside your call. Stop there first." : "Vaani is already taking notes in another tab. Stop there first."); renderAlert(); return; } fn(); }); }
 
   /* ---- one click handler for every line row on Home and pages ---- */
   function tick(id, key, row, removeOnDone) {
@@ -644,10 +692,10 @@
     else if (a === "recap") runAsk("/week");
     else if (a === "backup") downloadBackup();
     else if (a === "backupLater") { V.save("vaani.backupLater", String(Date.now())); renderHome(); }
-    else if (a === "recover") recoverLive();
+    else if (a === "recover") liveGuard(recoverLive);
     else if (a === "steerYes") V.openSettings("sarvam");
     else if (a === "steerNo") { V.save("vaani.steerNo", V.langSel.value); renderSteer(); $("#langSel").focus(); }
-    else if (a === "discard") discardLive();
+    else if (a === "discard") liveGuard(discardLive);
     else if (s === "sample") { var sm = allNotes().filter(function (n) { return n.sample; })[0]; if (sm) V.showNote(sm, false); }
     else if (s === "test") { V.startRec(); }
     else if (s === "names") go("words");
@@ -691,19 +739,21 @@
     h += '<div class="ln"><div class="ln-list"' + (done ? "" : " data-removable") + ">";
     var groups = Object.create(null), order = [];
     list.forEach(function (t) {
-      var k = S.todoGroup === "person" ? t.owner.toLowerCase() : String(t.n.id);
+      /* NEW-2 (round 7): "Not said" (and "Unassigned", "No owner") is never a person: one group, last */
+      var k = S.todoGroup === "person" ? (noOwner(t.owner) ? "n" : "p:" + t.owner.toLowerCase()) : String(t.n.id);
       if (!groups[k]) { groups[k] = []; order.push(k); }
       groups[k].push(t);
     });
-    if (S.todoGroup === "person") order.sort(function (a, b) { return groups[b].length - groups[a].length; });
+    if (S.todoGroup === "person") order.sort(function (a, b) { return (a === "n") - (b === "n") || groups[b].length - groups[a].length; });
     order.forEach(function (k) {
       var g = groups[k], t0 = g[0];
-      if (S.todoGroup === "person") h += '<div class="grp-h person"><span class="av c' + hueOf(t0.owner) + '" aria-hidden="true">' + esc(t0.owner.charAt(0).toUpperCase()) + "</span><b>" + esc(t0.owner) + "</b><span>" + g.length + "</span></div>";
+      if (S.todoGroup === "person" && k === "n") h += '<div class="grp-h person none"><b>' + ownerLabel(t0.owner) + "</b><span>" + g.length + "</span></div>";
+      else if (S.todoGroup === "person") h += '<div class="grp-h person"><span class="av c' + hueOf(t0.owner) + '" aria-hidden="true">' + esc(t0.owner.charAt(0).toUpperCase()) + "</span><b>" + esc(t0.owner) + "</b><span>" + g.length + "</span></div>";
       else h += '<div class="grp-h"><b>' + esc(t0.n.title || "Untitled") + "</b><span>" + esc(groupDay(new Date(t0.n.date))) + "</span></div>";
       g.forEach(function (t) { h += todoRow(t, { showDue: true, noSrc: S.todoGroup !== "person" }); });
     });
     h += "</div>";
-    if (!list.length) h += '<p class="empty">' + (done ? "Ticked items show here." : "Nothing open. Every action item is ticked.") + "</p>";
+    if (!list.length) h += '<p class="empty">' + (done ? "Ticked items show here." : "Nothing open. Every task is ticked.") + "</p>";
     return h + "</div>";
   }
   function searchNotes(q) {
@@ -720,7 +770,7 @@
       h += "</div>";
     }
     h += '<div class="ln"><div class="ln-list">' + dayGroups(list, { suggest: !S.query }) + "</div>";
-    if (!list.length) h += '<p class="empty">' + (S.query ? "No notes match that search." : "Your notes will appear here. Everything stays in this browser.") + "</p>";
+    if (!list.length) h += '<p class="empty">' + (S.query ? "No notes match that search." : "Vaani keeps your notes here. Everything stays in this browser.") + "</p>";
     return h + "</div>";
   }
   function pageFolder(id) {
@@ -947,7 +997,7 @@
     if (q.charAt(0) === "/") {
       var cmd = q.split(/\s+/)[0].toLowerCase(), rest = q.slice(cmd.length).trim();
       if (cmd === "/todos") {
-        var t = openTodos(), h = t.length ? "<ul>" + t.slice(0, 8).map(function (x) { var dg = dueGutter(x); return "<li><b>" + esc(x.owner) + ":</b> " + esc(x.task) + (x.due ? ' <span class="due-a">' + esc(dg.l2) + "</span>" : "") + "</li>"; }).join("") + "</ul>" : "<p>Nothing open. Every action item is ticked.</p>";
+        var t = openTodos(), h = t.length ? "<ul>" + t.slice(0, 8).map(function (x) { var dg = dueGutter(x); return "<li><b>" + esc(x.owner) + ":</b> " + esc(x.task) + (x.due ? ' <span class="due-a">' + esc(dg.l2) + "</span>" : "") + "</li>"; }).join("") + "</ul>" : "<p>Nothing open. Every task is ticked.</p>";
         if (t.length > 8) h += '<p><button type="button" class="lnk-in" data-aact="todos">See all ' + t.length + " to-dos</button></p>";
         var srcIds = Object.create(null), srcs = []; t.slice(0, 8).forEach(function (x) { if (!srcIds[x.n.id]) { srcIds[x.n.id] = 1; srcs.push(x.n); } });
         return panel("My open to-dos", h, srcs);
@@ -975,11 +1025,11 @@
     V.generate(sys, pr, function () { return "__BASIC__"; }).then(function (r) {
       if (r.text === "__BASIC__" && own.length) {
         var who = own[0].owner.split(/\s+/)[0];
-        panel(q, "<p>" + esc(who) + "'s action items:</p><ul>" + own.slice(0, 8).map(function (t) { return "<li>" + esc(showTask(t)) + (t.done ? ' <span class="due-a">Done</span>' : t.due ? ' <span class="due-a">' + esc(dueGutter(t).l2) + "</span>" : "") + '<br><span class="due-a">' + esc((t.n.title || "Untitled") + ", " + relDay(new Date(t.n.date))) + "</span></li>"; }).join("") + "</ul>", top, NO_AI_HINT);
+        panel(q, "<p>" + esc(who) + "’s tasks:</p><ul>" + own.slice(0, 8).map(function (t) { return "<li>" + esc(showTask(t)) + (t.done ? ' <span class="due-a">Done</span>' : t.due ? ' <span class="due-a">' + esc(dueGutter(t).l2) + "</span>" : "") + '<br><span class="due-a">' + esc((t.n.title || "Untitled") + ", " + relDay(new Date(t.n.date))) + "</span></li>"; }).join("") + "</ul>", top, NO_AI_HINT);
       } else if (r.text === "__BASIC__") {
         panel(q, "<p>These notes mention it:</p><ul>" + top.map(function (n) { var w = q.split(/\s+/).filter(function (x) { return x.length > 3; })[0] || q; return "<li><b>" + esc(n.title || "Untitled") + "</b>, " + esc(relDay(new Date(n.date))) + "<br>" + snippetHtml(n, w) + "</li>"; }).join("") + "</ul>", top, NO_AI_HINT);
       } else panel(q, mdHtml(r.text), top, "Written by " + esc(r.engine) + ". Check the sources.");
-    }).catch(function () { panel(q, "<p>The AI didn't answer. Here are the notes that mention it.</p>", top, NO_AI_HINT); });
+    }).catch(function () { panel(q, "<p>The AI didn’t answer. Here are the notes that mention it.</p>", top, NO_AI_HINT); });
   }
   function decisionsOf(n) {
     var out = [];
@@ -1014,7 +1064,9 @@
     b += ch === "wa" ? "\n\nShout if I missed anything." : "\n\nLet me know if I missed anything.";
     return b;
   }
+  /* v2.4: one follow-up email editor, the same one as the note's Next steps (agent.js) */
   function followSheet(n) {
+    if (window.VaaniAgent && VaaniAgent.mailSheet) return VaaniAgent.mailSheet(n);
     FU = { n: n, ch: "email", ai: {}, edited: false };
     $("#fuSub").textContent = n.title || "Untitled";
     setFuCh("email"); V.openSheet("#fuSheet");
@@ -1042,7 +1094,8 @@
   $("#fuSend").addEventListener("click", function () {
     var t = $("#fuText2").value, n = FU.n;
     if (FU.ch === "wa") window.open("https://wa.me/?text=" + encodeURIComponent(t), "_blank", "noopener");
-    else location.href = "mailto:?subject=" + encodeURIComponent("Follow-up: " + (n.title || "our meeting")) + "&body=" + encodeURIComponent(t);
+    /* v2.4: addressed to the other people in the meeting's calendar invite, when the note has them (agent.js) */
+    else location.href = window.VaaniAgent ? VaaniAgent.mailtoUrl((n.cal && Array.isArray(n.cal.mails) ? n.cal.mails : []).filter(VaaniAgent.okMail), "Follow-up: " + (n.title || "our meeting"), t) : "mailto:?subject=" + encodeURIComponent("Follow-up: " + (n.title || "our meeting")) + "&body=" + encodeURIComponent(t);
     V.closeSheets();
   });
   $("#fuCopy").addEventListener("click", function () { V.copyText($("#fuText2").value, "Copied. Paste it anywhere."); });
@@ -1070,7 +1123,7 @@
   /* share sheet: follow-up first */
   (function () {
     var opts = $("#shareSheet .opts"); if (!opts) return;
-    var b = el("button", "opt"); b.id = "shFollow"; b.innerHTML = '<span class="oi">' + ic("mail") + "</span><span>Draft a follow-up<small>Email or WhatsApp, from these notes</small></span>";
+    var b = el("button", "opt"); b.id = "shFollow"; b.innerHTML = '<span class="oi">' + ic("mail") + "</span><span>Draft the follow-up email<small>Check it, then send it from your email</small></span>";
     opts.insertBefore(b, opts.firstChild);
     b.addEventListener("click", function () { var n = V.cur(); V.closeSheets(); if (n) followSheet(n); });
     $("#tbShare").addEventListener("click", function () { var n = V.cur(); b.hidden = !n || n.kind !== "meeting"; });
@@ -1098,7 +1151,7 @@
     /* v2.3: a live count of words heard, and a calm warning when speech is heard but no words arrive */
     var meta = $("#recMeta"), hl = el("p", "rec-health"); hl.id = "recHealth";
     var warn = el("div", "rec-warn"); warn.id = "recWarn"; warn.hidden = true;
-    meta.parentNode.insertBefore(hl, meta.nextSibling); hl.parentNode.insertBefore(warn, hl.nextSibling);
+    var after = $("#recSrc") || meta; after.parentNode.insertBefore(hl, after.nextSibling); hl.parentNode.insertBefore(warn, hl.nextSibling);
     warn.addEventListener("change", function (e) { if (e.target.id !== "rwLang" || !e.target.value) return; var l = e.target.value; V.setRecLang(l); H.seen = Date.now(); hideWarn(); emptyLy("Listening for " + V.langName(l) + "."); V.toast("Listening for " + shortLang(l) + " now"); $("#stopBtn").focus(); });
     warn.addEventListener("click", function (e) { var b = e.target.closest("[data-rw]"); if (!b) return; useSarvam(); });
   })();
@@ -1118,7 +1171,8 @@
   function sttKeyless() { return !(window.VaaniSTT && VaaniSTT.hasKey()); }
   function paintHealth() {
     var hl = $("#recHealth"); if (!hl) return;
-    var w = heardWords(), st = H.st, s = V.sttActive();
+    /* H3: in the Vaani window after a hand-over, the other tab's words count too */
+    var w = heardWords() + (V.prevWords ? V.prevWords() : 0), st = H.st, s = V.sttActive();
     var txt = plural(w, "word", "words") + " heard";
     if (s && st && st.micLost) problemWarn("mic", "The microphone stopped.", "Stop the recording to make notes from what was heard.");
     else if (s && st && st.auth) problemWarn("auth", "Sarvam AI didn’t accept your key.", "Nothing is being turned into text. Vaani keeps up to 15 minutes of audio. Stop now, then fix the key in Settings.");
@@ -1162,7 +1216,7 @@
   function consentText() {
     var hi = /^hi|^mr|^ur/.test(V.langSel.value), svc = speechService(), prov = V.remoteReady() ? V.PNAME[V.provider()] : "", sv = V.sttActive();
     if (hi) return "Main is call ke notes apne browser ke ek notes app se le raha hoon. " + (sv ? "Sarvam AI baaton ko text mein badalta hai" : "Browser ki speech service (" + svc + ") baaton ko text mein badalti hai") + (prov ? ", aur notes " + prov + " us text se likhta hai" : "") + ". Notes mere device par save hote hain. Agar aap nahi chahte to bata dijiye.";
-    return "I'm taking notes on this call with a notes app in my browser. " + (sv ? "Sarvam AI turns what we say into text" : "My browser's speech service (" + svc + ") turns what we say into text") + (prov ? ", and " + prov + " writes the notes from that text" : "") + ". The notes are saved on my device. Tell me if you'd rather I didn't.";
+    return "I’m taking notes on this call with a notes app in my browser. " + (sv ? "Sarvam AI turns what we say into text" : "My browser’s speech service (" + svc + ") turns what we say into text") + (prov ? ", and " + prov + " writes the notes from that text" : "") + ". The notes are saved on my device. Tell me if you’d rather I didn’t.";
   }
   var TRIG = /\b(note this|note that|mark this|action item|important point|yeh likh lo|ye likh lo|isko note karo|note kar lo|likh lo)\b/i;
   function secOf(t) { var m = /^(\d{1,3}):(\d{2})$/.exec(String(t || "")); return m ? +m[1] * 60 + +m[2] : -1; }
@@ -1243,40 +1297,166 @@
     $("#markLbl").textContent = S.marks.length ? "Marked " + S.marks.length : "Mark this";
     $("#markBtn").classList.toggle("on", !!S.marks.length);
   }
-  var liveT = 0;
+  /* NEW-1 (round 7): a save skipped by the 1.5 s throttle (a Mark in a quiet moment) is written by one trailing save, so
+     every change reaches the crash copy within about 1.5 s */
+  var liveT = 0, liveTT = 0;
   function saveLive(force) {
     if (!V.isListening()) return;
-    var now = Date.now(); if (!force && now - liveT < 1500) return; liveT = now;
-    var segs = V.getSegs().slice(), it = V.getInterim();
-    var live = { startedAt: V.getStartedAt(), savedAt: now, mode: V.getMode(), lang: V.langSel.value, tmpl: V.tmplSel.value, prev: S.prev || "", segs: segs, interim: it, marks: S.marks, src: callSrc(V.SRC), call: V.hasCallTrack() };
+    var now = Date.now();
+    if (!force && now - liveT < 1500) { if (!liveTT) liveTT = setTimeout(function () { liveTT = 0; saveLive(true); }, Math.max(50, 1500 - (now - liveT))); return; }
+    if (liveTT) { clearTimeout(liveTT); liveTT = 0; }
+    liveT = now;
+    var segs = V.getSegs().slice(), it = V.getInterim(), ci = V.contInfo ? V.contInfo() : null;
+    var live = cleanLive({ startedAt: V.getStartedAt(), savedAt: now, mode: V.getMode(), lang: V.langSel.value, tmpl: V.tmplSel.value, prev: S.prev || "", segs: segs, interim: it, marks: S.marks, src: callSrc(V.SRC), call: V.hasCallTrack(), hid: ci && ci.hid, st0: ci && ci.st0 });
+    /* Q-G5-2 (gate 5): never over another recording's crash copy that still holds words, while the other tab's words are
+       only there. G6-M1 (gate 6): only in the Vaani window during a hand-over or its Stop (V.handPend); a normal tab always
+       keeps its own crash copy, so an old copy nobody finished can never turn crash protection off */
+    if (!live || (V.handPend && V.handPend() && otherLive())) return;
     extHook("live", live); SJ("vaani.live", live);
   }
-  function hasLive() { var l = J("vaani.live", null); return l && l.segs && l.segs.length; }
+  /* a crash copy with words from a recording that isn't this tab's own (another startedAt) */
+  function otherLive() { var l = liveJ(); return !!(l && l.startedAt !== V.getStartedAt() && liveHas(l)); }
+  /* G6-M1 (c): unfinished words count too (a recording closed before its first final line) */
+  function liveHas(l) { return !!(l && (l.segs.length || l.interim)); }
+  /* G3-L1 (variant): another tab's crash copy is used only when its times are real numbers and its lines a list */
+  /* G4-I2: and only real times: after 1970, not after it was saved, saved no later than a minute from now (so
+     new Date(...).toISOString() can't throw) */
+  /* Q-G8-4 (gate 8): a copy whose recording was already turned into a note (a late write of it) is never offered again */
+  function liveJ() { var l = cleanLive(J("vaani.live", null)); return l && V.liveUsed && V.liveUsed(l.startedAt) ? null : l; }
+  /* G6-I2 (gate 6): a crash copy is cleaned by the rules of a saved note (cleanNote) where it is written and wherever it is
+     read: lines are text with an m:ss time or none, the language and the notes style known values, marks whole line
+     numbers ("tap" or "voice"), unfinished words text. Null or odd lines are dropped, never thrown on (round 7: also a time,
+     source or mark time that is an object, such as {"toString":1}, is only checked once it is text). */
+  function cleanLive(l) {
+    if (!l || typeof l !== "object" || Array.isArray(l)) return null;
+    var st = l.startedAt, sv = l.savedAt;
+    if (!(typeof st === "number" && isFinite(st) && typeof sv === "number" && isFinite(sv) && st > 0 && st <= sv && sv <= Date.now() + 60000) || (l.segs != null && !Array.isArray(l.segs))) return null;
+    var mm = /^\d{1,3}:\d{2}$/;
+    var segs = (l.segs || []).filter(function (x) { return x && typeof x === "object" && typeof x.x === "string"; }).map(function (x) { return { t: typeof x.t === "string" && mm.test(x.t) ? x.t : "", x: x.x.slice(0, 5000) }; });
+    var marks = Array.isArray(l.marks) ? l.marks.filter(function (m) { return m && typeof m === "object" && Number.isInteger(m.i) && m.i >= 0; }).slice(0, 200).map(function (m) { var v = typeof m.s === "number" && isFinite(m.s) ? Math.max(0, m.s) : 0; return { i: m.i, s: v, t: typeof m.t === "string" && mm.test(m.t) ? m.t : V.fmt(v), how: m.how === "voice" ? "voice" : "tap" }; }) : [];
+    var pv = typeof l.prev === "number" || (typeof l.prev === "string" && /^\d{1,16}$/.test(l.prev)) ? +l.prev : 0;
+    var out = { startedAt: st, savedAt: sv, mode: l.mode === "note" ? "note" : "meeting", lang: typeof l.lang === "string" && /^[a-z]{2}(-[A-Z]{2})?$/.test(l.lang) ? l.lang : "en-IN", tmpl: V.hasTmpl(l.tmpl) ? l.tmpl : "auto", prev: isFinite(pv) && pv > 0 ? pv : "", segs: segs, interim: typeof l.interim === "string" ? l.interim.trim().slice(0, 5000) : "", marks: marks, src: typeof l.src === "string" && callSrc(l.src) ? l.src : "", call: l.call === true };
+    /* NEW-3 (round 7): the Vaani window's copy names its hand-over (the one-time id) and, once known, when the other tab's
+       part started; only a well-formed id, and a start before this recording's */
+    /* the calendar event calendar.js put on the copy (its "live" hook), cleaned by a saved note's rules, so a recovered
+       note keeps the event's title */
+    var cc = l.cal && typeof l.cal === "object" && !Array.isArray(l.cal) ? (cleanNote({ id: 1, date: 0, cal: l.cal }) || {}).cal : null;
+    if (cc) out.cal = cc; if (typeof l.calk === "string" && callSrc(l.calk)) out.calk = l.calk;
+    if (typeof l.hid === "string" && /^[a-p]{16}$/.test(l.hid)) { out.hid = l.hid; out.st0 = typeof l.st0 === "number" && isFinite(l.st0) && l.st0 > 0 && l.st0 < st ? l.st0 : 0; }
+    return out;
+  }
+  function hasLive() { return liveRec(liveJ()); }
+  /* Q-G7-1 (gate 7): a crashed Vaani window's copy with no words of its own yet still holds the other tab's part (NEW-3):
+     Home offers it too, and "Make notes" gives that part its notes */
+  function liveRec(l) { if (liveHas(l)) return true; try { return !!contPart(l); } catch (e) { return false; } }
+  /* G7-3 (gate 7): that copy is one recording with the other tab's part (recoverLive merges it): it began then */
+  function liveStart(l) { var b = null; try { b = l && l.hid ? contPart(l) : null; } catch (e) { b = null; } return b ? b.st0 : l.startedAt; }
+  /* Q-G7-1 (gate 7), the safety net: a part another tab handed over (a note still marked "cont") that no Vaani window took.
+     Only when no Vaani tab records (the caller checked the lock), no crash copy names it (Home's card makes that one), and it
+     was saved more than 10 minutes ago. Its marker goes first (so it stops saying "moved to the Vaani window" and is listed
+     again), then Vaani makes its notes in the background, cleaned as a note (cleanNote). */
+  /* G8-M1 (gate 8): the net can never loop or repeat a call. Each part (by id) is handled once per page (partSeen); its
+     marker goes in the same write that starts its notes (a reload or crash mid-call finds a plain note, never a retry); at most
+     2 parts per run, one call at a time and none while a run is busy (partBusy); at most PARTMAX calls per page, and any further
+     part only loses its marker (its notes are made when it is opened). One toast per run. */
+  var PARTOLD = 600000, PARTRUN = 2, PARTMAX = 4, partSeen = Object.create(null), partBusy = false, partCalls = 0;
+  function freeParts(live) {
+    if (partBusy || V.isListening() || (V.handPend && V.handPend())) return;
+    /* G8-I2 (gate 8): only the one part the card offers (contPart) is left for the card; any other part with that id is freed */
+    var keep = null; try { keep = live && live.hid ? contPart(live) : null; } catch (e) { keep = null; }
+    var now = Date.now(), got = [], calls = [];
+    V.notes().forEach(function (x) {
+      if (!x || typeof x !== "object" || typeof x.cont !== "string" || !x.cont || (keep && x.id === keep.id) || !(now - x.id > PARTOLD) || partSeen[x.id]) return;
+      var capped = partCalls + calls.length >= PARTMAX;
+      if (!capped && got.length >= PARTRUN) return; /* the next run takes it */
+      partSeen[x.id] = 1;
+      var c = null; try { c = cleanNote(x); } catch (e) { c = null; }
+      if (!c) { var y = Object.assign({}, x); delete y.cont; delete y.st0; got.push(y); return; }
+      delete c.engine; c.md = ""; c.done = {}; c.recovered = true; if (!c.cal) c.title = V.titleOf ? V.titleOf(c.segs) : c.title;
+      got.push(c); if (c.segs.length && !capped) calls.push(c);
+    });
+    if (!got.length) return;
+    var by = Object.create(null); got.forEach(function (g) { by[g.id] = g; });
+    V.setNotes(V.notes().map(function (n) { return by[n.id] || n; })); /* every marker of this run goes in one write */
+    memo = null; setTimeout(refresh, 0);
+    if (!calls.length) return;
+    partBusy = true; partCalls += calls.length;
+    var made = 0;
+    (function next(i) {
+      if (i >= calls.length) { partBusy = false; memo = null; refresh(); if (made) V.toast(made === 1 ? "Vaani made notes from your earlier recording." : "Vaani made notes from " + made + " earlier recordings."); return; }
+      V.makeNotes(calls[i], function (r) { if (r) made++; next(i + 1); });
+    })(0);
+  }
+  /* NEW-3 (round 7): the part the other tab handed to the Vaani window that crashed (that copy's hand-over): only the saved
+     note marked with that one-time id, whose part started when the window knew (st0), saved while the window recorded
+     (G6-M1: fresh, owned). Cleaned as a note (cleanNote); its start is kept for the merge. */
+  function contPart(l) {
+    if (!l || !l.hid || !V.mergeCont) return null;
+    /* G8-I2 (gate 8): the first part with that id that passes every rule, not just the first with that id */
+    var bs = V.notes().filter(function (x) { return x && typeof x === "object" && x.cont === l.hid; });
+    for (var i = 0; i < bs.length; i++) {
+      var b = bs[i], s0 = typeof b.st0 === "number" && isFinite(b.st0) && b.st0 > 0 ? b.st0 : 0, c = null;
+      try { c = cleanNote(b); } catch (e) { c = null; } /* a field no string can be made of (G3-L1) is never thrown on */
+      if (!c || !s0 || s0 >= l.startedAt || (l.st0 && s0 !== l.st0) || c.id < l.startedAt - 600000 || c.id > l.savedAt + 600000) continue;
+      delete c.engine; c.st0 = s0; return c;
+    }
+    return null;
+  }
   function recoverLive() {
-    var l = J("vaani.live", null); if (!l) return;
-    var segs = (l.segs || []).slice(); if (l.interim) segs.push({ t: segs.length ? segs[segs.length - 1].t : "00:00", x: l.interim });
-    if (!segs.length) { V.remove("vaani.live"); renderHome(); return; }
-    var w = V.words(segs.map(function (s) { return s.x; }).join(" "));
-    var n = { id: Date.now(), kind: l.mode === "note" ? "note" : "meeting", date: new Date(l.startedAt).toISOString(), dur: Math.max(1, Math.round((l.savedAt - l.startedAt) / 1000)), lang: l.lang, tmpl: l.tmpl || "auto", segs: segs, title: V.titleFrom(segs[0].x), md: "", done: {}, words: w, recovered: true };
-    if (l.prev) n.prev = +l.prev; if (l.marks && l.marks.length) n.marks = l.marks; if (callSrc(l.src)) n.src = l.src; if (l.call === true) n.call = true;
-    hookBeforeSave(n, true); extHook("recover", { n: n, live: l });
-    V.remove("vaani.live");
+    var l = liveJ(); if (!l) return;
+    var segs = l.segs.slice(); if (l.interim) segs.push({ t: segs.length ? segs[segs.length - 1].t : "00:00", x: l.interim });
+    var b = contPart(l);
+    if (!segs.length && !b) { V.remove("vaani.live"); renderHome(); return; }
+    var n = null;
+    if (segs.length) {
+      var w = V.words(segs.map(function (s) { return s.x; }).join(" "));
+      n = cleanNote({ id: Date.now(), kind: l.mode, date: new Date(l.startedAt).toISOString(), dur: Math.max(1, Math.round((l.savedAt - l.startedAt) / 1000)), lang: l.lang, tmpl: l.tmpl, segs: segs, title: V.titleOf ? V.titleOf(segs) : V.titleFrom(segs[0].x), md: "", done: {}, words: w, recovered: true, prev: l.prev, marks: l.marks.length ? l.marks : undefined, src: l.src, call: l.call });
+      if (!n) return; delete n.engine;
+      hookBeforeSave(n, true);
+    }
+    /* one note: the other tab's lines first, then the window's (index.html mergeCont, as at the window's own Stop) */
+    if (b) { var m = cleanNote(n ? V.mergeCont(b, n, l.startedAt) : Object.assign({}, b, { md: "", done: {} })); if (!m) return; delete m.engine; m.recovered = true; n = m; if (V.load("vaani.handed", null) === l.hid) V.remove("vaani.handed"); }
+    extHook("recover", { n: n, live: l });
+    V.remove("vaani.live"); if (V.liveDone) V.liveDone(l.startedAt);
     V.upsert(n); V.setCurrentId(n.id); V.makeNotes(n);
   }
+  /* Q-G8-1 (gate 8): the card counts the other tab's part in the recording (G7-3), so discarding it discards that part too
+     (else the safety net would give it notes a moment later). Undo puts both back, and "Make notes" then gives one note. */
+  function dropLive() {
+    var raw = J("vaani.live", null), l = liveJ(), b = null, part = null;
+    try { b = l && l.hid ? contPart(l) : null; } catch (e) { b = null; }
+    if (b) part = V.notes().filter(function (x) { return x.id === b.id; })[0] || null;
+    V.remove("vaani.live");
+    if (part) V.setNotes(V.notes().filter(function (x) { return x.id !== part.id; }));
+    memo = null;
+    return { live: raw, part: part };
+  }
   function discardLive() {
-    var l = J("vaani.live", null); V.remove("vaani.live");
+    var u = dropLive();
     renderHome();
-    undoToast("Recording discarded", function () { SJ("vaani.live", l); renderHome(); });
+    undoToast("Recording discarded", function () { if (u.live) SJ("vaani.live", u.live); if (u.part && !V.getNote(u.part.id)) V.upsert(u.part); memo = null; renderHome(); });
+  }
+  /* G8-L1 (gate 8), in the Vaani window: a crash copy with words that isn't this window's and can't be its first part (too
+     old, or not that tab's) becomes its own recovered note before this window writes over it */
+  function keepLive() {
+    var l = liveJ(); if (!l || l.startedAt === V.getStartedAt() || !liveHas(l)) return false;
+    var segs = l.segs.slice(); if (l.interim) segs.push({ t: segs.length ? segs[segs.length - 1].t : "00:00", x: l.interim });
+    var n = cleanNote({ id: Date.now() - 1, kind: l.mode, date: new Date(l.startedAt).toISOString(), dur: Math.max(1, Math.round((l.savedAt - l.startedAt) / 1000)), lang: l.lang, tmpl: l.tmpl, segs: segs, title: V.titleOf ? V.titleOf(segs) : V.titleFrom(segs[0].x), md: "", done: {}, words: V.words(segs.map(function (s) { return s.x; }).join(" ")), recovered: true, prev: l.prev, marks: l.marks.length ? l.marks : undefined, src: l.src, call: l.call });
+    if (!n) return false; delete n.engine;
+    V.upsert(n); V.remove("vaani.live"); if (V.liveDone) V.liveDone(l.startedAt);
+    V.toast("Your other tab’s words are kept as their own note.");
+    return true;
   }
   sheet("liveSheet", '<h2 id="liveSheetH">Finish the last recording first</h2><p class="sub" id="liveSub"></p><button class="done-btn" id="liveMake">Make notes from it</button><button class="btn-wide" id="liveDrop">Discard it and record</button><button class="cancel" data-close>Cancel</button>');
   function askAboutLive() {
-    var l = J("vaani.live", null), mins = Math.max(1, Math.round((l.savedAt - l.startedAt) / 60000));
-    var dl = V.dayLabel(new Date(l.startedAt)); if (/^(Today|Yesterday)$/.test(dl)) dl = dl.toLowerCase();
-    $("#liveSub").textContent = "A " + durLabel(mins) + " recording from " + dl + ", " + V.timeLabel(new Date(l.startedAt)) + " didn't finish. Make notes from it, or discard it to start a new one.";
+    var l = liveJ(); if (!l) return;
+    var s0 = liveStart(l), mins = Math.max(1, Math.round((l.savedAt - s0) / 60000));
+    var dl = V.dayLabel(new Date(s0)); if (/^(Today|Yesterday)$/.test(dl)) dl = dl.toLowerCase();
+    $("#liveSub").textContent = "A " + durLabel(mins) + " recording from " + dl + ", " + V.timeLabel(new Date(s0)) + " didn’t finish. Make notes from it, or discard it to start a new one.";
     V.openSheet("#liveSheet");
   }
-  $("#liveMake").addEventListener("click", function () { V.closeSheets(); recoverLive(); });
-  $("#liveDrop").addEventListener("click", function () { V.closeSheets(); V.remove("vaani.live"); renderAlert(); V.startRec(); });
+  $("#liveMake").addEventListener("click", function () { V.closeSheets(); liveGuard(recoverLive); });
+  $("#liveDrop").addEventListener("click", function () { V.closeSheets(); dropLive(); renderAlert(); V.startRec(); });
   window.addEventListener("beforeunload", function (e) { if (V.isListening()) { saveLive(true); e.preventDefault(); e.returnValue = ""; } });
   document.addEventListener("visibilitychange", function () { if (document.hidden) saveLive(true); });
 
@@ -1312,19 +1492,22 @@
       sp.addEventListener("click", function (e) { if (e.target.closest("[data-fy]")) { fileNote(n.id, sg.id); decorateNote(V.getNote(n.id), false); } else if (e.target.closest("[data-fn]")) { var x = V.getNote(n.id); x.noSug = x.noSug || {}; x.noSug[sg.id] = 1; var no = J("vaani.folderNo", {}); no[sg.id + "|" + x.tmpl] = (no[sg.id + "|" + x.tmpl] || 0) + 1; SJ("vaani.folderNo", no); V.upsert(x); sp.remove(); } }); } }
     if (n.sample) { var rs = el("button", "btn-f", "Remove sample"); rs.setAttribute("data-ntx", "1"); rs.type = "button"; tools.appendChild(rs); rs.addEventListener("click", removeSample); var st = J("vaani.setup", {}); st.sample = true; SJ("vaani.setup", st); }
     if (!fresh) $("#noteKicker").textContent = "";
-    if (n.sample) $("#engineNote").textContent = "This is a sample meeting, so you can try ticking, asking and drafting a follow-up. Remove it any time.";
+    if (n.sample) $("#engineNote").textContent = "This is a sample meeting, so you can try ticking tasks, asking and opening the follow-up email. Remove it any time.";
     var lang = (V.LANGS.filter(function (l) { return l[0] === n.lang; })[0] || [0, ""])[1], d0 = new Date(n.date);
     $("#noteMeta").innerHTML = typeChip(n) + "<span>" + esc([V.dayLabel(d0) + ", " + V.timeLabel(d0), lenLabel(n), lang].filter(Boolean).join(", ")) + "</span>";
     if (n.kind === "meeting" || n.thin) lineBody(n, fresh);
     if (n.thin) thinFix(n);
     var mi = (n.marks || []).map(function (m) { return m.i; });
     $$("#trBody .tr-row").forEach(function (r, i) { var on = mi.indexOf(i) >= 0; r.classList.toggle("mk", on); var dt = $(".ln-dot", r); if (dt) dt.classList.toggle("mk", on); });
+    /* v2.4: agent.js adds the "Next steps" block each time the note body is drawn */
+    extHook("decorated", { n: n, fresh: fresh });
   }
   function lineBody(n, fresh) {
     var body = $("#noteBody"), secs = V.parseMd(n.md), segs = n.segs || [], h = "";
-    var fuShown = false, pn = normNum(V.plain(n)), aiMade = n.engine && !/basic engine|Sample/.test(n.engine), flags = 0;
+    var pn = normNum(V.plain(n)), aiMade = n.engine && !/basic engine|Sample/.test(n.engine), flags = 0;
     secs.forEach(function (s, si) {
-      var isAct = ACT_RE.test(s.h); if (isAct && s.paras.length) { s.items = s.items.concat(s.paras); s.paras = []; }
+      if (V.isMailHead(s.h)) return;
+      var isAct = ACT_RE.test(s.h), isPlan = /\bplan\b/i.test(s.h); if (isAct && s.paras.length) { s.items = s.items.concat(s.paras); s.paras = []; }
       if (s.h) h += '<h3 class="sec-h">' + V.il(s.h) + "</h3>";
       h += '<div class="nb-sec">';
       var rows = s.paras.map(function (p) { return { t: p, para: true }; }).concat(s.items.map(function (it, ii) { return { t: it, ii: ii }; }));
@@ -1334,17 +1517,17 @@
         if (miss.length) flags++;
         if (isAct && !r.para) {
           var key = si + "." + r.ii, done = !!(n.done && n.done[key]), mm = ownerSplit(r.t); isDone = done;
-          txt = mm ? "<b>" + esc(stripMd(mm[1])) + ":</b> " + V.il(mm[2]) : V.il(r.t);
+          txt = mm ? "<b>" + esc(ownerLabel(stripMd(mm[1]))) + ":</b> " + V.il(mm[2]) : V.il(r.t);
           node = '<button class="ck' + (done ? " done" : "") + '" data-ck="' + key + '" aria-pressed="' + done + '" aria-label="Done">' + CK + "</button>";
-        } else { txt = V.il(r.t); node = '<span class="ln-dot" aria-hidden="true"></span>'; }
+        } else if (isPlan && !r.para) { var pm = ownerSplit(r.t); txt = pm ? "<b>" + esc(ownerLabel(stripMd(pm[1]))) + ":</b> " + V.il(pm[2]) : V.il(r.t); node = '<span class="ln-num">' + (r.ii + 1) + "</span>"; }
+        else { txt = V.il(r.t); node = '<span class="ln-dot" aria-hidden="true"></span>'; }
         var g = rc.length ? '<button class="rc-t" data-rc="' + esc(rc.join(",")) + '" aria-expanded="false" aria-label="Show where this was said, at ' + esc(segs[rc[0]].t) + '">' + esc(segs[rc[0]].t || "Said") + "</button>" : "";
         h += '<div class="row-r nb-row' + (isDone ? " is-done" : "") + '"><span class="ln-g">' + g + '</span><span class="ln-n">' + node + '</span><div class="ln-c"><span class="l1">' + txt + (miss.length ? '<span class="flag" title="Vaani could not find ' + esc(miss.join(", ")) + ' in the transcript">Not in transcript</span>' : "") + '</span></div><div class="ln-x"></div></div>';
       });
       h += "</div>";
-      if (isAct && s.items.length && !fuShown && (fuShown = true)) h += '<div class="inline-act"><button class="btn-f" data-follow="1">' + "Draft a follow-up</button></div>";
     });
     if (n.gap) h = '<p class="chk-line">Sarvam AI couldn’t transcribe ' + esc(gapLabel(n.gap)) + " of this recording, so the notes leave that part out.</p>" + h;
-    if (flags) h = '<p class="chk-line">' + (flags === 1 ? "1 line has a figure Vaani couldn't find in the transcript. Check it before you share." : flags + " lines have a figure Vaani couldn't find in the transcript. Check them before you share.") + "</p>" + h;
+    if (flags) h = '<p class="chk-line">' + (flags === 1 ? "1 line has a figure Vaani couldn’t find in the transcript. Check it before you share." : flags + " lines have a figure Vaani couldn’t find in the transcript. Check them before you share.") + "</p>" + h;
     /* from last time */
     var prev = n.prev && V.getNote(+n.prev);
     if (prev) {
@@ -1379,7 +1562,7 @@
     }
     if ((b = e.target.closest("[data-peak]"))) {
       var a = b.getAttribute("data-peak"), sh = J("vaani.share", { count: 0, no: 0, last: -99 });
-      if (a === "send") { var msg = "I use Vaani for meeting notes. Free, and it works in Indian languages: " + V.APP_URL; if (navigator.share) navigator.share({ text: msg }).catch(function () {}); else window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank", "noopener"); }
+      if (a === "send") { var msg = "I use Vaani, an AI note taker agent, for my meeting notes. Free, and it works in Indian languages: " + V.APP_URL; if (navigator.share) navigator.share({ text: msg }).catch(function () {}); else window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank", "noopener"); }
       else { sh.no = (sh.no || 0) + 1; SJ("vaani.share", sh); }
       var pk = b.closest(".peak"); if (pk) pk.remove();
     }
@@ -1396,7 +1579,7 @@
       acts = (keyless ? '<button type="button" class="btn-f" data-thin="sarvam">Set up Sarvam AI</button>' : off ? '<button type="button" class="btn-f" data-thin="on">Use Sarvam AI for speech</button>' : "") + '<button type="button" class="btn-t" data-thin="lang">Choose a language</button>';
     } else {
       why = n.thin === "sarvam" ? "Sarvam AI got very little speech from this recording." : "The microphone picked up very little sound.";
-      todo = "Check that the right microphone is chosen in your computer’s sound settings, and that it is close to the people talking. On a call, turn on “Hear everyone on a call” and Share tab audio.";
+      todo = "Check that the right microphone is chosen in your computer’s sound settings, and that it is close to the people talking. On a call in Chrome, start Vaani from its extension icon so it hears the call too.";
     }
     var box = el("div", "thin-fix", "<p><b>Likely reason.</b> " + esc(why) + "</p><p><b>What to do.</b> " + esc(todo) + "</p>" + (acts ? '<div class="tf-act">' + acts + "</div>" : ""));
     box.setAttribute("role", "note"); $("#noteBody").appendChild(box);
@@ -1433,8 +1616,8 @@
   function seedSample() {
     if (allNotes().length || V.load("vaani.sampleSeeded", "")) return;
     var d = new Date(Date.now() - DAY); d.setHours(10, 30, 0, 0);
-    var segs = [["00:04", "Okay, let's lock the store launch plan for Brightline."], ["00:31", "I think we move the launch to Saturday the 14th so we can test the LED wall first."], ["01:12", "Agreed, Saturday the 14th. Budget stays at 6 lakh, no new spend without a call."], ["02:05", "We decided to go with Brightline for the LED wall."], ["02:40", "Meera, can you share the venue floor plan with the vendor by Friday?"], ["02:52", "Yes, I'll share the floor plan by Friday."], ["03:30", "Rohit will send the revised quote to Brightline by Tuesday."], ["04:10", "I need to book the demo slot with the mall team."], ["04:45", "Mall permissions for the night install are still pending."]];
-    var md = "# Store launch planning\n## Highlights\n- Launch moves to Saturday 14 November so the LED wall can be tested first.\n- Budget stays at 6 lakh, no new spend without a call.\n## Decided\n- Go with Brightline for the LED wall.\n## Action items\n- Meera: Share the venue floor plan with the vendor, by Friday\n- Rohit: Send the revised quote to Brightline, by Tuesday\n- Me: Book the demo slot with the mall team\n## Risks and blockers\n- Mall permissions for the night install are still pending.";
+    var segs = [["00:04", "Okay, let’s lock the store launch plan for Brightline."], ["00:31", "I think we move the launch to Saturday the 14th so we can test the LED wall first."], ["01:12", "Agreed, Saturday the 14th. Budget stays at 6 lakh, no new spend without a call."], ["02:05", "We decided to go with Brightline for the LED wall."], ["02:40", "Meera, can you share the venue floor plan with the vendor by Friday?"], ["02:52", "Yes, I’ll share the floor plan by Friday."], ["03:30", "Rohit will send the revised quote to Brightline by Tuesday."], ["04:10", "I need to book the demo slot with the mall team."], ["04:45", "Mall permissions for the night install are still pending."]];
+    var md = "# Store launch planning\n## Summary\nThe Brightline store launch moves to Saturday 14 November so the LED wall can be tested first. The budget stays at 6 lakh.\n## Notes\n- Go with Brightline for the LED wall.\n- No new spend without a call.\n## Risks and blockers\n- Mall permissions for the night install are still pending.\n## Tasks\n- Meera: Share the venue floor plan with the vendor, by Friday\n- Rohit: Send the revised quote to Brightline, by Tuesday\n- Not said: Book the demo slot with the mall team\n## Next action plan\n1. Rohit: Send the revised quote\n2. Not said: Chase the mall for night-install permission\n3. Meera: Share the floor plan once the quote is agreed\n## Meeting conclusion\nLaunch on Saturday 14 November with Brightline, within 6 lakh.\n## Follow-up meeting\n- When: Friday at 4 pm\n- About: Check the floor plan and the mall permission\n## Follow-up email\nSubject: Store launch: next steps\nHi all,\n\nThanks for today. We are launching on Saturday 14 November with Brightline, within 6 lakh.\n\n- Meera: Share the venue floor plan with the vendor, by Friday\n- Rohit: Send the revised quote to Brightline, by Tuesday\n\nTalk on Friday.";
     var n = { id: d.getTime(), kind: "meeting", sample: true, date: d.toISOString(), dur: 312, lang: "en-IN", tmpl: "management", segs: segs.map(function (s) { return { t: s[0], x: s[1] }; }), title: "Store launch planning", md: md, done: {}, words: 0, engine: "Sample" };
     V.save("vaani.sampleSeeded", "1");
     V.upsert(n);
@@ -1446,7 +1629,7 @@
     var done = $("#setDone"); if (!done) return;
     var box = el("div"); box.innerHTML = '<span class="form-l">Your notes</span><div class="opts set-more">' +
       '<div class="set-row"><span>Download a backup</span><button type="button" id="bkDl">Download</button></div>' +
-      '<div class="set-row" id="bkCalRow" hidden><span id="bkCalLbl">Include attendee names in backups<small>From notes you took for calendar events. Off unless you turn it on.</small></span><button type="button" class="switch" id="bkCal" role="switch" aria-checked="false" aria-labelledby="bkCalLbl"><i aria-hidden="true"></i><span class="sr" id="bkCalState">Off</span></button></div>' +
+      '<div class="set-row" id="bkCalRow" hidden><span id="bkCalLbl">Include attendee names and emails in backups<small>From notes you took for calendar events. Off unless you turn it on.</small></span><button type="button" class="switch" id="bkCal" role="switch" aria-checked="false" aria-labelledby="bkCalLbl"><i aria-hidden="true"></i><span class="sr" id="bkCalState">Off</span></button></div>' +
       '<div class="set-row"><span>Restore from a backup</span><button type="button" id="bkUp">Choose file</button><input type="file" id="bkFile" accept="application/json,.json" hidden></div>' +
       '<div class="set-row"><span>Names and words</span><button type="button" id="setWords">Open</button></div>' +
       '<div class="set-row"><span>Where your words go</span><button type="button" data-open="privacy">Open</button></div>' +
@@ -1469,7 +1652,14 @@
   function calKept(n) { return !!(n.cal && (n.cal.id || (Array.isArray(n.cal.people) && n.cal.people.length))); }
   function downloadBackup() {
     var withCal = V.load("vaani.bkCal", "0") === "1";
-    var notes = allNotes().map(function (n) { if (withCal || !n.cal) return n; var c = Object.assign({}, n); c.cal = { id: "", title: String(n.cal.title || ""), people: [] }; return c; });
+    /* with the switch off, no attendee name or email address goes in: not the invite's, and not a follow-up email's To line */
+    var notes = allNotes().map(function (n) {
+      if (withCal || (!n.cal && !n.agentMail)) return n;
+      var c = Object.assign({}, n);
+      if (n.cal) c.cal = { id: "", title: String(n.cal.title || ""), people: [] };
+      if (n.agentMail && typeof n.agentMail === "object") c.agentMail = Object.assign({}, n.agentMail, { to: [] });
+      return c;
+    });
     var data = { app: "vaani", version: 1, exported: new Date().toISOString(), notes: notes, folders: folders(), dict: dict(), me: meName() };
     var b = new Blob([JSON.stringify(data, null, 1)], { type: "application/json" }), u = URL.createObjectURL(b), a = document.createElement("a");
     a.href = u; a.download = "vaani-backup-" + new Date().toISOString().slice(0, 10) + ".json"; document.body.appendChild(a); a.click();
@@ -1478,26 +1668,33 @@
   }
   /* backups are files people pass around: accept only well-formed values, never markup in ids or colours */
   function str(v, max) { return typeof v === "string" ? v.slice(0, max || 20000) : ""; }
+  /* G7-L1 (gate 7): a number or date from a file is read only from a number or text, so an object such as {"toString":1}
+     is dropped (or the note skipped as damaged), never thrown on */
+  function numIn(v) { return typeof v === "number" ? v : typeof v === "string" ? +v : NaN; }
+  function dOf(n) { var d = n && n.date; return typeof d === "string" || typeof d === "number" ? new Date(d) : new Date(NaN); }
   function cleanNote(n) {
     if (!n || typeof n !== "object") return null;
-    var id = typeof n.id === "number" ? n.id : /^\d{1,16}$/.test(String(n.id)) ? +n.id : NaN;
+    var id = typeof n.id === "number" ? n.id : typeof n.id === "string" && /^\d{1,16}$/.test(n.id) ? +n.id : NaN;
     if (!Number.isFinite(id) || id <= 0) return null;
-    var dt = new Date(n.date); if (isNaN(dt)) return null;
-    var segs = Array.isArray(n.segs) ? n.segs.filter(function (x) { return x && typeof x.x === "string"; }).map(function (x) { return { t: /^\d{1,3}:\d{2}$/.test(x.t) ? x.t : "", x: x.x.slice(0, 5000) }; }) : [];
-    var out = { id: id, kind: n.kind === "note" ? "note" : "meeting", date: dt.toISOString(), dur: Math.max(0, Math.round(+n.dur || 0)), lang: /^[a-z]{2}(-[A-Z]{2})?$/.test(n.lang) ? n.lang : "en-IN", tmpl: V.hasTmpl(n.tmpl) ? n.tmpl : "general", segs: segs, title: visible(str(n.title, 200)) || "Untitled", md: str(n.md, 60000), done: {}, words: Math.max(0, Math.round(+n.words || 0)), engine: str(n.engine, 60) };
+    var dt = dOf(n); if (isNaN(dt)) return null;
+    /* round 7: a time or language that isn't text (an object such as {"toString":1}) is dropped, never thrown on */
+    var segs = Array.isArray(n.segs) ? n.segs.filter(function (x) { return x && typeof x.x === "string"; }).map(function (x) { return { t: typeof x.t === "string" && /^\d{1,3}:\d{2}$/.test(x.t) ? x.t : "", x: x.x.slice(0, 5000) }; }) : [];
+    var out = { id: id, kind: n.kind === "note" ? "note" : "meeting", date: dt.toISOString(), dur: Math.max(0, Math.round(numIn(n.dur) || 0)), lang: typeof n.lang === "string" && /^[a-z]{2}(-[A-Z]{2})?$/.test(n.lang) ? n.lang : "en-IN", tmpl: V.hasTmpl(n.tmpl) ? n.tmpl : "general", segs: segs, title: visible(str(n.title, 200)) || "Untitled", md: str(n.md, 60000), done: {}, words: Math.max(0, Math.round(numIn(n.words) || 0)), engine: str(n.engine, 60) };
     if (n.done && typeof n.done === "object") Object.keys(n.done).forEach(function (k) { if (/^\d{1,3}\.\d{1,3}$/.test(k) && n.done[k] === true) out.done[k] = true; });
-    if (n.nudged && typeof n.nudged === "object") { out.nudged = {}; Object.keys(n.nudged).forEach(function (k) { if (/^\d{1,3}\.\d{1,3}$/.test(k) && !isNaN(new Date(n.nudged[k]))) out.nudged[k] = new Date(n.nudged[k]).toISOString(); }); }
+    if (n.nudged && typeof n.nudged === "object") { out.nudged = {}; Object.keys(n.nudged).forEach(function (k) { var v = n.nudged[k], d = typeof v === "string" || typeof v === "number" ? new Date(v) : null; if (/^\d{1,3}\.\d{1,3}$/.test(k) && d && !isNaN(d)) out.nudged[k] = d.toISOString(); }); }
     if (typeof n.folder === "string" && /^[\w-]{1,40}$/.test(n.folder)) out.folder = n.folder;
-    ["of", "prev"].forEach(function (k) { if (Number.isFinite(+n[k]) && +n[k] > 0) out[k] = +n[k]; });
-    if (Array.isArray(n.marks)) out.marks = n.marks.filter(function (m) { return m && Number.isInteger(m.i) && m.i >= 0; }).map(function (m) { return { i: m.i, s: Math.max(0, +m.s || 0), t: /^\d{1,3}:\d{2}$/.test(m.t) ? m.t : "", how: str(m.how, 10) }; });
+    ["of", "prev"].forEach(function (k) { var v = numIn(n[k]); if (Number.isFinite(v) && v > 0) out[k] = v; });
+    if (Array.isArray(n.marks)) out.marks = n.marks.filter(function (m) { return m && Number.isInteger(m.i) && m.i >= 0; }).map(function (m) { return { i: m.i, s: typeof m.s === "number" || typeof m.s === "string" ? Math.max(0, +m.s || 0) : 0, t: typeof m.t === "string" && /^\d{1,3}:\d{2}$/.test(m.t) ? m.t : "", how: str(m.how, 10) }; });
     if (n.sample === true) out.sample = true;
     if (n.recovered === true) out.recovered = true;
-    if (/^(meet|teams|zoom|installed)$/.test(n.src)) out.src = n.src;
+    if (typeof n.src === "string" && /^(meet|teams|zoom|whatsapp|slack|webex|jitsi|whereby|discord|installed|desktop)$/.test(n.src)) out.src = n.src;
     if (n.call === true) out.call = true;
     if (n.stt === "sarvam") out.stt = "sarvam";
-    if (/^(lang|quiet|sarvam)$/.test(n.thin)) out.thin = n.thin;
-    if (Number.isFinite(+n.gap) && +n.gap > 0) out.gap = Math.round(+n.gap);
-    if (n.cal && typeof n.cal === "object") { var cid = str(n.cal.id, 200); out.cal = { id: /^[\w-]{1,200}$/.test(cid) ? cid : "", title: visible(str(n.cal.title, 200)), people: Array.isArray(n.cal.people) ? n.cal.people.filter(function (x) { return typeof x === "string" && visible(x).trim(); }).map(function (x) { return visible(x).trim().slice(0, 80); }).slice(0, 40) : [] }; }
+    if (typeof n.thin === "string" && /^(lang|quiet|sarvam)$/.test(n.thin)) out.thin = n.thin;
+    var gp = numIn(n.gap); if (Number.isFinite(gp) && gp > 0) out.gap = Math.round(gp);
+    if (n.cal && typeof n.cal === "object") { var cid = str(n.cal.id, 200); out.cal = { id: /^[\w-]{1,200}$/.test(cid) ? cid : "", title: visible(str(n.cal.title, 200)), people: Array.isArray(n.cal.people) ? n.cal.people.filter(function (x) { return typeof x === "string" && visible(x).trim(); }).map(function (x) { return visible(x).trim().slice(0, 80); }).slice(0, 40) : [] };
+      /* v2.4: attendee email addresses, only well-formed ones (agent.js MAIL_RE), only to fill a follow-up's To line */
+      var mails = Array.isArray(n.cal.mails) && window.VaaniAgent ? n.cal.mails.filter(VaaniAgent.okMail).slice(0, 40) : []; if (mails.length) out.cal.mails = mails; }
     return out;
   }
   function cleanFolder(f) { if (!f || typeof f.id !== "string" || !/^[\w-]{1,40}$/.test(f.id)) return null; return { id: f.id, name: visible(str(f.name, 80)).trim() || "Folder", hue: hueN(f.hue) }; }
@@ -1521,7 +1718,8 @@
   /* restore: notes and folders by default; name and word rules and your name only when you tick them */
   function planRestore(d, name) {
     var have = allNotes(), ids = Object.create(null); have.forEach(function (n) { ids[n.id] = 1; });
-    var clean = d.notes.slice(0, 5000).map(cleanNote).filter(Boolean), bad = d.notes.length - clean.length;
+    /* G7-L1 (gate 7): one damaged note never stops the rest: it is skipped and counted ("1 damaged entry skipped") */
+    var clean = d.notes.slice(0, 5000).map(function (n) { try { return cleanNote(n); } catch (e) { return null; } }).filter(Boolean), bad = d.notes.length - clean.length;
     var add = clean.filter(function (n) { if (ids[n.id]) return false; ids[n.id] = 1; return true; });
     var fids = Object.create(null); folders().forEach(function (f) { fids[f.id] = 1; });
     var newF = []; (Array.isArray(d.folders) ? d.folders.slice(0, 200) : []).forEach(function (f) { f = cleanFolder(f); if (f && !fids[f.id]) { fids[f.id] = 1; newF.push(f); } });
@@ -1532,12 +1730,16 @@
     if (me && me.toLowerCase() === meName().toLowerCase()) me = "";
     var known = { app: 1, version: 1, exported: 1, notes: 1, folders: 1, dict: 1, me: 1 };
     var other = Object.keys(d).filter(function (k) { return !Object.prototype.hasOwnProperty.call(known, k); }).length;
-    return { name: name, add: add, already: clean.length - add.length, bad: bad, folders: newF, rules: rules, badRules: badRules, dupRules: dupRules, me: me, other: other };
+    /* email addresses in a backup are kept only if the person ticks it: a shared file could carry anyone's */
+    var mails = []; add.forEach(function (n) { if (n.cal && n.cal.mails) n.cal.mails.forEach(function (m) { if (mails.indexOf(m) < 0) mails.push(m); }); });
+    var mailNotes = add.filter(function (n) { return n.cal && n.cal.mails && n.cal.mails.length; }).length;
+    return { name: name, add: add, already: clean.length - add.length, bad: bad, folders: newF, rules: rules, badRules: badRules, dupRules: dupRules, me: me, other: other, mails: mails, mailNotes: mailNotes };
   }
   sheet("rsSheet", '<h2 id="rsSheetH">Restore from a backup</h2><p class="sub" id="rsSub"></p><div class="rs-body" id="rsBody"></div><button class="done-btn" id="rsGo" type="button">Restore</button><button class="cancel" data-close>Cancel</button>');
   var RS = null;
   /* the same wording as Names and words: the word first, in bold, then what it is heard as */
   function ruleHtml(r) { return "<b>" + esc(r.word) + "</b>" + esc(r.heard.length ? ", heard as " + r.heard.join(", ") : " (spelling only)"); }
+  function clipList(a, k) { return a.slice(0, k).join(", ") + (a.length > k ? " and " + (a.length - k) + " more" : ""); }
   function restoreSheet(pl) {
     RS = pl;
     $("#rsSub").textContent = pl.name ? "From " + pl.name + ". Here is everything in it." : "Here is everything in this file.";
@@ -1552,12 +1754,15 @@
       if (pl.me) h += '<label class="rs-opt"><input type="checkbox" id="rsMe"><span>Use “' + esc(pl.me) + "” as your name</span></label>";
       h += "</div>";
     }
+    if (pl.mails.length) h += '<p class="hint rs-warn">' + esc(plural(pl.mailNotes, "note has", "notes have")) + " email addresses saved with " + (pl.mailNotes === 1 ? "it" : "them") + ". Vaani puts them in the follow-up email’s To line. Keep them only if you trust this file.</p>" +
+      '<div class="rs-opts"><label class="rs-opt"><input type="checkbox" id="rsMails"><span>Keep the email addresses saved with these notes<small>' + esc(clipList(pl.mails, 6)) + "</small></span></label></div>";
     $("#rsBody").innerHTML = h;
     $("#rsGo").textContent = pl.add.length || pl.folders.length ? "Restore" : "Restore what I ticked";
     V.openSheet("#rsSheet");
   }
   $("#rsGo").addEventListener("click", function () {
     var pl = RS; if (!pl) return; RS = null;
+    if (pl.mails.length && !($("#rsMails") && $("#rsMails").checked)) pl.add.forEach(function (n) { if (n.cal) delete n.cal.mails; });
     var have = allNotes(), kept = pl.add.length ? V.setNotes(V.sortNotes(have.concat(pl.add))) : true;
     if (pl.folders.length) setFolders(folders().concat(pl.folders));
     var pick = $$("#rsBody [data-ri]").filter(function (c) { return c.checked; }).map(function (c) { var r = pl.rules[+c.getAttribute("data-ri")]; return { word: r.word, heard: r.heard }; });
@@ -1578,9 +1783,9 @@
   function restoreBackup(file) {
     var r = new FileReader();
     r.onload = function () {
-      var d; try { d = JSON.parse(r.result); } catch (e) { V.toast("That file isn't a Vaani backup"); return; }
-      if (!d || typeof d !== "object" || d.app !== "vaani" || !Array.isArray(d.notes)) { V.toast("That file isn't a Vaani backup"); return; }
-      restoreSheet(planRestore(d, String(file && file.name || "").slice(0, 80)));
+      var d; try { d = JSON.parse(r.result); } catch (e) { V.toast("That file isn’t a Vaani backup"); return; }
+      if (!d || typeof d !== "object" || d.app !== "vaani" || !Array.isArray(d.notes)) { V.toast("That file isn’t a Vaani backup"); return; }
+      try { restoreSheet(planRestore(d, String(file && file.name || "").slice(0, 80))); } catch (e) { V.toast("That file isn’t a Vaani backup"); }
     };
     r.readAsText(file);
   }
@@ -1660,8 +1865,15 @@
       } else if (ev === "start") {
         S.marks = []; liveT = 0; saveLive(true); paintMarks();
         H.log = []; H.seen = Date.now(); H.st = null; hideWarn(); clearInterval(H.iv); H.iv = setInterval(healthCheck, 5000); paintHealth();
+      } else if (ev === "joined") {
+        /* Q-G7-1 (gate 7): the other tab's part is here: the crash copy names it now, before this window's first line */
+        liveT = 0; saveLive(true);
       } else if (ev === "stt") {
         H.st = d; paintHealth();
+      } else if (ev === "prev") {
+        paintHealth();
+      } else if (ev === "moved" || ev === "joinOff") {
+        watchElse(); elseTick();
       } else if (ev === "result") {
         if (d.stt) {
           /* Sarvam AI: a voice mark points at the line that said it, at the time that line was said */
@@ -1681,8 +1893,22 @@
         refresh(); if (appView() === "idle") renderAlert();
       } else if (ev === "deleted") {
         undoToast("Note deleted", function () { if (!V.getNote(d.id)) V.upsert(d); V.showNote(V.getNote(d.id), false); });
+      } else if (ev === "otherGone") {
+        /* gate 5: the other tab closed before it stopped: its crash copy becomes the note here (one note, nothing lost).
+           G6-M1 (gate 6): only that tab's own copy (its startedAt, d.st0) and only a fresh one (saved in the last 10 min) */
+        var gl = liveJ();
+        if (V.isListening() || !liveHas(gl) || !(d && d.st0 > 0 && gl.startedAt === d.st0 && Date.now() - gl.savedAt < 600000)) return false;
+        recoverLive(); return true;
+      } else if (ev === "stopEnd") {
+        /* G5-3: the other tab said it stopped, but it still holds the lock while it saves its note: the card says that */
+        /* G6-4 (gate 6): the card is cleared before the view changes (the old "taking notes" card never shows), and looked
+           at again after 0.6 s */
+        if (d && d.ok) { S.elseSave = Date.now(); if (!hasMoved()) $("#hmAlert").innerHTML = ""; setTimeout(function () { if (appView() === "idle") renderAlert(); }, 600); }
       } else if (ev === "cleanup") {
-        V.remove("vaani.live"); clearInterval(H.iv); H.iv = 0; hideWarn();
+        /* Q-G5-2: only this recording's own crash copy (or an empty one) is removed */
+        if (!otherLive()) V.remove("vaani.live");
+        if (V.liveDone) V.liveDone(V.getStartedAt()); /* Q-G8-4: this recording is a note now; a late copy of it is never offered */
+        clearInterval(H.iv); H.iv = 0; hideWarn();
       } else if (ev === "beforeSave") {
         hookBeforeSave(d, false);
       } else if (ev === "prompt") {
@@ -1696,7 +1922,7 @@
         return pr;
       } else if (ev === "made") {
         var rl = dictRules(); if (rl.length) { d.md = applyDict(d.md, rl); d.title = applyDict(d.title, rl); }
-        if (markHead("# " + (d.title || ""))) d.title = V.titleFrom((d.segs[0] || {}).x || "");
+        if (markHead("# " + (d.title || ""))) d.title = V.titleOf ? V.titleOf(d.segs || []) : V.titleFrom((d.segs[0] || {}).x || "");
         d.md = stripMarked(d.md);
         if (d.kind === "meeting" && d.marks && d.marks.length) {
           var items = markedLines(d).join("\n");
@@ -1709,10 +1935,11 @@
     }
   }
 
-  window.VaaniHome = { ext: EXT, S: S, go: go, refresh: refresh, renderHome: renderHome, renderSidebar: renderSidebar, appView: appView,
+  window.VaaniHome = { ext: EXT, S: S, go: go, cleanLive: cleanLive, keepLive: keepLive, refresh: refresh, renderHome: renderHome, renderSidebar: renderSidebar, appView: appView,
     allNotes: allNotes, realNotes: realNotes, realMeetings: realMeetings, todosOf: todosOf, openTodos: openTodos, isMine: isMine, isTeamOwner: isTeamOwner,
     typeOf: typeOf, TYPE: TYPE, hueOf: hueOf, plural: plural, durLabel: durLabel, ic: ic, el: el, startOfDay: startOfDay, daysBetween: daysBetween,
-    shortDate: shortDate, weekdayLong: weekdayLong, relDay: relDay, meName: meName, dict: dict, actToast: actToast, onSheet: onSheet, callSrc: callSrc, mqPhone: mqPhone, DAY: DAY };
+    shortDate: shortDate, weekdayLong: weekdayLong, relDay: relDay, meName: meName, dict: dict, actToast: actToast, onSheet: onSheet, callSrc: callSrc, mqPhone: mqPhone, DAY: DAY,
+    parseDue: parseDue, showTask: showTask, ownerLabel: ownerLabel, noOwner: noOwner, sheet: sheet, longDay: longDay };
 
   /* ================= start ================= */
   if (V.SRC) V.save("vaani.extSeen", "1");

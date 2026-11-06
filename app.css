@@ -15,7 +15,7 @@
   --bg:#FFFFFF;--bg2:#F2F2F7;--card:#FFFFFF;--card2:#FFFFFF;--sheet:#F2F2F7;--side:rgba(242,242,247,0.86);
   --label:#000000;--label2:#6C6C70;--label3:#737378;--sep:rgba(60,60,67,0.18);
   --fill:rgba(118,118,128,0.12);--fill2:rgba(118,118,128,0.2);--fill-card:var(--fill);
-  --tint:#0A66D8;--tint-soft:rgba(10,102,216,0.12);--on-tint:#FFFFFF;--tint-fill:#0A66D8;
+  --tint:#0A66D8;--tint-strong:#0858BD;--tint-soft:rgba(10,102,216,0.12);--on-tint:#FFFFFF;--tint-fill:#0A66D8;
   --red:#FF3B30;--red-ink:#D70015;--red-soft:rgba(255,59,48,0.12);--ring:#D1D1D6;--past:#8E8E93;--ck-edge:#8E8E93;
   --amber:#9A5200;--amber-soft:rgba(255,159,10,0.16);--amber-bar:#FF9F0A;--wave:#FF9F0A;
   --field-edge:rgba(60,60,67,0.6);--switch-on:#34C759;--knob:#FFFFFF;--thumb:#FFFFFF;--mask:#000000;
@@ -49,7 +49,7 @@
   --bg:#000000;--bg2:#000000;--card:#1C1C1E;--card2:#2C2C2E;--sheet:#1C1C1E;--side:rgba(28,28,30,0.86);
   --label:#FFFFFF;--label2:#AEAEB2;--label3:#98989D;--sep:rgba(84,84,88,0.6);
   --fill:rgba(118,118,128,0.24);--fill2:rgba(118,118,128,0.32);--fill-card:var(--card2);
-  --tint:#4D97FF;--tint-soft:rgba(77,151,255,0.2);
+  --tint:#4D97FF;--tint-strong:#4D97FF;--tint-soft:rgba(77,151,255,0.2);
   --red:#FF453A;--red-ink:#FF6961;--red-soft:rgba(255,69,58,0.18);--ring:#48484A;--past:#7C7C80;
   --amber:#FFB340;--amber-soft:rgba(255,179,64,0.18);--amber-bar:#FFB340;
   --thumb:#636366;--field-edge:rgba(235,235,245,0.5);
@@ -76,7 +76,7 @@
     --bg:#000000;--bg2:#000000;--card:#1C1C1E;--card2:#2C2C2E;--sheet:#1C1C1E;--side:rgba(28,28,30,0.86);
     --label:#FFFFFF;--label2:#AEAEB2;--label3:#98989D;--sep:rgba(84,84,88,0.6);
     --fill:rgba(118,118,128,0.24);--fill2:rgba(118,118,128,0.32);--fill-card:var(--card2);
-    --tint:#4D97FF;--tint-soft:rgba(77,151,255,0.2);
+    --tint:#4D97FF;--tint-strong:#4D97FF;--tint-soft:rgba(77,151,255,0.2);
     --red:#FF453A;--red-ink:#FF6961;--red-soft:rgba(255,69,58,0.18);--ring:#48484A;--past:#7C7C80;
     --amber:#FFB340;--amber-soft:rgba(255,179,64,0.18);--amber-bar:#FFB340;
     --thumb:#636366;--field-edge:rgba(235,235,245,0.5);
@@ -127,6 +127,9 @@ kbd,.kbd{font-family:var(--font);font-size:12px;font-weight:400;padding:2px var(
 .bar{display:flex;align-items:center;gap:var(--space-2);padding:calc(env(safe-area-inset-top,0px) + var(--space-2)) var(--space-2) var(--space-1);min-height:52px}
 .brand{font-family:var(--font-d);font-size:17px;font-weight:600;letter-spacing:-0.02em}
 .bar .brand{margin-right:auto}
+/* round 9: the name says what Vaani is, an AI agent: a small second line in the sidebar, a short tag in the phone bar */
+.brand-tag{display:block;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0;color:var(--label2)}
+.brand-tag.in{display:inline;font-size:13px;margin-left:2px}
 .icon-btn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--tint);transition:background-color .15s var(--spring)}
 @media (hover:hover){.icon-btn:hover{background:var(--fill)}}
 .icon-btn svg{width:22px;height:22px}
@@ -228,10 +231,6 @@ kbd,.kbd{font-family:var(--font);font-size:12px;font-weight:400;padding:2px var(
 .hm-steer p{max-width:62ch}
 .hm-steer div{display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:var(--space-3)}
 .hm-steer .btn-f{background:var(--fill-card)}
-.call-chip{display:inline-flex;align-items:center;gap:var(--space-2);height:36px;padding:0;border-radius:999px;background:none;color:var(--label2);font-size:14px;font-weight:400;transition:color .15s var(--spring)}
-.call-chip:hover{color:var(--label)}
-.call-chip svg{width:16px;height:16px}
-.call-chip[aria-pressed=true]{color:var(--label)}
 .ext-link{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:400;color:var(--tint);text-decoration:none}
 .ext-link:hover{text-decoration:underline}
 
@@ -244,6 +243,8 @@ kbd,.kbd{font-family:var(--font);font-size:12px;font-weight:400;padding:2px var(
 .ln-head .seg{width:180px;align-self:center}
 .lnk{font-size:15px;font-weight:400;color:var(--tint);white-space:nowrap;min-height:32px;padding:0 var(--space-1);border-radius:8px}
 .lnk:hover{text-decoration:underline}
+/* G9: the Mac key-needed state: "Open Settings" is a tinted link on its own line, aligned with the paragraph above */
+#deskSet{display:block;margin-top:var(--space-2);margin-left:calc(-1 * var(--space-1))}
 .row-r{position:relative;display:grid;grid-template-columns:var(--gut) var(--axis) minmax(0,1fr) auto;align-items:start;min-height:52px;border-radius:10px;transition:background-color .15s var(--spring),opacity .2s var(--spring),transform .2s var(--spring)}
 .row-r.hov:hover{background:var(--fill)}
 .row-r.out{animation:rowOut .2s var(--spring) forwards}
@@ -280,7 +281,8 @@ kbd,.kbd{font-family:var(--font);font-size:12px;font-weight:400;padding:2px var(
 .row-r.is-done .l1{color:var(--label3);text-decoration:line-through;text-decoration-color:var(--label3)}
 /* one action pill: Nudge, Draft a follow-up, Recap my week, Download a backup, Remove sample, Make notes */
 .nudge,.btn-f{min-height:36px;padding:0 var(--space-4);border-radius:999px;background:var(--fill);font-size:14px;font-weight:600;color:var(--tint);transition:background-color .15s var(--spring)}
-.nudge:hover,.btn-f:hover{background:var(--fill2)}
+/* a hover that sticks after a tap on touch screens is left out; on desktop the text darkens to stay 4.5:1 on --fill2 */
+@media (hover:hover){.nudge:hover,.btn-f:hover{background:var(--fill2);color:var(--tint-strong,var(--tint))}}
 .chip{display:inline-flex;align-items:center;height:20px;padding:0 var(--space-2);border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap;background:var(--fill);color:var(--label2)}
 .c1{background:var(--h1-soft);color:var(--h1-ink)}.c2{background:var(--h2-soft);color:var(--h2-ink)}.c3{background:var(--h3-soft);color:var(--h3-ink)}.c4{background:var(--h4-soft);color:var(--h4-ink)}
 .c5{background:var(--h5-soft);color:var(--h5-ink)}.c6{background:var(--h6-soft);color:var(--h6-ink)}.c7{background:var(--h7-soft);color:var(--h7-ink)}.c8{background:var(--h8-soft);color:var(--h8-ink)}
@@ -350,7 +352,7 @@ kbd,.kbd{font-family:var(--font);font-size:12px;font-weight:400;padding:2px var(
 .grp-h b{font-size:13px;font-weight:600;color:var(--label2);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .grp-h span{margin-left:auto;font-size:13px;color:var(--label3);white-space:nowrap}
 .grp-h.person b{font-size:15px;color:var(--label)}
-.grp-h .av{width:24px;height:24px;font-size:11px;align-self:center}
+.grp-h .av{width:24px;height:24px;font-size:11px;align-self:center;margin-left:0}
 /* names and words */
 .wd-form{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:var(--space-3);margin-top:var(--space-6)}
 .wd-form label{display:flex;flex-direction:column;gap:var(--space-1);font-size:13px;color:var(--label2)}
@@ -431,6 +433,11 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
 .ly time{display:block;font-family:var(--font);font-size:13px;font-weight:600;letter-spacing:0;color:var(--label2);margin-bottom:2px;font-variant-numeric:tabular-nums}
 .ly.mk{color:var(--label);box-shadow:inset 4px 0 0 var(--amber-bar);padding-left:var(--space-4)}
 .ly.mk time{color:var(--amber)}
+/* H3: in the Vaani window after a hand-over, the last lines from the other tab sit above this window's own, quieter */
+.ly-prev{width:100%;max-width:760px;margin:var(--space-3) auto 0;display:flex;flex-direction:column;gap:var(--space-2)}
+.ly-prev-h{margin:0;font-size:13px;line-height:18px;font-weight:600;color:var(--label2)}
+.lyp{margin:0;font-size:17px;line-height:1.3;font-weight:600;color:var(--label2)}
+.lyp time{display:block;font-size:13px;line-height:18px;font-weight:600;color:var(--label2);font-variant-numeric:tabular-nums}
 .empty-ly{font-family:var(--font-d);font-size:27px;font-weight:700;letter-spacing:-0.02em;color:var(--past)}
 .rec-foot{display:flex;align-items:center;justify-content:center;gap:var(--space-7);padding-top:var(--space-4)}
 .rec-foot>.rec-label{display:none}
@@ -440,12 +447,14 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
 .rf-side.on>span:first-child{background:var(--amber-soft);color:var(--amber)}
 .rf-hint{font-size:13px;color:var(--label2);text-align:center;margin-top:var(--space-2)}
 /* v2.3: words heard, and the calm warning when speech is heard but no words arrive */
+/* v2.4: what Vaani hears, one calm line under the meeting line */
+.rec-src{margin-top:var(--space-1);font-size:13px;line-height:18px;color:var(--label2);align-self:stretch;max-width:760px;margin-inline:auto;width:100%}
 .rec-health{margin-top:var(--space-1);font-size:13px;line-height:18px;color:var(--label2);font-variant-numeric:tabular-nums;align-self:stretch;max-width:760px;margin-inline:auto;width:100%}
 .rec-warn{align-self:stretch;max-width:760px;width:100%;margin:var(--space-3) auto 0;padding:var(--space-3) var(--space-4);border-radius:14px;background:var(--amber-soft);font-size:15px;line-height:21px;color:var(--label)}
 .rec-warn b{font-weight:600}
 .rw-act{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2);margin-top:var(--space-3)}
 .rw-act .pill-select select,.rw-act .btn-f{background:var(--card)}
-.rw-act .pill-select select:hover,.rw-act .btn-f:hover{background:var(--bg2)}
+@media (hover:hover){.rw-act .pill-select select:hover,.rw-act .btn-f:hover{background:var(--bg2)}}
 
 /* ================= making ================= */
 .v-making{justify-content:center;gap:var(--space-4);padding-inline:var(--space-4);animation:fadeIn .35s var(--spring) backwards}
@@ -453,7 +462,7 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
 .v-making p{font-size:15px;color:var(--label2);text-align:center;max-width:46ch}
 /* the one-time speech-to-text choice: the second option is the grey fill on a card (4.5:1 in both themes) */
 #sttChoice .btn-wide{background:var(--fill-card)}
-#sttChoice .btn-wide:hover{background:var(--fill2)}
+#sttChoice .btn-wide:hover{background:var(--fill-card);box-shadow:inset 0 0 0 1px var(--field-edge)}
 #sttChoice h2:focus{outline:none}
 .stt-ask .btn-f{min-height:44px;border-radius:12px;padding:0 var(--space-5)}
 .stt-ask{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:var(--space-2);max-width:420px}
@@ -484,6 +493,18 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
 .rcpt time{font-weight:600;color:var(--label);margin-right:var(--space-2);font-variant-numeric:tabular-nums}
 .flag{display:inline-flex;align-items:center;height:20px;margin-left:var(--space-2);padding:0 var(--space-2);border-radius:6px;font-size:12px;font-weight:600;background:var(--amber-soft);color:var(--amber);vertical-align:2px;white-space:nowrap}
 .chk-line{display:flex;align-items:center;gap:var(--space-3);margin-top:var(--space-4);padding-left:calc(var(--gut) + var(--axis) + var(--space-1));font-size:14px;color:var(--label2)}
+/* v2.4: a "Next action plan" step carries its number on the line, not a tick box */
+.ln-num{position:relative;display:grid;place-items:center;min-width:22px;height:22px;padding:0 var(--space-1);border-radius:11px;background:var(--bg);box-shadow:inset 0 0 0 1.5px var(--label3);font-size:12px;line-height:22px;font-weight:600;color:var(--label2);font-variant-numeric:tabular-nums}
+/* v2.4: "Next steps from Vaani", the agent block under a meeting's notes: the same line, one row per action */
+.agent{margin-top:var(--space-7)}
+.agent .sec-h{margin-top:0}
+.ag-mode{padding-left:calc(var(--gut) + var(--axis) + var(--space-1));font-size:14px;line-height:20px;color:var(--label2)}
+.ag-list{margin-top:var(--space-2)}
+.ag-row{min-height:0}
+.ag-row .ln-c{padding-top:var(--space-2);padding-bottom:var(--space-2)}
+.ag-row .ln-n,.ag-row .ln-g{padding-top:var(--space-2)}
+.ag-row .l1{line-height:24px}
+.ag-row .ln-x{flex-wrap:wrap;justify-content:flex-end;padding-top:var(--space-1)}
 .inline-act{display:flex;flex-wrap:wrap;gap:var(--space-2);padding:var(--space-2) 0 0 calc(var(--gut) + var(--axis) + var(--space-1))}
 .peak{margin:var(--space-8) 0 0 calc(var(--gut) + var(--axis) + var(--space-1));padding:var(--space-4) 0;box-shadow:inset 0 .5px 0 var(--sep),inset 0 -.5px 0 var(--sep);font-size:15px;line-height:22px}
 .peak div{display:flex;gap:var(--space-2);margin-top:var(--space-3)}
@@ -545,6 +566,9 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
 .cancel:hover{background:var(--fill)}
 .btn-wide{display:block;width:100%;min-height:52px;margin-top:var(--space-2);border-radius:14px;background:var(--fill);font-size:17px;font-weight:600;color:var(--tint)}
 .btn-wide:hover{background:var(--fill2)}
+/* G8-3 (gate 8): on the start sheet the second button sits on an opaque fill (4.5:1 in both themes); hover shows an edge, not a darker fill */
+#liveSheet .btn-wide,#liveSheet .btn-wide:hover{background:var(--fill-card)}
+#liveSheet .btn-wide:hover{box-shadow:inset 0 0 0 1px var(--field-edge)}
 .form-l{display:block;margin:var(--space-4) var(--space-1) var(--space-2);font-size:13px;color:var(--label2)}
 .panel .field{min-height:44px}
 .hint{margin:var(--space-2) var(--space-1) 0;font-size:13px;line-height:1.5;color:var(--label2)}
@@ -565,10 +589,10 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
 .set-row>span{flex:1;min-width:0}
 .set-row button{min-height:44px;font-size:16px;font-weight:400;color:var(--tint)}
 .switch{display:grid;place-items:center;min-width:51px}
-.call-chip i,.switch i{width:30px;height:18px;border-radius:999px;background:var(--label3);position:relative;transition:background-color .25s var(--spring)}
-.call-chip i::after,.switch i::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--knob);transition:transform .3s var(--spring)}
-.call-chip[aria-pressed=true] i,.switch[aria-checked=true] i{background:var(--switch-on)}
-.call-chip[aria-pressed=true] i::after,.switch[aria-checked=true] i::after{transform:translateX(12px)}
+.switch i{width:30px;height:18px;border-radius:999px;background:var(--label3);position:relative;transition:background-color .25s var(--spring)}
+.switch i::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--knob);transition:transform .3s var(--spring)}
+.switch[aria-checked=true] i{background:var(--switch-on)}
+.switch[aria-checked=true] i::after{transform:translateX(12px)}
 .switch i{width:44px;height:26px}
 .switch i::after{width:22px;height:22px}
 .switch[aria-checked=true] i::after{transform:translateX(18px)}
@@ -585,7 +609,11 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
 /* the toast sizes to its text (one line on a phone); max-width still caps it */
 .toast,.vtoast{width:max-content}
 .toast.show,.vtoast.show{opacity:1;transform:translate(-50%,0) scale(1);pointer-events:auto}
-.vtoast button{font-size:14px;font-weight:600;color:var(--tint);min-height:28px;padding:0 var(--space-1)}
+/* G8-2 (gate 8): the text-only toast has nothing to press, so taps go through to what is under it; .vtoast keeps its OK and Undo */
+.toast.show{pointer-events:none}
+.vtoast button{font-size:14px;font-weight:600;color:var(--tint);min-height:28px;min-width:44px;padding:0 var(--space-1)}
+/* G7-4 (gate 7): on the record screen a notice sits under the timer row, never over it */
+#app[data-view="rec"] ~ .vtoast{top:calc(env(safe-area-inset-top,0px) + 112px)}
 :root .vtoast button{color:var(--on-island);text-decoration:underline;text-underline-offset:3px}
 
 /* ================= motion ================= */
@@ -636,6 +664,8 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
   .nb-row>.ln-g{display:block;grid-column:2;grid-row:2;justify-self:start;padding:0 0 var(--space-2) var(--space-1)}
   .nb-row>.ln-g:empty{display:none}
   .rcpt{grid-column:2}
+  .ag-row .ln-x{justify-content:flex-start}
+  .ag-row .btn-t{min-width:44px;padding:0 var(--space-3)}
   .wk-grid{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:var(--space-4)}
   .wk-grid div:nth-child(3){padding-left:0;box-shadow:none}
   .wd-form{grid-template-columns:minmax(0,1fr)}
@@ -847,6 +877,7 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
 .rs-opts{display:flex;flex-direction:column;margin-top:var(--space-2);max-height:40vh;overflow-y:auto}
 .rs-opt{display:flex;align-items:center;gap:var(--space-3);min-height:44px;padding:0 var(--space-1);font-size:15px;line-height:20px;overflow-wrap:anywhere;cursor:pointer}
 .rs-opt + .rs-opt{box-shadow:inset 0 .5px 0 var(--sep)}
+.rs-opt small{display:block;color:var(--label2);font-size:13px;line-height:18px}
 .rs-opt input{appearance:none;-webkit-appearance:none;position:relative;flex:none;width:44px;height:44px;margin:0 calc(var(--space-3) * -1);cursor:pointer}
 .rs-opt input::before{content:"";position:absolute;inset:11px;border-radius:6px;background:var(--card);box-shadow:inset 0 0 0 1.5px var(--ck-edge)}
 .rs-opt input:checked::before{background:var(--tint);box-shadow:none}
@@ -855,3 +886,27 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
 .rs-opt input:focus-visible{outline:2px solid var(--tint);outline-offset:-9px;border-radius:8px}
 .key-rm{margin-top:var(--space-1);margin-left:calc(var(--space-2) * -1)}
 @media (max-width:899px){.key-rm{min-height:44px}}
+/* G4-1 (gate 4): the Vaani window beside a call is short (420 to 640 px): the waiting line fits in full.
+   G5-1 (gate 5): at 17 px it is normal-size text, so it takes --label3 (4.7:1 light, 7.3:1 dark; --past is 3.3:1 in light).
+   Gate 5: the whole record screen fits one short window (Stop always on screen, the waiting line whole, under the fade):
+   the waiting line never shrinks, and the other tab's earlier lines give way first (only the newest one shows) */
+.lyrics:has(>.empty-ly){flex:1 0 auto;-webkit-mask-image:none;mask-image:none}
+@media (max-height:640px){
+  .empty-ly{font-size:17px;line-height:24px;color:var(--label3)}
+  .rec-meta{margin-top:var(--space-3)}
+  .rec-foot{padding-top:var(--space-2)}
+  .v-rec{padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--space-3))}
+}
+/* G6-3 (gate 6): a Vaani window made taller by hand (641 to 760 px) and narrow: only the newest earlier line, up to 3 lines,
+   so Stop stays on screen with no page scroll. Before the 520 and 430 tiers, which still win below them. G7-6 (gate 7): a
+   window 360 px wide or less keeps this up to 810 px high. */
+@media (max-height:760px),(max-height:810px) and (max-width:360px){
+  .ly-prev .lyp:not(:last-child){display:none}
+  .ly-prev .lyp{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+}
+@media (max-height:520px){
+  .rf-hint{display:none}
+  .ly-prev .lyp{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ly-prev .lyp time{display:inline;margin-right:var(--space-2)}
+}
+@media (max-height:430px){.ly-prev{display:none}}

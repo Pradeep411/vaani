@@ -1,13 +1,17 @@
 {
-  "name": "Vaani",
+  "name": "Vaani: AI Note Taker Agent",
   "short_name": "Vaani",
-  "description": "Just talk. Vaani takes the notes. Free meeting notes and dictation in 22 languages.",
+  "description": "Vaani is an AI agent for your meetings: it takes the notes, finds the tasks and drafts the follow-up email. Free, in 22 languages.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
   "icons": [
-    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
   ]
 }

@@ -2,14 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-uuMYDjU1wN7np2lpFpmJ2cQsVpHNZgFh0Ay1qIoiC6o=' https://accounts.google.com/gsi/client https://www.gstatic.com/firebasejs/12.19.0/; style-src 'self' https://accounts.google.com/gsi/style; img-src 'self'; connect-src https://api.sarvam.ai https://api.openai.com https://api.anthropic.com https://generativelanguage.googleapis.com https://www.googleapis.com/calendar/v3/ https://accounts.google.com/gsi/ https://oauth2.googleapis.com/revoke https://identitytoolkit.googleapis.com/v1/ https://securetoken.googleapis.com/v1/ https://firestore.googleapis.com/v1/projects/vaani-accounts/; frame-src https://accounts.google.com/gsi/; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-VXD/JiOh0KJU+2/mWMhggKrUADof3VoPO++ip2Sds+k=' https://accounts.google.com/gsi/client https://www.gstatic.com/firebasejs/12.19.0/; style-src 'self' https://accounts.google.com/gsi/style; img-src 'self'; connect-src https://api.sarvam.ai https://api.openai.com https://api.anthropic.com https://generativelanguage.googleapis.com https://www.googleapis.com/calendar/v3/ https://accounts.google.com/gsi/ https://oauth2.googleapis.com/revoke https://hooks.slack.com/services/ https://identitytoolkit.googleapis.com/v1/ https://securetoken.googleapis.com/v1/ https://firestore.googleapis.com/v1/projects/vaani-accounts/; frame-src https://accounts.google.com/gsi/; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Vaani: Free AI Meeting Notes for Meet, Zoom and Teams in 22 Languages</title>
-<meta name="description" content="Just talk. Vaani takes the notes. Free meeting notes and dictation in 22 languages, right in your browser. No bot in your call.">
+<title>Vaani: AI Note Taker Agent for Meet, Zoom and Teams</title>
+<meta name="description" content="Vaani is a free AI agent for your meetings. It spots your call, takes the notes, and writes the summary, tasks with owners and the follow-up email, in 22 languages, right in your browser. No bot in your call.">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
-<meta property="og:title" content="Vaani: just talk, Vaani takes the notes">
-<meta property="og:description" content="Free meeting notes and dictation in 22 languages. No bot in your call.">
+<meta property="og:title" content="Vaani: AI Note Taker Agent">
+<meta property="og:description" content="Vaani is an AI agent for your meetings: it takes the notes and writes the summary, tasks and follow-up email. Free, in 22 languages. No bot in your call.">
+<meta name="twitter:title" content="Vaani: AI Note Taker Agent">
+<meta name="twitter:description" content="Vaani is an AI agent for your meetings: it takes the notes and writes the summary, tasks and follow-up email. Free, in 22 languages. No bot in your call.">
 <meta property="og:image" content="https://pradeep411.github.io/vaani/icons/og.png">
 <meta property="og:url" content="https://pradeep411.github.io/vaani/">
 <meta name="twitter:card" content="summary_large_image">
@@ -26,8 +28,8 @@
 
   <aside class="side" id="side" aria-label="Your notes">
     <div class="side-head">
-      <span class="brand desk-only">Vaani</span>
-      <span class="brand phone-only">Vaani</span>
+      <span class="brand desk-only">Vaani<span class="brand-tag">AI Note Taker Agent</span></span>
+      <span class="brand phone-only">Vaani<span class="brand-tag">AI Note Taker Agent</span></span>
       <button class="icon-btn phone-only" id="listClose" aria-label="Close your notes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
     <button class="new-btn" id="newBtn"><i aria-hidden="true"></i>New recording</button>
@@ -42,13 +44,13 @@
   <main class="main" id="main">
     <header class="bar" id="bar">
       <button class="icon-btn phone-only" id="listBtn" aria-label="Your notes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></svg></button>
-      <span class="brand phone-only">Vaani</span>
+      <span class="brand phone-only">Vaani <span class="brand-tag in">AI agent</span></span>
       <button class="icon-btn phone-only" data-open="settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
     </header>
 
     <section class="view v-idle" id="vIdle">
       <div class="hero">
-        <h1>Just talk.<br>Vaani takes the notes.</h1>
+        <h1>Just talk.<br>Your AI agent takes the notes.</h1>
         <p id="heroSub">Meetings, calls and ideas, in 22 languages.</p>
       </div>
       <div class="stage">
@@ -63,7 +65,7 @@
           <label class="pill-select"><span id="langText">English (India)</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9l5-5 5 5M7 15l5 5 5-5"/></svg><select id="langSel" aria-label="Speaking language"></select></label>
           <label class="pill-select" id="tmplWrap"><span id="tmplText">General meeting</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9l5-5 5 5M7 15l5 5 5-5"/></svg><select id="tmplSel" aria-label="Notes style"></select></label>
         </div>
-        <button class="call-chip" id="callChip" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1v-6h3zM3 19a2 2 0 0 0 2 2h1v-6H3z"/></svg><span>Hear everyone on a call</span><i aria-hidden="true"></i></button><a class="ext-link" id="extLink" href="https://github.com/Pradeep411/vaani#chrome-extension" target="_blank" rel="noopener">Add Vaani to Chrome. It pops up when a call starts.</a>
+        <a class="ext-link" id="extLink" href="https://github.com/Pradeep411/vaani#chrome-extension" target="_blank" rel="noopener">Add Vaani to Chrome. Vaani offers to take notes when a call starts.</a>
       </div>
     </section>
 
@@ -83,8 +85,8 @@
 
     <section class="view v-making" id="vMaking" hidden>
       <span class="think" aria-hidden="true"><i></i><i></i><i></i></span>
-      <h2 id="makingH">Writing your notes</h2>
-      <p id="makingSub"></p>
+      <h2 id="makingH">Vaani is writing your notes</h2>
+      <p id="makingSub" aria-live="polite"></p>
     </section>
 
     <section class="view v-note" id="vNote" hidden>
@@ -177,6 +179,7 @@
       <button type="button" data-stt="browser" aria-pressed="false">This browser</button>
     </div>
     <p class="hint" id="sttHint"></p>
+    <p class="hint" id="sttCallHint" hidden>To hear whole calls, click the Vaani icon in Chrome and turn on “Hear the whole call”.</p>
     <label class="form-l" for="outLang">Write notes in</label>
     <select class="field" id="outLang"></select>
     <span class="form-l">Appearance</span>
@@ -194,7 +197,7 @@
 <div class="scrim" id="sttChoice" hidden>
   <div class="panel" role="dialog" aria-modal="true" aria-labelledby="sttChoiceH" aria-describedby="sttChoiceP">
     <h2 id="sttChoiceH" tabindex="-1">Use Sarvam AI for speech to text?</h2>
-    <p class="sub" id="sttChoiceP">Sarvam AI can turn speech into text with your key. Your meeting audio and your Names and words list then go from this browser to Sarvam AI. With “Hear everyone on a call” on, other people’s voices go too. Nothing goes to Vaani.</p>
+    <p class="sub" id="sttChoiceP">Sarvam AI can turn speech into text with your key. Your meeting audio and your Names and words list then go from this browser to Sarvam AI. When Vaani hears a call through its Chrome extension, other people’s voices go too. Nothing goes to Vaani.</p>
     <button class="done-btn" id="sttUse" type="button">Use Sarvam AI</button>
     <button class="btn-wide" id="sttKeep" type="button">Keep this browser</button>
     <button class="cancel" data-close type="button">Cancel</button>
@@ -207,10 +210,11 @@
     <h2 id="privH">Where your words go</h2>
     <p class="sub">Your notes stay on this device. Here is every stop, plainly.</p>
     <div class="facts">
-      <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg><span><b>Speech to text.</b> Without a Sarvam AI key, your browser does it: Chrome and Edge send the audio to Google or Microsoft; Safari uses Apple’s engine. With a Sarvam AI key, the meeting audio goes from this browser straight to Sarvam AI, in pieces of about 25 seconds, to be turned into text, together with your Names and words list so names come out right. With “Hear everyone on a call” on, the other people’s voices go there too. Nothing goes to Vaani: the audio is held only in memory and dropped once it is transcribed.</span></div>
+      <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg><span><b>Speech to text.</b> Without a Sarvam AI key, your browser does it: Chrome and Edge send the audio to Google or Microsoft; Safari uses Apple’s engine. With a Sarvam AI key, the meeting audio goes from this browser straight to Sarvam AI, in pieces of about 25 seconds, to be turned into text, together with your Names and words list so names come out right. When Vaani hears a call through its Chrome extension, the other people’s voices go there too. Nothing goes to Vaani: the audio is held only in memory and dropped once it is transcribed.</span></div>
       <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span><b>Notes stay on this device.</b> Everything you save lives in this browser’s storage (local storage, or IndexedDB when that is full). Clearing browser data deletes it.</span></div>
       <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg><span><b>The built-in notes engine runs on your device.</b> If you add your own AI key in Settings, text goes to that provider whenever Vaani writes notes, answers a question, recaps your week, translates or drafts a follow-up. Ask and Recap send the notes they search. OpenAI, Claude and Gemini get text only; a Sarvam AI key also turns on Sarvam AI’s speech to text, so Sarvam AI gets the audio too.</span></div>
-      <div class="fact" id="privCal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span><b>Google Calendar, only if you connect it.</b> Vaani reads your next 36 hours of events straight from Google into this browser. None of it goes to a Vaani account or database. Disconnect any time. Attendee names stay on this device; an event’s title becomes the note’s title, which goes to your AI provider like any note title if you use your own key. A note you take for an event keeps the attendee names; backups leave them out unless you turn them on in Settings. Disconnect deletes the saved events and asks Google to remove Vaani’s access. If Google can’t, Vaani tells you, and you can remove it in your Google Account under Security, Third-party connections.</span></div>
+      <div class="fact" id="privCal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span><b>Google Calendar, only if you connect it.</b> Vaani reads your next 36 hours of events straight from Google into this browser. None of it goes to a Vaani account or database. Disconnect any time. Attendee names and email addresses stay on this device; the addresses only fill in the To line of a follow-up email, or the guests of a follow-up meeting, when you tap. An event’s title becomes the note’s title, which goes to your AI provider like any note title if you use your own key. A note you take for an event keeps the attendee names and addresses; backups leave them out unless you turn them on in Settings. Disconnect deletes the saved events and asks Google to remove Vaani’s access. If Google can’t, Vaani tells you, and you can remove it in your Google Account under Security, Third-party connections.</span></div>
+      <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h12M12 6l6 6-6 6"/></svg><span><b>After a meeting.</b> Vaani drafts the follow-up email, the tasks and the follow-up meeting in this browser. Gmail, your mail app, WhatsApp and Google Calendar open only when you tap, filled in for you to check and send. Slack gets the notes only if you add a Slack channel link in Settings: when you tap, or on its own after each meeting if you choose “Do it automatically”.</span></div>
       <div class="fact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M17 11a3 3 0 1 0 0-6M21.5 20a5.5 5.5 0 0 0-4.5-5.4"/></svg><span><b>Tell people you are taking notes.</b> It’s polite, and in many places it’s the law.</span></div>
     </div>
     <button class="done-btn" data-close>Got it</button>
@@ -265,15 +269,11 @@
   /* ---------- data ---------- */
   var LANGS=[["en-IN","English (India)"],["en-US","English (US)"],["en-GB","English (UK)"],["hi-IN","Hindi (हिन्दी)"],["kn-IN","Kannada (ಕನ್ನಡ)"],["ta-IN","Tamil (தமிழ்)"],["te-IN","Telugu (తెలుగు)"],["mr-IN","Marathi (मराठी)"],["bn-IN","Bengali (বাংলা)"],["gu-IN","Gujarati (ગુજરાતી)"],["ml-IN","Malayalam (മലയാളം)"],["pa-IN","Punjabi (ਪੰਜਾਬੀ)"],["ur-PK","Urdu (اردو)"],["es-ES","Spanish"],["fr-FR","French"],["de-DE","German"],["ar-SA","Arabic"],["pt-BR","Portuguese"],["ru-RU","Russian"],["zh-CN","Chinese"],["ja-JP","Japanese"],["id-ID","Indonesian"],["it-IT","Italian"],["ko-KR","Korean"]];
   var OUT=[["English","en"],["Hindi","hi"],["Kannada","kn"],["Tamil","ta"],["Telugu","te"],["Marathi","mr"],["Bengali","bn"],["Gujarati","gu"],["Malayalam","ml"],["Punjabi","pa"],["Urdu","ur"],["Spanish","es"],["French","fr"],["German","de"],["Arabic","ar"],["Portuguese","pt"],["Chinese","zh"],["Japanese","ja"]];
-  var FMT="Format in markdown. First line: '# ' and a short title of at most 6 words. Then use only the sections named for this meeting, in that order, leaving out any that are genuinely empty. Every point is a short, plain '- ' bullet (under 20 words); no tables, no bold labels, no filler. Under '## Action items' write one bullet per task as '- Owner: task, by deadline', using the real name of whoever took it on ('Team' if nobody did; drop the deadline if none was said). Be faithful to the transcript, which may mix languages; never invent owners, dates, numbers, decisions or facts. Anything asked but not settled is a question, not a decision. Summarise only what is said in the transcript: never infer or guess topics, goals, dates, deadlines, owners, decisions or action items that nobody said. If the transcript is short, broken or unclear, say so in one bullet and write only what it supports; leave a section out rather than fill it. Never write a section called 'You marked'.";
+  /* v2.4: one note shape for every meeting, like an assistant's: Summary, Notes, Tasks, Next action plan, Meeting conclusion,
+     Follow-up meeting and a drafted Follow-up email. Each meeting type adds what to cover in Notes and at most a few sections. */
+  var FMT="Format in markdown. First line: '# ' and a short title of at most 6 words. Then these sections, in this order: '## Summary' (2 or 3 short sentences); '## Notes' (the main points, one bullet each); any extra sections named for this meeting type; '## Tasks' (one bullet per task as '- Owner: task, by due date'); '## Next action plan' (the order to do things in, as '1. Owner: step'; add what Tasks doesn't say: what comes first, what waits for what. Leave this section out if it would only repeat Tasks); '## Meeting conclusion' (1 or 2 sentences on where the meeting landed); '## Follow-up meeting' (only if a next meeting was mentioned: '- When: ' the day and time as said, '- Who: ' the names said, '- About: ' the topic); '## Follow-up email' (a short email from the person who ran the meeting to the people in it: the first line is 'Subject: ' and a subject, then the body in under 120 words: thanks, what was decided, then each task as 'Owner: task'). Leave out any section the transcript gives nothing for. Owner is the real name of whoever took the task on; if nobody took it on, the owner is 'Not said'. Add ', by' and a due date only if a date was said. In Follow-up meeting write 'Not said' for any part nobody said. Never put an email address, phone number or link anywhere that nobody said. Every point is a short, plain bullet (under 20 words); no tables, no bold labels, no filler. Be faithful to the transcript, which may mix languages; never invent owners, dates, numbers, decisions or facts. Anything asked but not settled is a question, not a decision. Summarise only what is said in the transcript: never infer or guess topics, goals, dates, deadlines, owners, decisions or action items that nobody said. If the transcript is short, broken or unclear, say so in one bullet and write only what it supports; leave a section out rather than fill it. Never write a section called 'You marked'.";
   var TMPL={
-    auto:{label:"Auto-detect type",sys:""},management:{label:"Management meeting",sys:"This is a management meeting. Sections: '## Highlights' (the 3 most important points), '## Discussed' (one bullet per topic and where it landed), '## Decided', '## Action items', '## Risks and blockers'."},sales:{label:"Sales call",sys:"This is a sales call. Sections: '## Deal snapshot' (who, what they need, stage, budget and timeline if said), '## Pain points', '## Objections' (with how each was answered), '## Commitments' (what each side promised), '## Action items' (the steps to close), '## Next step' (next touchpoint and date)."},client:{label:"Client call",sys:"This is a client call. Sections: '## Summary' (2 short sentences), '## What the client wants', '## Concerns', '## What we promised', '## Action items', '## Next meeting'."},developer:{label:"Developer or tech",sys:"This is a developer or technical meeting; write for engineers. Sections: '## Summary' (2 short sentences), '## Technical decisions', '## Action items' (name the feature, component or file in each task), '## Bugs and blockers', '## Specs mentioned' (exact numbers, versions, APIs, sizes as said), '## Open technical questions'."},founder:{label:"Founders or leadership",sys:"This is a founders or leadership meeting. Sections: '## Highlights' (the 3 most important points), '## Strategic decisions', '## Numbers' (revenue, costs, targets and dates exactly as said), '## Action items', '## Risks', '## To revisit'."},cx:{label:"Customer support or CX",sys:"This is a customer experience or support call. Sections: '## Customer issue', '## Impact', '## Root cause' (only if found), '## Resolution', '## Action items', '## Follow-up with customer'."},daily:{label:"Daily team call",sys:"This is a daily team call. Sections: '## Updates' (one bullet per person: done, doing next), '## Blockers', '## Action items'."},general:{label:"General meeting",sys:"Sections: '## Summary' (2 short sentences), '## Discussed', '## Decided', '## Action items', '## Open questions'."},interview:{label:"Interview",sys:"These are interview notes. Sections: '## Summary' (ends with a clear hire or no-hire lean), '## Strengths', '## Concerns', '## Action items'."},oneonone:{label:"One-on-one",sys:"These are one-on-one notes. Sections: '## Discussed', '## Feedback', '## Agreed', '## Action items'."},lecture:{label:"Lecture or class",sys:"These are study notes. Sections: '## Big idea', '## Key concepts' (each briefly explained), '## To revisit', '## Action items' (what to study or do)."}
-
-
-
-
-
-
+    auto:{label:"Auto-detect type",sys:""},management:{label:"Management meeting",sys:"This is a management meeting. In '## Notes' write one bullet per topic and where it landed. Extra section, after Notes: '## Risks and blockers'."},sales:{label:"Sales call",sys:"This is a sales call. In '## Notes' cover the pain points and what each side promised. Extra sections, after Notes: '## Deal snapshot' (who, what they need, stage, budget and timeline if said), '## Objections' (with how each was answered)."},client:{label:"Client call",sys:"This is a client call. Extra sections, after Notes: '## What the client wants', '## Concerns'."},developer:{label:"Developer or tech",sys:"This is a developer or technical meeting; write for engineers. In each task, name the feature, component or file. Extra sections, after Notes: '## Technical decisions', '## Bugs and blockers', '## Specs mentioned' (exact numbers, versions, APIs, sizes as said)."},founder:{label:"Founders or leadership",sys:"This is a founders or leadership meeting. Extra sections, after Notes: '## Strategic decisions', '## Numbers' (revenue, costs, targets and dates exactly as said), '## Risks'."},cx:{label:"Customer support or CX",sys:"This is a customer experience or support call. Extra sections, after Notes: '## Customer issue', '## Root cause' (only if found), '## Resolution'."},daily:{label:"Daily team call",sys:"This is a daily team call. In '## Notes' write one bullet per person: done, doing next. Extra section, after Notes: '## Blockers'."},general:{label:"General meeting",sys:"This is a general meeting. Use only the standard sections."},interview:{label:"Interview",sys:"These are interview notes. The Summary ends with a clear hire or no-hire lean. Extra sections, after Notes: '## Strengths', '## Concerns'. Leave out the follow-up email."},oneonone:{label:"One-on-one",sys:"These are one-on-one notes. Extra sections, after Notes: '## Feedback', '## Agreed'."},lecture:{label:"Lecture or class",sys:"These are study notes. In '## Notes' write the big idea, then each key concept briefly explained. Tasks are what to study or do. Leave out the follow-up meeting and the follow-up email."}
   };
   TMPL.auto.sys="Pick the one meeting type below that best fits this conversation. On the line right after the title write 'Type: ' and that type's name exactly as listed. Then follow that type's instructions. Types: "+Object.keys(TMPL).filter(function(k){return k!=="auto";}).map(function(k){return "["+TMPL[k].label+"] "+TMPL[k].sys;}).join(" ");var NOTE_SYS="You are a careful dictation editor. Fix punctuation, capitalisation and obvious speech-to-text slips. Keep the speaker's words and meaning; do not add or translate. First line: '# ' and a title of at most 6 words. Then the cleaned text.";
 
@@ -288,13 +288,13 @@
   tmplSel.value=load("vaani.tmpl","auto");if(!tmplSel.value)tmplSel.value="general";
   outLang.value=load("vaani.outLang","English");
   function syncPills(){$("#langText").textContent=langSel.options[langSel.selectedIndex].text;$("#tmplText").textContent=TMPL[tmplSel.value].label;}
-  langSel.addEventListener("change",function(){save("vaani.lang",langSel.value);syncPills();syncRecBtn();});
+  langSel.addEventListener("change",function(){save("vaani.lang",langSel.value);syncPills();syncRecBtn();if(DESK&&DESK.wait)setTimeout(deskRetry,0);});
   tmplSel.addEventListener("change",function(){save("vaani.tmpl",tmplSel.value);syncPills();});
   syncPills();
   var isMac=/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent);
 
   /* ---------- toast ---------- */
-  var tT;function toast(m){var t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(tT);tT=setTimeout(function(){t.classList.remove("show");},2200);}
+  var tT;function toast(m){var t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(tT);tT=setTimeout(function(){t.classList.remove("show");},Math.min(8000,Math.max(2200,String(m).length*60)));}/* G7-5 (gate 7): a long message stays longer (60 ms a character, 2.2 to 8 s) */
 
   /* ---------- theme ---------- */
   function applyTheme(t){if(t==="light"||t==="dark")root.setAttribute("data-theme",t);else root.removeAttribute("data-theme");save("vaani.theme",t);
@@ -305,7 +305,7 @@
 
   /* ---------- segmented mode ---------- */
   var mode=load("vaani.mode","meeting")==="note"?"note":"meeting";
-  function setMode(m){mode=m;save("vaani.mode",m);var cc=document.getElementById("callChip");if(cc)cc.hidden=m!=="meeting"||!(navigator.mediaDevices&&navigator.mediaDevices.getDisplayMedia);var on=m==="note"?1:0;$("#modeSeg").setAttribute("data-on",on);
+  function setMode(m){mode=m;save("vaani.mode",m);var on=m==="note"?1:0;$("#modeSeg").setAttribute("data-on",on);
     $$("#modeSeg button").forEach(function(b){b.setAttribute("aria-pressed",b.getAttribute("data-mode")===m?"true":"false");});
     $("#tmplWrap").hidden=m!=="meeting";$("#heroSub").textContent=m==="meeting"?"Meetings, calls and classes, in 22 languages.":"Speak a thought. Get clean, ready-to-send text.";}
   $("#modeSeg").addEventListener("click",function(e){var b=e.target.closest("[data-mode]");if(b)setMode(b.getAttribute("data-mode"));});
@@ -314,8 +314,47 @@
   /* ---------- history ---------- */
   /* ids are positive numbers everywhere they reach markup: coerce digit strings, drop anything else */
   function okId(n){if(!n||typeof n!=="object")return false;if(typeof n.id==="string"&&/^\d{1,16}$/.test(n.id))n.id=+n.id;return typeof n.id==="number"&&isFinite(n.id)&&n.id>0;}
-  function notes(){var a=loadJSON("vaani.history",[]);if(!Array.isArray(a))a=[];return a.filter(okId).map(function(n){ if(!n.segs){ n.segs=String(n.text||"").split(/\n/).filter(Boolean).map(function(l){var m=l.match(/^\[(\d+:\d+)\]\s*(.*)$/);return m?{t:m[1],x:m[2]}:{t:"",x:l};}); n.kind=n.kind==="meeting"?"meeting":"note"; } return n; });}
+  /* G7-I1 (gate 7): a saved note is read by many screens (Home, To-dos, Insights, Calendar). A date, number or text that is an
+     object (only corrupt storage or another page on this address can write one) is made plain here once, so none of them
+     throws: the date becomes the note's own save time, a number nothing, a text empty */
+  function primOk(v){return v==null||typeof v==="string"||typeof v==="number"||typeof v==="boolean";}
+  /* G8-I1 / Q-G8-3 (gate 8): every field a screen reads is made the type it expects, by cleanNote's rules (home.js), but nothing
+     the note holds is dropped unless it can't be read: a date no clock can show (text that isn't a date, 1e20) becomes the
+     note's own save time; text fields that aren't text become empty; lines, marks, a calendar event, a folder, an email draft,
+     to-do ticks and reminders that aren't the right shape are fixed or dropped. Nothing here is ever rendered as markup. */
+  function dOk(v){return (typeof v==="string"||typeof v==="number")&&!isNaN(new Date(v).getTime());}
+  function fixN(n){if(!dOk(n.date)){var d=new Date(n.id);n.date=(isNaN(d.getTime())?new Date(0):d).toISOString();}
+    ["dur","words"].forEach(function(k){var v=n[k];if(v!=null&&!(typeof v==="number"&&isFinite(v)))n[k]=typeof v==="string"&&v.trim()&&isFinite(+v)?+v:0;});
+    ["of","prev","gap"].forEach(function(k){var v=n[k];if(v!=null&&!(typeof v==="number"&&isFinite(v))&&!(typeof v==="string"&&/^\d{1,16}$/.test(v)))delete n[k];});
+    ["title","md","kind","lang","tmpl","engine"].forEach(function(k){if(n[k]!=null&&typeof n[k]!=="string")n[k]="";});
+    ["folder","src","stt","thin","cont"].forEach(function(k){if(n[k]!=null&&typeof n[k]!=="string")delete n[k];});
+    if(n.st0!=null&&!(typeof n.st0==="number"&&isFinite(n.st0)))delete n.st0;
+    if(n.text!=null&&typeof n.text!=="string")n.text=typeof n.text==="number"?String(n.text):"";
+    if(n.segs!=null&&!Array.isArray(n.segs))delete n.segs;
+    if(n.segs)n.segs=n.segs.filter(function(x){return x&&typeof x==="object"&&(typeof x.x==="string"||typeof x.x==="number");}).map(function(x){return typeof x.x==="string"&&typeof x.t==="string"?x:Object.assign({},x,{x:String(x.x),t:typeof x.t==="string"?x.t:""});});
+    if(n.done!=null&&(typeof n.done!=="object"||Array.isArray(n.done)))n.done={};
+    if(n.nudged!=null&&(typeof n.nudged!=="object"||Array.isArray(n.nudged)))delete n.nudged;
+    if(n.nudged)Object.keys(n.nudged).forEach(function(k){if(!dOk(n.nudged[k]))delete n.nudged[k];});
+    if(n.marks!=null&&!Array.isArray(n.marks))delete n.marks;
+    if(n.marks)n.marks=n.marks.filter(function(m){return m&&typeof m==="object"&&Number.isInteger(m.i)&&m.i>=0;}).map(function(m){return {i:m.i,s:typeof m.s==="number"&&isFinite(m.s)?m.s:0,t:typeof m.t==="string"?m.t:"",how:m.how==="voice"?"voice":"tap"};});
+    if(n.cal!=null&&(typeof n.cal!=="object"||Array.isArray(n.cal)))delete n.cal;
+    if(n.cal){var c=n.cal;n.cal=Object.assign({},c,{id:typeof c.id==="string"?c.id:"",title:typeof c.title==="string"?c.title:"",people:Array.isArray(c.people)?c.people.filter(function(x){return typeof x==="string";}):[]});
+      if(c.mails!=null){if(Array.isArray(c.mails))n.cal.mails=c.mails.filter(function(x){return typeof x==="string";});else delete n.cal.mails;}}
+    if(n.agentMail!=null){var am=n.agentMail;if(!am||typeof am!=="object"||Array.isArray(am)||typeof am.body!=="string")delete n.agentMail;
+      else n.agentMail={to:Array.isArray(am.to)?am.to.filter(function(x){return typeof x==="string";}):[],subject:typeof am.subject==="string"?am.subject:"",body:am.body};}
+    return n;}
+  /* G8-M1 (gate 8): two saved notes never share an id. A second one with the same id (corrupt storage, or two tabs saving in
+     the same millisecond) gets the next free id, the same one on every read, so nothing is lost and every save, tick and
+     marker change reaches the note it means. It is written back with the next save. */
+  function uniqIds(a){var all=Object.create(null),seen=Object.create(null);a.forEach(function(n){all[n.id]=1;});
+    a.forEach(function(n){if(seen[n.id]){var id=n.id+1;while(all[id]||seen[id])id++;n.id=id;}seen[n.id]=1;});return a;}
+  function notes(){var a=loadJSON("vaani.history",[]);if(!Array.isArray(a))a=[];return uniqIds(a.filter(okId)).map(function(n){ fixN(n); if(!n.segs){ n.segs=String(n.text||"").split(/\n/).filter(Boolean).map(function(l){var m=l.match(/^\[(\d+:\d+)\]\s*(.*)$/);return m?{t:m[1],x:m[2]}:{t:"",x:l};}); n.kind=n.kind==="meeting"?"meeting":"note"; } return n; });}
   function setNotes(a){var ok=saveJSON("vaani.history",a);if(window.VaaniHook)VaaniHook("change",a);return ok;}
+  /* Q-G8-4 (gate 8): the start times of crash copies already turned into a note (Home's "Make notes", the window taking the
+     other tab's copy, a normal Stop). A late write of the same recording is never offered again. The last 20 are kept. */
+  function liveUsed(st){var a=loadJSON("vaani.liveUsed",[]);return typeof st==="number"&&Array.isArray(a)&&a.indexOf(st)>=0;}
+  function liveDone(st){if(!(typeof st==="number"&&isFinite(st)&&st>0))return;var a=loadJSON("vaani.liveUsed",[]);if(!Array.isArray(a))a=[];
+    a=a.filter(function(x){return typeof x==="number"&&x!==st;});a.push(st);saveJSON("vaani.liveUsed",a.slice(-20));}
   function getNote(id){return notes().filter(function(n){return n.id===id;})[0];}
   function upsert(n){var a=notes(),i=-1;a.forEach(function(x,j){if(x.id===n.id)i=j;});if(i>=0)a[i]=n;else a.unshift(n);return setNotes(a);}
   function plain(n){return n.segs.map(function(s){return s.x;}).join(" ");}
@@ -330,7 +369,10 @@
   $("#listClose").addEventListener("click",function(){app.classList.remove("list-open");});
 
   /* ---------- time saved ---------- */
-  function savedWords(){return notes().reduce(function(t,n){return t+(n.sample||n.of?0:(+n.words||0));},0);}
+  /* G7-I1 (gate 7): a stored value no number can be made of (an object) counts as nothing, never thrown on */
+  function numIn(v){return typeof v==="number"&&isFinite(v)?v:typeof v==="string"&&isFinite(+v)?+v:0;}
+  function dTime(n){var d=n&&n.date;return typeof d==="string"||typeof d==="number"?(new Date(d).getTime()||0):0;}
+  function savedWords(){return notes().reduce(function(t,n){return t+(n.sample||n.of?0:numIn(n.words));},0);}
   function renderSaved(bump){var w=savedWords(),m=Math.round(w/40);
     $("#savedVal").textContent=m<60?m+" min":Math.floor(m/60)+" h "+(m%60)+" min";
     if(bump){var s=$("#saved");s.classList.remove("bump");void s.offsetWidth;s.classList.add("bump");}}
@@ -352,44 +394,449 @@
   function syncRecBtn(){if(SR)return;var ok=sttUsable();$("#recBtn").disabled=!ok;if(!ok)$("#recLabel").textContent="Open Vaani in Chrome, Edge or Safari to record. Your saved notes still work here.";}
   function langName(l){return (LANGS.filter(function(x){return x[0]===l;})[0]||[0,l])[1];}
   function recMetaText(){var k=mode==="meeting"?(tmplSel.value==="auto"?"Meeting":TMPL[tmplSel.value].label):"Quick note";
-    if(sttOn)return k+(VaaniSTT.codeFor(langSel.value)==="unknown"?", any language":" in "+langName(langSel.value))+", by Sarvam AI"+(callTrack?", whole call":"");
-    return k+" in "+langSel.options[langSel.selectedIndex].text+(callTrack?", whole call":"");}
+    if(sttOn)return k+(VaaniSTT.codeFor(langSel.value)==="unknown"?", any language":" in "+langName(langSel.value))+", by Sarvam AI";
+    return k+" in "+langSel.options[langSel.selectedIndex].text;}
 
-  var callOn=load("vaani.call","0")==="1",callTrack=null,callStreams=[],callAc=null;var Q=new URLSearchParams(location.search),SRC=Q.get("src");if(!/^(meet|teams|zoom|installed|ext)$/.test(SRC||""))SRC=null;var CALLSRC=/^(meet|teams|zoom)$/.test(SRC||"");if(CALLSRC)callOn=true;function syncCall(){$("#callChip").setAttribute("aria-pressed",callOn?"true":"false");}$("#callChip").addEventListener("click",function(){callOn=!callOn;save("vaani.call",callOn?"1":"0");syncCall();if(callOn)toast("When you start, pick your call tab and turn on Share tab audio");});syncCall();if(SRC||!window.chrome)$("#extLink").hidden=true;if(SRC==="installed"){$("#heroSub").textContent="Vaani is in Chrome now. Join a Meet, Teams or Zoom call and it will offer to take notes.";}else if(CALLSRC){setMode("meeting");var nm={meet:"Google Meet",teams:"Teams",zoom:"Zoom"}[SRC];$("#heroSub").textContent=(nm?"Ready for your "+nm+" call. ":"")+"Tap the red button, pick the call tab and turn on Share tab audio.";}function stopCall(){callStreams.forEach(function(st){st.getTracks().forEach(function(t){t.stop();});});callStreams=[];if(callAc){try{callAc.close();}catch(e){}callAc=null;}callTrack=null;}function getCall(){return navigator.mediaDevices.getDisplayMedia({video:true,audio:{suppressLocalAudioPlayback:false},systemAudio:"include",selfBrowserSurface:"exclude",preferCurrentTab:false}).then(function(ds){callStreams.push(ds);if(!ds.getAudioTracks().length){stopCall();toast("No call sound was shared, so Vaani hears only you. Next time turn on Share tab audio.");return;}return navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}}).then(function(mic){callStreams.push(mic);callAc=new (window.AudioContext||window.webkitAudioContext)();var d=callAc.createMediaStreamDestination();callAc.createMediaStreamSource(ds).connect(d);callAc.createMediaStreamSource(mic).connect(d);callTrack=d.stream.getAudioTracks()[0];ds.getVideoTracks().forEach(function(v){v.addEventListener("ended",function(){if(listening)toast("Call sharing stopped. Vaani keeps listening to you.");});});});}).catch(function(){stopCall();toast("Recording just your microphone");});}function startRec(){if(listening)return;if(window.VaaniSTT&&VaaniSTT.busy()){toast("Vaani is still transcribing the last recording");return;}if(window.VaaniHook&&VaaniHook("beforeStart",{})===false)return;if(sttUsable()&&load("vaani.stt",null)===null){openSttChoice();return;}if(mode==="meeting"&&callOn&&!callTrack&&!listening&&navigator.mediaDevices&&navigator.mediaDevices.getDisplayMedia){getCall().then(startRec0);return;}startRec0();}function startRec0(){
+  /* v2.4: no screen sharing. Vaani records the microphone. With the Vaani Chrome extension (1.1.0), a click on its icon
+     during a call lets Vaani hear the call tab too, through chrome.tabCapture, with no picker. The extension opens Vaani
+     with ?src=…&start=1&ext=<its id>; this page then asks that extension for the call (externally_connectable), once, in
+     its first minute. The extension answers only the Vaani tab it opened after the click, with a one-time id that works in
+     this tab only, or "nocap" with the reason. Only an answer in the exact shape below is used. A URL alone never starts
+     the mic: with no answer, the page says so and the person taps the red button. Stop and "the call ended" come over a
+     port this page opens to the extension. Browser speech recognition is never given the call: that needs Sarvam AI. */
+  /* one-time migration: the old "Hear everyone on a call" switch (vaani.call) is gone; a saved "1" no longer turns anything on */
+  if(load("vaani.call",null)!==null)remove("vaani.call");
+  var callTrack=null,callStreams=[],callAc=null,callTabSt=null,callHeard="",callNote="";
+  var Q=new URLSearchParams(location.search),SRC=Q.get("src");if(!/^(meet|teams|zoom|whatsapp|slack|webex|jitsi|whereby|discord|installed|ext|desktop)$/.test(SRC||""))SRC=null;
+  var CALLSRC=/^(meet|teams|zoom|whatsapp|slack|webex|jitsi|whereby|discord)$/.test(SRC||""),CALLNAME={meet:"Google Meet",teams:"Teams",zoom:"Zoom",whatsapp:"WhatsApp",slack:"Slack",webex:"Webex",jitsi:"Jitsi",whereby:"Whereby",discord:"Discord"};
+  /* F-L2: the only Chrome extensions this page talks to. Before release the Chrome Web Store item's ID replaces the
+     placeholder (then run tests/csp.py, because this script's hash changes). An ID in the address is used only when it is
+     in this list, and it is never saved. While only the placeholder is here, nothing is handed over: the page asks the
+     person to update the extension. The test build's ID (its manifest carries tests/ext-test-key.txt) counts only on
+     this computer (localhost), and only after the developer turned it on there (N-I3: its key is public, so any unpacked
+     extension can carry that ID): localStorage "vaani.devExt" = "1", which no extension can set on this page. */
+  var VAANI_EXTENSION_IDS=["fhgpebnbfjmldplhfnlmclkcplbiheof"];
+  var VAANI_TEST_EXTENSION_ID="mhfoieapnlkkmfhjobhhllgjgcngehgf";
+  var EXT_RE=/^[a-p]{32}$/,EXT_LOCAL=location.hostname==="localhost"||location.hostname==="127.0.0.1";
+  var EXT_DEV=EXT_LOCAL&&load("vaani.devExt",null)==="1";
+  var EXT_IDS=VAANI_EXTENSION_IDS.filter(function(x){return EXT_RE.test(x);}).concat(EXT_DEV&&EXT_RE.test(VAANI_TEST_EXTENSION_ID)?[VAANI_TEST_EXTENSION_ID]:[]);
+  var EXTID=EXT_IDS.indexOf(Q.get("ext")||"")>=0?Q.get("ext"):null,extKnown=EXTID;
+  if(load("vaani.extId",null)!==null)remove("vaani.extId"); /* an ID saved from an old link is never used again */
+  /* ?start=1: the person already clicked the Vaani icon; the recording starts when the extension answers */
+  var EXTSTART=Q.get("start")==="1"&&/^(meet|teams|zoom|whatsapp|slack|webex|jitsi|whereby|discord|ext)$/.test(SRC||""),extT0=Date.now(),extDone=!EXTSTART,extWait=0,extFailed=false,extPort=null,extPing=0,extPerm=null,extRetry=0,extConnAt=0,extRefused=0;
+  /* N-1: the extension opened this window to take over notes that another Vaani tab was taking, with the call: that tab
+     hands them over once this one is taking notes, and they become one note here (join=<a one-time name>) */
+  var joinHid=EXTSTART&&/^[a-p]{16}$/.test(Q.get("join")||"")?Q.get("join"):null,joinFirst=!!joinHid,joinIn=false,handTo=null,callSetup=0,callOffPend="";
+  /* Q2: in that window the extension hears "taking notes" only once the recorder really runs (recLive), so the other tab
+     never stops for a window whose microphone failed. toldRec: it was told. contNone (Q4): the extension says nothing
+     will come from the other tab. contPrev (H3): the other tab's part, shown above this window's lines. */
+  var recLive=false,toldRec=false,contNone=false,contPrev=null,stopHeld=0,joinSay="";
+  /* gate 4: stopWant: this window asked the extension to stop the other tab and waits until that tab says it stopped.
+     contAsk: this window took notes, stopped, and waits for the other tab's notes. stopAckW: in any tab, the extension's
+     "stop" is answered with ack:true once it has stopped. All three are said again if the port comes back. */
+  var stopWant=0,stopWaitT=0,contAsk=null,stopAckW=false;
+  /* gate 5: stopUntil: until when this window's Stop for the other tab counts (STOPLIFE after it asked); stopLim: in any
+     tab, the time limit the extension gave with its next "stop" (a Stop that arrives later is ignored). contAdopt: the
+     other tab closed during the hand-over and this window made its crash copy the first part of this note (Q-G5-2). */
+  var stopUntil=0,stopSubT=0,stopLim=0,contAdopt=null;
+  /* gate 6: stopTickT: the waiting line's countdown (G6-1); stopGoneT/stopFree: while the window waits, the other tab's
+     lock is watched (a crash says nothing: Q-G6-2); contSt0: the other tab's recording (the startedAt of its fresh crash
+     copy when this window opened), the only crash copy this window ever takes (G6-M1); contBusy: "contgone" came but that
+     tab still holds the recording lock (alive, only unreachable), so this window never writes over its crash copy */
+  var stopTickT=0,stopGoneT=0,stopFree=0,contSt0=0,contBusy=false;
+  var EXTFAIL=EXTSTART&&!EXT_IDS.length?"Vaani needs the newest Vaani extension to start from its icon. Update it in Chrome, or tap the red button to start with your mic.":"Vaani didn’t hear back from the Chrome extension. Tap the red button to start with your mic.";
+  if(SRC||!window.chrome)$("#extLink").hidden=true;
+  /* the welcome after installing the extension; the other lines live next to the red button only (N10: say it once) */
+  if(SRC==="installed"){$("#heroSub").textContent="Vaani is in Chrome now. Join a call in Google Meet, Teams or Zoom and Vaani offers to take the notes.";}
+  else if(SRC==="desktop"&&deskOk())setMode("meeting");
+  else if(CALLSRC||EXTSTART)setMode("meeting");
+  function stopCall(){callStreams.forEach(function(st){st.getTracks().forEach(function(t){t.stop();});});callStreams=[];if(callAc){try{callAc.close();}catch(e){}callAc=null;}callTrack=null;callTabSt=null;callHeard="";}
+  /* the call's sound has gone: stop hearing the tab, keep the mic. why: "" the call ended (the tab closed, left the call
+     or went to another page), "off" the person turned off "Hear the whole call" (N3), "lost" the extension went away */
+  function callEnded(why){if(!callHeard)return;why=typeof why==="string"?why:"";callHeard="";callNote=why==="off"?"off":why==="lost"?"lost":"ended";if(callTabSt)callTabSt.getTracks().forEach(function(t){t.stop();});syncRecSrc();if(listening){toExt(true);if(!why)toast("The call ended. Vaani keeps hearing your mic.");}else stopCall();}
+  /* the call tab's sound, mixed with the microphone for Sarvam AI's speech to text. Capturing a tab mutes it for the
+     person, so the tab's sound is also played back to the speakers. Resolves the mix, or null. */
+  function getTabCall(id,src){
+    var md=navigator.mediaDevices;if(!md||!md.getUserMedia)return Promise.resolve(null);
+    return md.getUserMedia({audio:{mandatory:{chromeMediaSource:"tab",chromeMediaSourceId:id}},video:false}).then(function(tab){
+      var tt=tab.getAudioTracks()[0];if(!tt){tab.getTracks().forEach(function(t){t.stop();});return null;}
+      return md.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}}).then(function(mic){
+        var ac=new (window.AudioContext||window.webkitAudioContext)();
+        var d=ac.createMediaStreamDestination(),ts=ac.createMediaStreamSource(tab);
+        ts.connect(d);ac.createMediaStreamSource(mic).connect(d);ts.connect(ac.destination);
+        if(ac.state!=="running")ac.resume().catch(function(){});
+        return {tab:tab,mic:mic,ac:ac,track:d.stream.getAudioTracks()[0],name:(CALLNAME[src]?CALLNAME[src]+" ":"")+"call"};
+      },function(){tab.getTracks().forEach(function(t){t.stop();});return null;});
+    }).catch(function(){return null;});
+  }
+  /* N-2: a call being set up when the extension says the call is gone (or hearing it was turned off) is dropped */
+  function callNew(id,src){if(!callSetup)callOffPend="";callSetup++;return getTabCall(id,src).then(function(c){callSetup--;var off=callOffPend;if(!callSetup)callOffPend="";
+    if(c&&off){c.tab.getTracks().concat(c.mic.getTracks()).forEach(function(t){t.stop();});try{c.ac.close();}catch(e){}return {off:off};}return c;});}
+  function useCall(c){callStreams=[c.tab,c.mic];callAc=c.ac;callTrack=c.track;callTabSt=c.tab;callHeard=c.name;var tt=c.tab.getAudioTracks()[0];if(tt)tt.addEventListener("ended",function(){if(callTabSt===c.tab)callEnded();});}
+  /* one calm line on the record screen: what Vaani hears */
+  var recSrc=document.createElement("p");recSrc.className="rec-src";recSrc.id="recSrc";recSrc.hidden=true;$("#recMeta").after(recSrc);
+  function recSrcText(){
+    if(DESK&&!DESK.wait)return DESK.note||(DESK.cap==="mic+system"?"Vaani is recording your mic and all Mac sound.":DESK.cap==="mic-only"?"Vaani hears only your mic.":"Vaani hears your "+DESK.app+" call and your mic.");
+    if(callHeard)return SRC==="ext"&&!joined?"Vaani hears this tab and your mic.":(joinHid&&joinIn?"Your notes from the other tab are here. ":"")+"Vaani hears your "+callHeard+" and your mic.";
+    if(callNote==="ended")return "The call ended, so Vaani hears only your mic now.";
+    if(callNote==="off")return "You turned off “Hear the whole call”, so Vaani hears only your mic now.";
+    if(callNote==="lost")return "Vaani lost touch with its Chrome extension, so it hears only your mic now.";
+    if(callNote==="fail")return "Vaani hears only your mic. It couldn’t reach the call tab. Next time, click the Vaani icon while you’re on the call tab.";
+    if(callNote==="perm")return "Vaani hears only your mic. To hear the whole call, click the Vaani icon on the call tab and follow the steps.";
+    if(callNote==="nokey"){var hasK=!!(window.VaaniSTT&&VaaniSTT.hasKey()),ln=langName(langSel.value).replace(/\s*\(.*\)\s*$/,"");
+      return !hasK?"Vaani hears only your mic, so other people may be missed. Add a Sarvam AI key in Settings to hear the whole call.":window.VaaniSTT&&VaaniSTT.codeFor(langSel.value)===null?"Vaani hears only your mic. Sarvam AI doesn’t cover "+ln+", so it can’t hear the whole call.":"Vaani hears only your mic. To hear the whole call, choose Sarvam AI under Speech to text in Settings.";}
+    return mode==="meeting"&&listening?"Vaani hears your mic.":"";}
+  function syncRecSrc(){var t=recSrcText();recSrc.textContent=t;recSrc.hidden=!t;}
+  /* the extension, through externally_connectable: only an ID in EXT_IDS (F-L2) */
+  var ID_RE=/^[A-Za-z0-9+\/=_.-]{8,200}$/,CALL_RE=/^(meet|teams|zoom|whatsapp|slack|webex|jitsi|whereby|discord)$/,joined=false,joinWait=0;
+  function extRt(){try{return window.chrome&&chrome.runtime&&typeof chrome.runtime.sendMessage==="function"?chrome.runtime:null;}catch(e){return null;}}
+  function extMsg(id,m,cb){var r=extRt();if(!r||EXT_IDS.indexOf(id||"")<0)return cb(null);try{r.sendMessage(id,m,function(x){try{void chrome.runtime.lastError;}catch(e){}cb(x===undefined?null:x);});}catch(e){cb(null);}}
+  function only(d,keys){if(!d||typeof d!=="object"||Array.isArray(d))return false;var ks=Object.keys(d);return ks.length===keys.length&&ks.every(function(k){return keys.indexOf(k)>=0;});}
+  /* to the extension: only whether Vaani is recording, and whether it hears the call. A recording that the extension
+     didn't start (the red button, Calendar's "Join and take notes") opens the port too, so the Vaani icon on the call tab
+     offers "Add this call" to this recording instead of starting a second one (B1). */
+  function toExt(rec){if(!extPort){if(rec&&listening&&extKnown&&!DESK)extConnect();return;}var r=!!rec&&(!joinHid||recLive),sm={type:"state",rec:r,call:!!(r&&callHeard)};if(!r&&stopAckW){sm.ack=true;stopAckW=false;}if(!r&&contAsk)sm.fin=true;try{extPort.postMessage(sm);if(r&&joinHid)toldRec=true;}catch(e){}
+    clearInterval(extPing);if(rec)extPing=setInterval(function(){try{if(extPort)extPort.postMessage({type:"ping"});}catch(e){}},20000);}
+  function extConnect(){var r=extRt();if(!r||!extKnown||extPort||typeof r.connect!=="function")return;
+    extConnAt=Date.now();
+    try{extPort=r.connect(extKnown,{name:"vaani"});}catch(e){extPort=null;extRefused++;if(callHeard)callEnded("lost");return;}
+    var me=extPort;
+    me.onMessage.addListener(function(m){
+      /* N-2: a "calloff" or "permoff" while the call is being set up still counts: that call is dropped when it arrives */
+      if(only(m,["type","until"])&&m.type==="stopuntil"&&typeof m.until==="number"){stopLim=m.until;return;}
+      if(only(m,["type"])){if(m.type==="stop"){var lim=stopLim;stopLim=0;if(lim&&lim-Date.now()>STOPLIFE+1000)return;/* Q-G7-N2: too far ahead (a clock step) is ignored, not "too late" */if(lim&&Date.now()>=lim){if(listening)lateStop();return;}if(listening){stopAckW=true;stopRec();}else try{me.postMessage({type:"state",rec:false,call:false,ack:true});}catch(e){}}else if(m.type==="stopped"){stopEnd(true);}else if(m.type==="stopgone"){stopEnd("gone");}else if(m.type==="contgone"){contGone(0);}else if(m.type==="calloff"){if(callSetup)callOffPend=callOffPend||"ended";callEnded();}else if(m.type==="permoff"){if(callSetup)callOffPend="off";callEnded("off");}else if(m.type==="nocont"){contNone=true;contPrev=null;renderPrev();heldGo();}return;}
+      if(only(m,["type","src"])&&m.type==="join"&&CALL_RE.test(m.src))extJoin(m.src);
+      if(only(m,["type","hid"])&&m.type==="handover"&&/^[a-p]{16}$/.test(m.hid))handOut(m.hid);});
+    me.onDisconnect.addListener(function(){try{void chrome.runtime.lastError;}catch(e){}if(extPort!==me)return;extPort=null;clearInterval(extPing);
+      /* F-L1: refused again right after connecting (the extension was reloaded, updated, turned off, or no longer knows
+         this tab): fail closed, so the call tab is never heard without the extension watching it. The mic carries on. */
+      if(Date.now()-extConnAt<2000){extRefused++;if(callHeard)callEnded("lost");}else extRefused=0;
+      if((listening||stopWant||contAsk)&&extRefused<20)setTimeout(function(){if(!extPort&&(listening||stopWant||contAsk))extConnect();},extRefused?Math.min(5000,500*extRefused):500);});
+    if(stopWant)sendEndStop();else if(contAsk)sendFin();else{toExt(listening);if(stopHeld>0)sendHeld();}}
+  /* gate 5 (Q-G5-2): the other tab closed or reloaded before it handed its notes over: what it saved for a crash becomes
+     the first part of this note, exactly as if it had handed it over (a saved note, marked for this window), so the
+     meeting is still one note and those words are kept even if this window closes too */
+  /* gate 6 (G6-M1): only the crash copy of the tab that went away: the recording this window saw when it opened (contSt0),
+     saved in the last 10 minutes, cleaned by the rules of a saved note (home.js cleanLive, G6-I2); anything else is left
+     for Home's card */
+  function ownLive(){var H=window.VaaniHome,l=H&&H.cleanLive?H.cleanLive(loadJSON("vaani.live",null)):null;return l&&contSt0>0&&l.startedAt===contSt0&&l.startedAt!==startedAt&&!liveUsed(l.startedAt)&&Date.now()-l.savedAt<600000&&(l.segs.length||l.interim)?l:null;}
+  function adoptLive(){if(!joinHid||joinIn||contAdopt)return;var l=ownLive(),now=Date.now();if(!l)return;
+    var st=l.startedAt,sv=l.savedAt,sg=l.segs.slice();if(l.interim)sg.push({t:sg.length?sg[sg.length-1].t:"00:00",x:l.interim});
+    var w=words(sg.map(function(x){return x.x;}).join(" "));
+    var b={id:now,kind:l.mode,date:new Date(st).toISOString(),dur:Math.max(1,Math.round((sv-st)/1000)),lang:l.lang,tmpl:l.tmpl,segs:sg,title:titleOf(sg),md:"",done:{},words:w,recovered:true,cont:joinHid,st0:st};
+    if(l.call)b.call=true;if(l.marks.length)b.marks=l.marks;
+    upsert(b);remove("vaani.live");liveDone(st);contAdopt=joinHid;joinIn=true;contPrev={segs:sg,st0:st,words:w};renderPrev();syncRecSrc();if(window.VaaniHook)VaaniHook("joined",{});}
+  /* Q-G6-2 (gate 6): "contgone" also comes when that tab's port went without a word (a crash, or a tab that can't be
+     reached). Only a tab that no longer holds the recording lock is gone: its crash copy becomes the first part here. One
+     that still holds it is alive (only unreachable): as for "nocont", and its crash copy stays its own. */
+  function contGone(n){if(!joinHid||joinIn||contNone)return;otherRec(function(busy){if(!joinHid||joinIn||contNone)return;
+    if(busy&&n<10){setTimeout(function(){contGone(n+1);},250);return;}
+    if(busy){contBusy=true;contPrev=null;busyWatch();}else adoptLive();contNone=true;renderPrev();heldGo();});}
+  /* G7-I2 (gate 7): "busy" lasts only while that tab holds the lock. Once it lets go, its own fresh crash copy (if it was closed
+     with its words there) becomes the first part here, and this window protects its own words again */
+  var busyIv=0;function busyWatch(){clearInterval(busyIv);busyIv=setInterval(function(){if(!contBusy||!listening||!joinHid){clearInterval(busyIv);busyIv=0;return;}
+    otherRec(function(b){if(b||!contBusy||!listening||!joinHid)return;clearInterval(busyIv);busyIv=0;contBusy=false;adoptLive();
+    /* G8-L1 (gate 8): a crash copy with words that can't be taken as the first part (too old, or not that tab's) is saved as
+       its own note before this window writes its own copy, so those words are never lost */
+    if(!contAdopt&&window.VaaniHome&&VaaniHome.keepLive)VaaniHome.keepLive();
+    if(window.VaaniHook)VaaniHook("joined",{});});},2000);}
+  /* J-1 (gate 6): a Stop from the Vaani window that came after its time limit: this tab keeps recording, and says so once */
+  /* G7-7 (gate 7): the state last, and "the Vaani window", the name people see. G7-1: OK puts the keyboard on Stop (never on the
+     hidden notice) */
+  var LATESTOP="Your Stop in the Vaani window came too late. This tab is still recording.";
+  function lateStop(){var H=window.VaaniHome;if(H&&H.actToast)H.actToast(LATESTOP,"OK",function(){var s=$("#stopBtn");if(s&&s.getClientRects().length)s.focus({preventScroll:true});},null,15000);else toast(LATESTOP);}
+  /* N1: this page is going away (a reload, another site): the extension stops counting it as taking notes at once */
+  /* G4-1: closed while its Stop is held or waiting: the Stop goes with it, so the other tab stops too */
+  /* gate 5: "gone" tells the extension this page is going away; it did not stop by itself (its words are in its crash copy) */
+  window.addEventListener("pagehide",function(){if(extPort)try{extPort.postMessage(stopHeld||stopWant?{type:"state",rec:false,call:false,end:true,stop:true,until:stopUntil||undefined}:{type:"state",rec:false,call:false,gone:true});}catch(e){}});
+  /* no answer from the extension: say so plainly next to the red button (once, N10) and hand it over (never starts on its own) */
+  function extNoReply(msg){if(extDone)return;extDone=true;extFailed=true;clearTimeout(extWait);if(typeof msg==="string")EXTFAIL=msg;
+    if(window.VaaniHome&&VaaniHome.appView()==="idle")VaaniHome.renderHome();
+    var rb=$("#recBtn")&&$("#recBtn").getClientRects().length?$("#recBtn"):$("#tabRec");if(rb)rb.focus();}
+  /* B1: one meeting, one recording. A Vaani tab that is taking notes answers here, so a second one never starts. */
+  /* N-I4: a lock held while recording, not a BroadcastChannel question: checking it sends nothing, so other pages on this
+     address can't see when a hand-over happens */
+  var recLockRel=null,recLockAsk=false,recLockMe=null;
+  /* while this page holds the lock it notes its own client id, so its own lock never counts as "another tab" (Q5) */
+  function holdRecLock(){try{if(!navigator.locks||recLockRel||recLockAsk)return;recLockAsk=true;navigator.locks.request("vaani-rec",function(){recLockAsk=false;try{navigator.locks.query().then(function(q){(q.held||[]).forEach(function(l){if(l.name==="vaani-rec"&&recLockRel)recLockMe=l.clientId;});},function(){});}catch(e){}return new Promise(function(res){recLockRel=res;if(!listening)relRecLock();});}).catch(function(){recLockAsk=false;});}catch(e){recLockAsk=false;}}
+  function relRecLock(){var r=recLockRel;recLockRel=null;if(r)r();}
+  function otherRec(cb){try{if(!navigator.locks||typeof navigator.locks.query!=="function")return cb(false);navigator.locks.query().then(function(q){cb((q.held||[]).some(function(l){return l.name==="vaani-rec"&&!(recLockRel&&recLockMe&&l.clientId===recLockMe);}));},function(){cb(false);});}catch(e){cb(false);}}
+  /* the notes are in another Vaani tab (the extension's window beside the call, after a hand-over, or any other tab) */
+  function otherMsg(){return notes().some(function(n){return n&&n.cont;})?"Vaani is already taking notes in its window beside your call. Stop there first.":"Vaani is already taking notes in another tab. Stop there first.";}
+  function extAnswer(d){
+    if(extDone)return;
+    if(Date.now()-extT0>60000)return extNoReply();
+    var tab=only(d,["type","id","src"])&&d.type==="tab"&&d.src===SRC&&typeof d.id==="string"&&ID_RE.test(d.id),no=only(d,["type","src","why"])&&d.type==="nocap"&&d.src===SRC&&/^(mic|nokey|perm|fail)$/.test(d.why);
+    if(!tab&&!no)return extNoReply();
+    extDone=true;clearTimeout(extWait);
+    /* N-1: here to take over another tab's notes, so that recording is expected; it stops once this one runs */
+    if(joinHid){extConnect();extStart(tab?d.id:"",tab?"":d.why);return;}
+    otherRec(function(busy){
+      if(busy){extDone=false;return extNoReply("Vaani is already taking notes in another tab, so it didn’t start a second recording here. To hear this call, stop those notes, then click the Vaani icon on the call again.");}
+      extConnect();extStart(tab?d.id:"",tab?"":d.why);});}
+  /* what the extension knows: whether hearing calls can work here (so it asks for Chrome's OK only then), and back,
+     whether "Hear the whole call" is on */
+  function extHello(){EXT_IDS.forEach(function(id){extMsg(id,{type:"hello",callAudio:sttUsable()},function(r){if(!only(r,["perm"])||typeof r.perm!=="boolean")return;extKnown=id;extPerm=r.perm;$("#extLink").hidden=true;if(typeof syncStt==="function")syncStt();if(listening&&!extPort)toExt(true);});});}
+  if(EXTSTART)extWait=setTimeout(extNoReply,8000);
+  document.addEventListener("DOMContentLoaded",function(){
+    if(EXTSTART){if(!EXTID||!extRt())extNoReply();else extMsg(EXTID,{type:"ready",callAudio:sttUsable()},extAnswer);}
+    else extHello();});
+  /* the click already happened in the extension: start now, with the call when Sarvam AI can hear it, else the mic only */
+  function extStart(id,why){
+    if(listening||(window.VaaniSTT&&VaaniSTT.busy()))return;
+    callNote=why==="perm"?"perm":why==="mic"?"":why==="nokey"||(id&&!sttUsable())?"nokey":!id?"fail":"";
+    /* the lock was checked when the extension answered (or this is the window taking over): start in this same turn */
+    if(!id||callNote){startRec1();return;}
+    callNew(id,SRC).then(function(c){if(c&&c.off){callNote=c.off;c=null;}else if(!c)callNote="fail";else useCall(c);if(listening)return dropIdleCall();startRec1();setTimeout(dropIdleCall,0);});
+  }
+  /* B1: Vaani is already taking notes here (the red button, or Calendar's "Join and take notes") and the person chose
+     "Add this call" in the Vaani popup on the call tab: the extension asks this page, and the call joins this same
+     recording and note. */
+  function extJoin(src){
+    if(!listening||callHeard||joinWait||!extKnown||DESK)return;
+    joinWait=setTimeout(function(){joinWait=0;},10000);
+    extMsg(extKnown,{type:"ready",callAudio:!!sttOn&&sttUsable()},function(d){
+      clearTimeout(joinWait);joinWait=0;if(!listening||callHeard)return;
+      if(only(d,["type","src","why"])&&d.type==="nocap"&&d.src===src&&/^(mic|nokey|perm|fail)$/.test(d.why)){callNote=d.why==="mic"?"":d.why;syncRecSrc();return;}
+      if(!(only(d,["type","id","src"])&&d.type==="tab"&&d.src===src&&typeof d.id==="string"&&ID_RE.test(d.id)))return;
+      if(!sttOn){callNote="nokey";syncRecSrc();return;}
+      callNew(d.id,src).then(function(c){
+        if(c&&c.off){callNote=c.off;syncRecSrc();return;}
+        if(!c){callNote="fail";syncRecSrc();return;}
+        var old={st:callStreams,ac:callAc};
+        if(!listening||!sttOn||!window.VaaniSTT||!VaaniSTT.useTrack(c.track)){c.tab.getTracks().concat(c.mic.getTracks()).forEach(function(t){t.stop();});try{c.ac.close();}catch(e){}callNote="fail";syncRecSrc();return;}
+        useCall(c);joined=true;callNote="";syncRecSrc();toExt(true);
+        /* a call heard earlier in this recording: its mix retires once the recorder has moved over */
+        setTimeout(function(){old.st.forEach(function(st){st.getTracks().forEach(function(t){t.stop();});});if(old.ac)try{old.ac.close();}catch(e){}},3000);
+      });});
+  }
+  /* ---------- U3: the Vaani Mac app (team/desktop/WEB-BRIDGE-SPEC.md, protocol 1) ----------
+     The Mac app loads this page with ?src=desktop in its own web view and hands it the call's sound: 16 kHz mono PCM in
+     250 ms chunks (the person's mic and the call app mixed, all Mac sound for "mic+system", or the mic alone). The page
+     turns it into a normal meeting note with Sarvam AI (stt.js, no recorder and no getUserMedia), as for a browser call.
+     F-M1: this page receives ONLY through the one callback it gives __VAANI_DESKTOP__.connect(), and sends ONLY through
+     the post() that connect() returns (it adds the protocol version and this load's nonce, which the page never sees).
+     The Mac app's user script delivers only calls that carry its own token, and the first connect() locks the slot, so
+     no other script in the page can feed audio in or send stop/done. connect() runs while this inline script runs,
+     before any other script (Google sign-in loads only later, from calendar.js; accounts.js loads nothing while off).
+     Inert everywhere else: unless every check holds, connect() is never called and nothing listens. */
+  /* captured now, before any other script can wrap them (as the reference module does) */
+  var deskAtob=window.atob.bind(window),deskCC=Function.prototype.call.bind(String.prototype.charCodeAt);
+  var DESK=null,deskCap=null,deskOn=false,deskQ=[],deskLive=false;
+  var DESK_ID=/^[A-Za-z0-9-]{1,64}$/,DESK_B64=/^[A-Za-z0-9+\/]*={0,2}$/,DESK_MAXF=16000*3600*4,DESK_CAP=/^(mic\+app|mic\+system|mic-only)$/;
+  var DESKNOTE={"tap-unavailable":"The Mac app can hear only your mic, so other people may be missed.","tap-silent":"The call app has been silent for a while. Check that Vaani may record its sound in System Settings.","mic-denied":"The Mac app can’t use your microphone. Turn it on for Vaani in System Settings.",
+    "system-wide":"Vaani is recording your mic and all Mac sound.","mic-only":"You chose to record only your mic for this call.","gap":"The start of this call is no longer kept on your Mac, so the notes cover the rest."};
+  /* the Mac app's web view (every check of WEB-BRIDGE-SPEC.md 1), whatever the address says; desktop mode also needs
+     ?src=desktop (N-I1) */
+  function deskOk(){return SRC==="desktop"&&deskEnv();}
+  function deskEnv(){try{var f=window.__VAANI_DESKTOP__,w=window.webkit,h=w&&w.messageHandlers&&w.messageHandlers.vaaniDesktop;
+    return window.top===window&&location.origin==="https://pradeep411.github.io"&&location.pathname.indexOf("/vaani/")===0&&!!f&&f.protocol===1&&Object.isFrozen(f)&&typeof f.connect==="function"&&typeof f._deliver==="function"&&!!h&&typeof h.postMessage==="function";}catch(e){return false;}}
+  /* the only way out: the capability from connect() (it adds v and the nonce) */
+  function deskSay(m){if(deskCap)try{deskCap.post(m);}catch(e){}}
+  function deskName(a){a=typeof a==="string"?a.replace(/[\u0000-\u001f\u007f-\u009f​-‏‪-‮⁦-⁩]+/g," ").replace(/\s+/g," ").trim().slice(0,40):"";return a||"call app";}
+  function deskPcm(b64){var bin=deskAtob(b64);if(!bin.length||bin.length%2||bin.length>16000)throw new Error("size");var out=new Int16Array(bin.length>>1);for(var i=0;i<out.length;i++){var u=deskCC(bin,2*i)|(deskCC(bin,2*i+1)<<8);out[i]=u>=0x8000?u-0x10000:u;}return out;}
+  /* the "key needed" line, for sound the Mac app already has (N9) */
+  function deskFixIn(){var hasK=!!(window.VaaniSTT&&VaaniSTT.hasKey());return !hasK||!(window.VaaniSTT&&VaaniSTT.codeFor(langSel.value)===null);}
+  function deskLine(){if(!DESK||!DESK.wait)return "";var hasK=!!(window.VaaniSTT&&VaaniSTT.hasKey()),ln=langName(langSel.value).replace(/\s*\(.*\)\s*$/,""),a="Vaani has your "+DESK.app+" call’s sound, until you close this window. ";
+    return a+(!hasK?"Add a Sarvam AI key in Settings to turn it into notes.":window.VaaniSTT&&VaaniSTT.codeFor(langSel.value)===null?"Sarvam AI doesn’t cover "+ln+": choose another language to turn it into notes.":load("vaani.stt",null)===null?"Choose Sarvam AI for speech to text to turn it into notes.":"To turn it into notes, choose Sarvam AI under Speech to text in Settings.");}
+  /* said once, next to the red button, with a button to the fix; a toast only when the call ended without a key */
+  function deskWaitUi(){var t=deskLine();if(!t)return;if(window.VaaniHome&&VaaniHome.appView()==="idle")VaaniHome.renderHome();
+    var b=$("#deskSet"),lab=$("#recLabel");if(!b&&lab){b=document.createElement("button");b.type="button";b.className="lnk";b.id="deskSet";b.textContent="Open Settings";b.addEventListener("click",function(){openSettings("sarvam");});lab.after(b);}
+    if(b){b.hidden=!deskFixIn();if(!b.hidden)b.focus();}
+    if(DESK.stopped&&!(window.VaaniSTT&&VaaniSTT.hasKey())&&!DESK.told){DESK.told=true;toast("The call ended. Its sound waits until you add a Sarvam AI key.");}}
+  function deskSetHide(){var b=$("#deskSet");if(b)b.hidden=true;}
+  function deskStart(m){
+    if(DESK&&DESK.id===m.sessionId)return; /* a replay after a reload, not a new meeting */
+    if(DESK||listening||(window.VaaniSTT&&VaaniSTT.busy()))return;
+    DESK={id:m.sessionId,app:deskName(m.source&&m.source.app),cap:m.capture,mic:m.capture==="mic-only",buf:[],frames:0,total:0,wait:false,stopped:false,note:""};
+    setMode("meeting");callHeard="";callNote="";
+    if(!sttUsable()||load("vaani.stt",null)===null){DESK.wait=true;deskWaitUi();if(sttUsable())openSttChoice();return;}
+    deskBegin();
+  }
+  function deskBegin(){
+    var D=DESK;D.wait=false;deskSetHide();
+    segs=[];interim="";lyShown=0;lyInterim=null;$("#lyrics").innerHTML="";voiceReset();sttPre=[];
+    startedAt=Date.now();sttOn=true;want=true;listening=true;
+    VaaniSTT.start({pcm:true,lang:langSel.value,t0:startedAt,onSegs:sttSegs,onState:function(st){if(window.VaaniHook)VaaniHook("stt",st);}}).catch(function(){
+      if(DESK!==D)return;sttOn=false;listening=false;want=false;clearInterval(timerInt);VaaniSTT.reset();D.wait=true;view("idle");deskWaitUi();});
+    $("#timer").textContent="00:00";timerInt=setInterval(function(){$("#timer").textContent=fmt(elapsed());},1000);
+    $("#recMeta").textContent=recMetaText();syncRecSrc();renderLyrics();view("rec");$("#wv").classList.add("css");if(window.VaaniHook)VaaniHook("start",{});holdRecLock();
+    D.buf.forEach(function(c){VaaniSTT.feed(c);});D.buf=[];D.frames=0;
+    if(D.stopped)stopRec();
+  }
+  function deskAudio(pcm){if(!DESK)return;DESK.total+=pcm.length;
+    /* waiting for a key: keep at most 30 minutes in memory, as the Mac app does */
+    if(DESK.wait){DESK.buf.push(pcm);DESK.frames+=pcm.length;while(DESK.frames>16000*1800&&DESK.buf.length)DESK.frames-=DESK.buf.shift().length;return;}
+    if(sttOn)VaaniSTT.feed(pcm);}
+  function deskNotice(code){var t=DESKNOTE[code];if(!t||!DESK||DESK.note===t)return;if(code==="system-wide"){DESK.cap="mic+system";DESK.mic=false;}DESK.note=t;syncRecSrc();if(!DESK.wait)toast(t);}
+  function deskStopped(){if(!DESK)return;DESK.stopped=true;clearTimeout(DESK.stopT);if(DESK.wait){deskWaitUi();return;}if(listening)stopRec();}
+  /* the notes are saved (or the person discarded them): the Mac app wipes its copy of the audio */
+  function deskDone(){if(!DESK)return;deskSay({type:"session.done",sessionId:DESK.id});DESK=null;deskSetHide();}
+  function deskRetry(){if(!DESK||!DESK.wait)return;if(sttUsable()&&load("vaani.stt",null)===null){openSttChoice();return;}if(sttUsable()&&!listening&&!(window.VaaniSTT&&VaaniSTT.busy()))deskBegin();else deskWaitUi();}
+  var deskS=Object.create(null);
+  /* every message from the Mac app, through the one connect() callback (null-prototype copies made by its user script) */
+  function deskOnMsg(m){
+    if(!deskLive){if(deskQ.length<8000)deskQ.push(m);return;} /* until stt.js and home.js are here */
+    if(!m||typeof m!=="object"||Array.isArray(m)||m.v!==1||typeof m.type!=="string")return;
+    if(m.sessionId!==undefined&&!(typeof m.sessionId==="string"&&DESK_ID.test(m.sessionId)))return;
+    var s=m.sessionId?deskS[m.sessionId]:null;
+    if(m.type==="session.start"){
+      var au=m.audio;if(!m.sessionId||!au||au.encoding!=="pcm_s16le"||au.sampleRate!==16000||au.channels!==1)return;
+      if(typeof m.capture!=="string"||!DESK_CAP.test(m.capture))return;
+      if(DESK&&DESK.id!==m.sessionId)return; /* one meeting at a time */
+      var first=Number.isInteger(m.firstSeq)&&m.firstSeq>=0&&m.firstSeq<=1e7?m.firstSeq:0;
+      if(!s)s=deskS[m.sessionId]={next:first,asked:false,stopped:false};
+      deskStart(m);
+      if(DESK&&DESK.id===m.sessionId){if(m.capture==="mic-only"&&typeof m.notice==="string")deskNotice("tap-unavailable");if(first>0)deskNotice("gap");}
+    }else if(m.type==="audio.chunk"){
+      if(!s||s.stopped||!DESK||DESK.id!==m.sessionId)return;
+      if(!Number.isInteger(m.seq)||m.seq<0||m.seq>1e7||typeof m.data!=="string"||m.data.length>16384||m.data.length%4||!DESK_B64.test(m.data))return;
+      if(m.seq<s.next)return; /* a duplicate from a replay */
+      if(m.seq>s.next){if(!s.asked){s.asked=true;deskSay({type:"resume",sessionId:m.sessionId,fromSeq:s.next});}return;}
+      var pcm;try{pcm=deskPcm(m.data);}catch(e){return;}
+      if(m.frames!==undefined&&m.frames!==pcm.length)return;
+      if(DESK.total+pcm.length>DESK_MAXF)return;
+      s.next++;s.asked=false;deskAudio(pcm);
+    }else if(m.type==="capture.notice"){
+      if(!s||!DESK||DESK.id!==m.sessionId||typeof m.code!=="string")return;
+      /* the older audio is gone on the Mac: carry on from the oldest piece it still has */
+      if(m.code==="gap"&&Number.isInteger(m.firstSeq)&&m.firstSeq>s.next&&m.firstSeq<=1e7){s.next=m.firstSeq;s.asked=false;}
+      deskNotice(m.code);
+    }
+    else if(m.type==="session.stop"){if(s&&!s.stopped&&DESK&&DESK.id===m.sessionId){s.stopped=true;deskStopped();}}
+    /* hello and newer message types: nothing to do */
+  }
+  function deskConnect(){
+    if(deskOn||!deskEnv())return;
+    /* N-I1: in the Mac window without ?src=desktop the page still takes the one slot, so no later script can, but it uses
+       nothing from it and goes to the desktop address (the Mac app's own page), where the notes come in */
+    var desk=SRC==="desktop",cap=null;try{cap=window.__VAANI_DESKTOP__.connect(desk?deskOnMsg:function(){});}catch(e){cap=null;}
+    if(!desk){try{var u=new URL(location.href);u.search="?src=desktop";u.hash="";location.replace(u.href);}catch(e){}return;}
+    /* null: something else took the slot first, so this page stays out of it */
+    if(!cap||typeof cap.post!=="function")return;
+    deskCap=cap;deskOn=true; /* connect() itself said "ready" */
+  }
+  deskConnect();
+  document.addEventListener("DOMContentLoaded",function(){deskLive=true;var q=deskQ;deskQ=[];q.forEach(deskOnMsg);});
+  /* a call held for a recording that didn't start (its question was cancelled): let it go, so the call sounds normal again */
+  function dropIdleCall(){if(callTrack&&!listening&&!sheetOpen()){stopCall();if(callNote!=="ended")callNote="";}}
+  function startRec(){if(listening)return;if(window.VaaniSTT&&VaaniSTT.busy()){toast("Vaani is still transcribing the last recording");return;}extDone=true;clearTimeout(extWait);
+    /* Q5: one meeting, one recording: another Vaani tab holds the lock (the window beside the call, after a hand-over) */
+    if(joinFirst)return startRec1();otherRec(function(busy){if(busy){toast(otherMsg());return;}startRec1();});}
+  function startRec1(){if(listening)return;if(window.VaaniSTT&&VaaniSTT.busy()){toast("Vaani is still transcribing the last recording");return;}extDone=true;clearTimeout(extWait);if(window.VaaniHook&&!joinFirst&&VaaniHook("beforeStart",{})===false)return;if(sttUsable()&&load("vaani.stt",null)===null){openSttChoice();return;}startRec0();}function startRec0(){
     var useS=sttUsable();
-    if(!SR&&!useS){toast("This browser can't turn speech into text");return;}
+    if(!SR&&!useS){toast("This browser can’t turn speech into text");return;}
     if(listening)return;
+    joinFirst=false;
     segs=[];interim="";lyShown=0;lyInterim=null;$("#lyrics").innerHTML="";voiceReset();sttPre=[];
     if(useS){startedAt=Date.now();sttOn=true;want=true;listening=true;sttStart();}
     else try{
+      if(callTrack){stopCall();callNote="nokey";}
       newSR();
-      want=true;if(callTrack)rec.start(callTrack);else rec.start();listening=true;
-    }catch(e){toast("Couldn't start the microphone");return;}
-    startedAt=Date.now();$("#timer").textContent="00:00";
-    timerInt=setInterval(function(){$("#timer").textContent=fmt(elapsed());},1000);
-    $("#recMeta").textContent=recMetaText();
-    renderLyrics();view("rec");startViz();if(window.VaaniHook)VaaniHook("start",{});
-    try{if(navigator.vibrate)navigator.vibrate(10);}catch(e){}
+      want=true;rec.start();listening=true;
+      /* a speech engine that never says its audio started: taking notes once 1.5 s pass with no error */
+      if(joinHid)setTimeout(function(){if(listening&&!sttOn)markLive();},1500);
+    }catch(e){joinFail("Couldn’t start the microphone");return;}
+    startedAt=Date.now();paintTimer();
+    timerInt=setInterval(paintTimer,1000);
+    $("#recMeta").textContent=recMetaText();syncRecSrc();
+    renderLyrics();view("rec");startViz();if(window.VaaniHook)VaaniHook("start",{});toExt(true);holdRecLock();
+    /* G3-L1: the earlier lines only once the recording screen, its Stop and the lock are up: a display problem can never
+       leave a recording without its screen */
+    renderPrev();
+    try{if(navigator.vibrate&&(!navigator.userActivation||navigator.userActivation.isActive))navigator.vibrate(10);}catch(e){}
   }
   /* M1: a Sarvam key saved before v2.3 was for text only. Nothing is recorded until the person chooses, once. */
   /* focus starts on the heading, never on the button that turns audio upload on (one Enter must not opt in) */
   function openSttChoice(){openSheet("#sttChoice");setTimeout(function(){$("#sttChoiceH").focus();},80);}
-  $("#sttUse").addEventListener("click",function(){save("vaani.stt","sarvam");closeSheets();syncRecBtn();if(!listening)startRec();else if(switchToSarvam())toast("Sarvam AI is transcribing from now on");});
+  $("#sttUse").addEventListener("click",function(){save("vaani.stt","sarvam");closeSheets();syncRecBtn();if(DESK&&DESK.wait)deskRetry();else if(!listening)startRec();else if(switchToSarvam())toast("Sarvam AI is transcribing from now on");});
   $("#sttKeep").addEventListener("click",function(){save("vaani.stt","browser");closeSheets();syncRecBtn();if(!listening)startRec();});
   function newSR(){
       rec=new SR();rec.lang=langSel.value;rec.continuous=true;rec.interimResults=true;
       rec.onresult=onResult;
-      rec.onerror=function(e){if(e.error==="not-allowed"||e.error==="service-not-allowed"){want=false;cleanup();view("idle");toast("Allow the microphone in the address bar, then try again");}};
-      rec.onend=function(){if(want){try{if(callTrack&&callTrack.readyState==="live")rec.start(callTrack);else rec.start();}catch(e){}}};
+      rec.onerror=function(e){if(e.error==="not-allowed"||e.error==="service-not-allowed"){want=false;cleanup();view("idle");joinFail("Allow the microphone in the address bar, then try again");}};
+      rec.onaudiostart=markLive;
+      rec.onend=function(){if(want){try{rec.start();}catch(e){}}};
   }
   function sttStart(){
-    VaaniSTT.start({track:callTrack,lang:langSel.value,t0:startedAt,onSegs:sttSegs,onState:function(st){if(window.VaaniHook)VaaniHook("stt",st);}}).catch(function(e){
+    VaaniSTT.start({track:callTrack,lang:langSel.value,t0:startedAt,onSegs:sttSegs,onState:function(st){if(window.VaaniHook)VaaniHook("stt",st);}}).then(function(){if(sttOn&&listening)markLive();}).catch(function(e){
       if(!sttOn||!listening)return;VaaniSTT.reset();sttOn=false;
-      if(e&&e.name==="NotAllowedError"){want=false;cleanup();view("idle");toast("Allow the microphone in the address bar, then try again");return;}
+      if(e&&e.name==="NotAllowedError"){want=false;cleanup();view("idle");joinFail("Allow the microphone in the address bar, then try again");return;}
       /* Sarvam's recorder could not start here: carry on with the browser's speech recognition */
-      if(SR){try{newSR();if(callTrack)rec.start(callTrack);else rec.start();$("#recMeta").textContent=recMetaText();renderLyrics();toast("Sarvam AI couldn't start here. Using this browser's speech recognition.");return;}catch(x){}}
-      want=false;cleanup();view("idle");toast("Couldn't start the microphone");});
+      if(SR){try{if(callTrack){stopCall();callNote="fail";}newSR();rec.start();$("#recMeta").textContent=recMetaText();syncRecSrc();renderLyrics();toast("Sarvam AI couldn’t start here. Using this browser’s speech recognition.");return;}catch(x){}}
+      want=false;cleanup();view("idle");joinFail("Couldn’t start the microphone");});
   }
+  /* Q2: the recorder runs: only now does the extension hear "taking notes" from the window (then the other tab hands over) */
+  function markLive(){if(!listening||recLive)return;recLive=true;if(joinHid)toExt(true);heldGo();}
+  /* Q2: the window couldn't take over (its microphone failed): the notes stay in the other tab, which the extension
+     counts as the recording again; this window lets go of its port. Q7: if the person had pressed Stop here meanwhile,
+     the meeting ends: the extension stops the other tab too, which saves the notes as usual (one note). joinSay: what
+     this window says about it. N3: Home looks again for the other tab's recording. */
+  var MICJOIN="Allow the microphone in the address bar. Vaani keeps taking notes in your other tab.";
+  /* gate 4: STOPJOIN is said only once the other tab has said it stopped; STOPCHECK when that answer doesn't come */
+  var STOPJOIN="Vaani stopped. Your other tab is saving your notes.",STOPCHECK="Vaani couldn’t confirm that your other tab stopped. Check it there.";
+  var SAVEH="Vaani is saving your notes",WAITH="Vaani is waiting for your other tab",SAVESUB="This takes a few seconds.",ASKSUB="Vaani is asking your other tab to stop.",STOPLIFE=20000,STOPWAIT=STOPLIFE+1500;
+  /* gate 5: what the window says when the other tab closed before it stopped: its words became a note here, or there were none */
+  /* gate 6 (N-2): true after a reload as well as a close. Q-G7-N1 (gate 7): and after a crash ("Aw, Snap!") */
+  var STOPGONE="Your other tab went away before it stopped. Vaani made the notes here from its words.",STOPGONE0="Your other tab went away before it stopped. Nothing is recording now.";
+  /* G6-1 (gate 6): the seconds left count down once a second where people see them (aria-hidden); a screen reader hears the
+     line once, when it appears (#makingSub is a polite live region), with "about N" (.sr), never every tick */
+  function askLeft(){return Math.max(1,Math.ceil((stopUntil+1500-Date.now())/1000));}
+  function askN(n){return n+(n===1?" more second":" more seconds");}
+  function askSub(){var s=$("#makingSub"),n=askLeft();s.textContent="Your other tab hasn’t answered yet. Vaani will keep trying for ";
+    var v=document.createElement("span");v.id="askN";v.setAttribute("aria-hidden","true");v.textContent=askN(n);
+    var r=document.createElement("span");r.className="sr";r.textContent="about "+askN(n);
+    s.appendChild(v);s.appendChild(r);s.appendChild(document.createTextNode(". You can also stop it in that tab."));
+    clearInterval(stopTickT);stopTickT=setInterval(function(){var c=$("#askN");if(!stopWant||!c){clearInterval(stopTickT);return;}c.textContent=askN(askLeft());},1000);}
+  function joinAbort(){if(!joinHid||toldRec)return false;joinHid=null;contPrev=null;renderPrev();
+    var held=!!stopHeld;if(stopHeld){clearTimeout(stopHeld);stopHeld=0;}
+    if(held){joinSay="";endStop();}
+    else{if(extPort){var op=extPort;extPort=null;clearInterval(extPing);try{op.postMessage({type:"state",rec:false,call:false,end:true});}catch(e){}try{op.disconnect();}catch(e){}}joinSay=MICJOIN;}
+    if(window.VaaniHook)setTimeout(function(){VaaniHook("joinOff",{});},0);
+    return true;}
+  /* the window couldn't take over: what it says (MICJOIN), or, when the person had pressed Stop here, "saving" until the
+     other tab says it stopped (the caller has just shown Home) */
+  /* G5-2 (gate 5): once the window waits for the other tab, it says so (not "a few seconds") */
+  /* G6-2 (gate 6): from the moment it asks, nothing is being saved yet: the heading says what it waits for */
+  function joinFail(def){var j=joinAbort();if(j&&stopWant){showSaving();$("#makingH").textContent=WAITH;$("#makingSub").textContent=ASKSUB;return;}toast(j?joinSay:def);}
+  function showSaving(){view("making");$("#makingH").textContent=SAVEH;$("#makingSub").textContent=SAVESUB;}
+  /* gate 4 (G4-L1, G4-L2): the Stop for the other tab is asked for, and asked again on every new port (a worker restart),
+     until the extension says that tab stopped ("stopped"), at most STOPWAIT. The extension keeps it too. */
+  /* gate 5: the Stop counts for STOPLIFE (20 s) from now, here and in the extension (until is sent with it); this window
+     says "couldn't confirm" only once that time and the 1 s the extension allows for the answer are over, so the other
+     tab can't stop after that line any more */
+  function endStop(){stopWant=Date.now();stopUntil=stopWant+STOPLIFE;clearInterval(extPing);clearTimeout(stopWaitT);clearTimeout(stopSubT);stopWaitT=setTimeout(function(){stopEnd(false);},STOPWAIT);
+    stopSubT=setTimeout(function(){if(stopWant&&$("#makingSub").textContent===ASKSUB)askSub();},5000);clearInterval(stopGoneT);stopFree=0;stopGoneT=setInterval(goneTick,1000);sendEndStop();}
+  /* Q-G6-2 (gate 6): a tab whose page crashed says nothing ("Aw, Snap!", no pagehide): once it holds no recording lock for
+     two checks in a row and its own fresh crash copy is there, it went away before it stopped (as "stopgone") */
+  function goneTick(){if(!stopWant||!navigator.locks||typeof navigator.locks.query!=="function")return;otherRec(function(busy){if(!stopWant)return;if(busy||!ownLive()){stopFree=0;return;}if(++stopFree>=2)stopEnd("gone");});}
+  function sendEndStop(){if(!stopWant)return;if(!extPort){extConnect();return;}try{extPort.postMessage({type:"state",rec:false,call:false,end:true,stop:true,until:stopUntil});}catch(e){}}
+  /* G6-I1 (gate 6): unless the other tab said it stopped, the window gives up its Stop in the extension too (until already
+     past), so it can't reach that tab later ("couldn't confirm", even after a clock change and a worker restart; or a
+     crashed tab's next recording after a reload) */
+  function stopEnd(ok){if(!stopWant)return;stopWant=0;clearTimeout(stopWaitT);clearTimeout(stopSubT);clearInterval(stopTickT);clearInterval(stopGoneT);if(extPort){var op=extPort;extPort=null;clearInterval(extPing);if(ok!==true)try{op.postMessage({type:"state",rec:false,call:false,end:true,stop:true,until:0});}catch(e){}try{op.disconnect();}catch(e){}}
+    if(listening)return;
+    /* the other tab closed first: its crash copy is made into this note (home.js), or there was nothing to keep */
+    if(ok==="gone"){var made=!!(window.VaaniHook&&VaaniHook("otherGone",{st0:contSt0})===true);if(!made)view("idle");toast(made?STOPGONE:STOPGONE0);if(window.VaaniHook)VaaniHook("stopEnd",{ok:false,gone:true});return;}
+    /* G5-3: Home hears it first, so its card is right from the first frame */
+    if(window.VaaniHook)VaaniHook("stopEnd",{ok:!!ok});view("idle");toast(ok?STOPJOIN:STOPCHECK);if(!ok)checkGone();}
+  /* QA N-2 (gate 6): "Check it there" goes as soon as that tab no longer records (it was closed, or it stopped) */
+  function checkGone(){var n=0,iv=setInterval(function(){if(++n>8){clearInterval(iv);return;}otherRec(function(b){if(!b&&$("#toast").textContent===STOPCHECK){$("#toast").classList.remove("show");clearInterval(iv);}});},300);}
+  /* held: told to the extension at once, so a Stop pressed here still counts if this window then closes (G4-1) */
+  function sendHeld(){try{if(extPort)extPort.postMessage({type:"state",rec:false,call:false,stop:true});}catch(e){}}
+  /* G4-3: this window took notes and stopped; its "taking notes" may have been lost on the way (a worker restart): the
+     extension hands the other tab's notes over now if it hasn't */
+  function sendFin(){try{if(extPort)extPort.postMessage({type:"state",rec:false,call:false,fin:true});}catch(e){}}
+  /* Q7: Stop in the window before its recorder ran (the other tab hasn't handed over yet): the Stop is held until the
+     recorder runs (then the hand-over happens and this window stops as usual: one note, nothing lost), at most 8 s. If
+     the recorder never runs, the other tab is stopped instead and keeps the notes (this window recorded nothing). */
+  function holdStop(){clearInterval(timerInt);stopViz();
+    /* G4-3 (design): words that are true for every ending (the hand-over, or the other tab stopping) */
+    showSaving();
+    stopHeld=setTimeout(function(){stopHeld=0;if(!listening)return;if(recLive||contNone||!joinHid)return stopRec();
+      want=false;if(sttOn){sttOn=false;VaaniSTT.reset();}stopHeld=-1;cleanup();view("idle");joinFail(STOPCHECK);stopHeld=0;},8000);
+    sendHeld();}
+  function heldGo(){if(stopHeld<=0)return;clearTimeout(stopHeld);stopHeld=0;if(listening)stopRec();}
   /* Sarvam AI's words arrive in pieces, in recording order */
   function sttSegs(a){if(!sttOn||!a.length)return;var from=segs.length;a.forEach(function(s){segs.push(s);});renderLyrics();if(window.VaaniHook)VaaniHook("result",{fin:a.map(function(s){return s.x;}).join(" "),interim:"",stt:true,from:from});}
   /* the browser heard nothing useful: listen for another language from now on (one tap in the warning) */
@@ -406,7 +853,7 @@
   var lyShown=0,lyInterim=null;
   function renderLyrics(){
     var el=$("#lyrics");
-    if(!segs.length&&!interim){el.innerHTML='<p class="empty-ly">'+(sttOn?"Listening. Words appear about every 25 seconds.":"Listening. Start talking whenever you are ready.")+'</p>';lyShown=0;lyInterim=null;return;}
+    if(!segs.length&&!interim){el.innerHTML='<p class="empty-ly">'+(sttOn?"Vaani is taking notes. Words appear about every 25 seconds.":"Vaani is taking notes. Start talking whenever you are ready.")+'</p>';lyShown=0;lyInterim=null;return;}
     var em=el.querySelector(".empty-ly");if(em)em.remove();
     while(lyShown<segs.length){var s=segs[lyShown],p=document.createElement("p");p.className="ly";p.innerHTML='<time>'+esc(s.t)+'</time>'+esc(s.x);
       if(lyInterim)el.insertBefore(p,lyInterim);else el.appendChild(p);lyShown++;}
@@ -415,32 +862,109 @@
     if(interim){if(!lyInterim){lyInterim=document.createElement("p");lyInterim.className="ly interim";el.appendChild(lyInterim);}lyInterim.textContent=interim;}
     else if(lyInterim){lyInterim.remove();lyInterim=null;}
   }
-  function cleanup(){if(window.VaaniHook)VaaniHook("cleanup",{});want=false;listening=false;if(rec){try{rec.stop();}catch(e){}}clearInterval(timerInt);stopViz();stopCall();}
+  function cleanup(){if(window.VaaniHook)VaaniHook("cleanup",{});want=false;listening=false;recLive=false;relRecLock();if(rec){try{rec.stop();}catch(e){}}clearInterval(timerInt);stopViz();stopCall();callNote="";syncRecSrc();toExt(false);}
   function stopRec(){
     if(!listening)return;
-    var dur=elapsed(),wasCall=!!callTrack;
-    if(sttOn){stopStt(dur,wasCall);return;}
+    /* U3: Stop in the page asks the Mac app to stop; its session.stop (with the last chunks) ends the recording */
+    if(DESK&&!DESK.stopped){var D=DESK;if(!D.stopT){deskSay({type:"stop",sessionId:D.id});D.stopT=setTimeout(function(){if(DESK===D){D.stopped=true;stopRec();}},5000);}return;}
+    /* Q7: held until this window's recorder runs (see holdStop) */
+    if(stopHeld)return;
+    if(joinHid&&!toldRec&&!recLive&&extPort&&!contNone){holdStop();return;}
+    if(joinHid&&toldRec&&!contNone)contAsk=joinHid;
+    /* gate 5: this tab stops now, whoever asked: its "not recording" says so (ack), so a Stop the extension was still
+       trying to give this tab counts as answered */
+    stopAckW=true;toExt(false);stopAckW=false;joinAbort();
+    var dur=elapsed(),st0=startedAt,wasCall=!!callTrack||!!(DESK&&!DESK.mic);if(DESK)dur=Math.max(dur,Math.round(DESK.total/16000));
+    if(sttOn){stopStt(dur,wasCall,st0);return;}
     lastVoice={known:vz.known,secs:vz.tot/1000};cleanup();
     if(interim){segs.push({t:fmt(dur),x:interim});interim="";}
     var w=words(segs.map(function(s){return s.x;}).join(" "));
-    if(!w){view("idle");toast("Vaani didn't catch any words. Check your microphone and try again.");return;}
-    var n={id:Date.now(),kind:mode,date:new Date().toISOString(),dur:dur,lang:langSel.value,tmpl:tmplSel.value,segs:segs.slice(),title:titleFrom(segs[0].x),md:"",done:{},words:w};if(wasCall)n.call=true;
-    if(window.VaaniHook)VaaniHook("beforeSave",n);upsert(n);currentId=n.id;lastVoice.id=n.id;
-    makeNotes(n);
+    if(!w){if(handTo)return handDone(null);
+      /* Q3: Stop in the window before it heard words: the other tab's part is still the note */
+      return withCont(null,st0,function(m){if(!m){view("idle");toast("Vaani didn’t catch any words. Check your microphone and try again.");return;}if(wasCall)m.call=true;upsert(m);currentId=m.id;makeNotes(m);});}
+    var n={id:Date.now(),kind:mode,date:new Date().toISOString(),dur:dur,lang:langSel.value,tmpl:tmplSel.value,segs:segs.slice(),title:titleOf(segs),md:"",done:{},words:w};if(wasCall)n.call=true;
+    if(window.VaaniHook)VaaniHook("beforeSave",n);
+    if(handTo)return handDone(n,st0);
+    withCont(n,st0,function(n){upsert(n);currentId=n.id;lastVoice.id=n.id;makeNotes(n);});
   }
+  /* N-1, in the tab that was taking the notes: the extension's Vaani window is taking notes with the call now, so this tab
+     stops and saves what it has, marked for that window, which adds it to the start of its note. Nothing is lost if that
+     window never collects it: it is a normal saved note. */
+  function handOut(hid){if(DESK||handTo)return;
+    /* Q4: this tab had already stopped on its own (its note is a normal one): say so at once, so the window doesn't wait */
+    if(!listening){save("vaani.handed",hid);return;}
+    handTo=hid;stopRec();}
+  function handDone(n,st0){var hid=handTo;handTo=null;
+    /* this tab is no longer the one the extension counts: its next recording opens a fresh port */
+    if(extPort){var op=extPort;extPort=null;clearInterval(extPing);try{op.disconnect();}catch(e){}}if(n){n.cont=hid;n.st0=st0;upsert(n);}save("vaani.handed",hid);currentId=null;view("idle");
+    toast(n?"Your notes moved to the Vaani window beside your call.":"Vaani is taking notes in its window beside your call.");if(window.VaaniHook)VaaniHook("moved",{});}
+  /* N-1, in the Vaani window: the notes from the other tab go first, then this recording's, as one note */
+  function tSec(t){var m=/^(\d+):(\d{2})$/.exec(String(t||""));return m?+m[1]*60+ +m[2]:null;}
+  function mergeCont(b,n,st0){
+    var off=Math.max(0,Math.round((st0-(numOf(b.st0)||st0))/1000)),bs=cleanSegs(b.segs),bl=bs.length;
+    var m=Object.assign({},b,{date:n.date,dur:off+n.dur,lang:n.lang,segs:bs.concat(n.segs.map(function(x){var v=tSec(x.t);return {t:v===null?x.t:fmt(v+off),x:x.x};})),words:numOf(b.words)+n.words,md:"",done:{}});
+    delete m.cont;delete m.st0;delete m.engine;
+    if(n.call)m.call=true;if(n.stt)m.stt=n.stt;if(n.gap)m.gap=n.gap;if(n.src&&!m.src)m.src=n.src;if(!m.cal&&n.cal)m.cal=n.cal;
+    if(n.marks&&n.marks.length)m.marks=(Array.isArray(b.marks)?b.marks:[]).concat(n.marks.map(function(k){var v=(+k.s||0)+off;return {i:k.i+bl,s:v,t:fmt(v),how:k.how};}));
+    if(!m.cal)m.title=titleOf(m.segs);
+    return m;}
+  /* NEW-3 (round 7): what this window's crash copy says about its hand-over (the one this window's Stop would merge, see
+     withCont): the one-time id and, once known, when the other tab's part started. A crash of this window then still
+     gives one note (home.js recoverLive). */
+  function contInfo(){var hid=contAdopt||(joinHid&&!contNone?joinHid:null);if(!hid)return null;return {hid:hid,st0:numOf(contPrev&&contPrev.st0)||contSt0||0};}
+  /* the other tab has saved its part: say so on the record screen (said only once it is true) */
+  if(joinHid)window.addEventListener("storage",function(e){if(joinHid&&e.key===K("vaani.handed")&&e.newValue===joinHid&&!joinIn){joinIn=true;
+    var b=notes().filter(function(x){return x.cont===joinHid;})[0];contPrev=b?{segs:cleanSegs(b.segs),st0:numOf(b.st0),words:numOf(b.words)}:null;renderPrev();syncRecSrc();
+    /* Q-G7-1 (gate 7): this window's crash copy names that part at once (home.js saveLive), before its own first line */
+    if(window.VaaniHook)VaaniHook("joined",{});}});
+  /* G3-L1: what another tab saved is cleaned where it is read (the rules of home.js cleanNote): a time is "m:ss" text or
+     nothing, a number is a finite number or 0, a line is text */
+  function numOf(v){return typeof v==="number"&&isFinite(v)?v:0;}
+  function tOf(t){return typeof t==="string"&&/^\d{1,3}:\d{2}$/.test(t)?t:"";}
+  function cleanSegs(a){return Array.isArray(a)?a.filter(function(x){return x&&typeof x==="object"&&typeof x.x==="string";}).map(function(x){return Object.assign({},x,{t:tOf(x.t)});}):[];}
+  /* the other tab's part alone (Q3: this window heard no words of its own) */
+  function contOnly(b){var m=Object.assign({},b,{segs:cleanSegs(b.segs),words:numOf(b.words),md:"",done:{}});delete m.cont;delete m.st0;delete m.engine;if(!m.cal)m.title=titleOf(m.segs||[]);return m;}
+  /* n may be null (no words here): the result is then the other tab's part, or null */
+  function withCont(n,st0,cb){var hid=joinHid||contAdopt;if(!hid){contAsk=null;return cb(n);}joinHid=null;renderPrev();
+    /* gate 5 (Q-G5-2): the other tab's crash copy is already the first part here */
+    if(contAdopt){contAdopt=null;contAsk=null;renderPrev();var a0=notes().filter(function(x){return x.cont===hid;})[0];return cb(a0?(n?mergeCont(a0,n,st0):contOnly(a0)):n);}
+    /* Q4: nothing can come: the extension said so, or this window never said it was taking notes (no hand-over began) */
+    if(contNone||!toldRec){contAsk=null;return cb(n);}
+    var end=Date.now()+30000;
+    (function wait(){
+      if(load("vaani.handed",null)===hid||contNone||Date.now()>end){contAsk=null;if(load("vaani.handed",null)===hid)remove("vaani.handed");var b=notes().filter(function(x){return x.cont===hid;})[0];return cb(b?(n?mergeCont(b,n,st0):contOnly(b)):n);}
+      view("making");$("#makingH").textContent="Vaani is adding your earlier notes";$("#makingSub").textContent="This takes a few seconds.";
+      setTimeout(wait,400);})();}
+  /* H3: in the window, the other tab's part goes on: its last lines above this window's, its words in the count, and the
+     clock carries on from when those notes started. At first from what that tab saved for a crash (vaani.live), then
+     from the part it hands over. */
+  var lyPrev=document.createElement("div");lyPrev.className="ly-prev";lyPrev.id="lyPrev";lyPrev.hidden=true;$("#lyrics").before(lyPrev);
+  function prevOn(){return !!(contPrev&&((joinHid&&!contNone)||contAdopt));}
+  function prevOff(){return prevOn()&&contPrev.st0>0&&startedAt>contPrev.st0?Math.round((startedAt-contPrev.st0)/1000):0;}
+  function paintTimer(){$("#timer").textContent=fmt(elapsed()+prevOff());}
+  function renderPrev(){var sg=prevOn()?contPrev.segs.filter(function(x){return x&&typeof x.x==="string"&&x.x.trim();}).slice(-3):[];
+    if(!sg.length){lyPrev.hidden=true;lyPrev.textContent="";}
+    else{try{lyPrev.innerHTML='<p class="ly-prev-h">Before Vaani heard the call</p>'+sg.map(function(x){return '<p class="lyp"><time>'+esc(tOf(x.t))+'</time>'+esc(x.x)+'</p>';}).join("");lyPrev.hidden=false;}catch(e){lyPrev.hidden=true;lyPrev.textContent="";}}
+    if(listening)paintTimer();if(window.VaaniHook)VaaniHook("prev",{});}
+  if(joinHid){var l0=loadJSON("vaani.live",null),now0=Date.now();
+    if(l0&&typeof l0==="object"&&numOf(l0.startedAt)>0&&numOf(l0.startedAt)<now0&&now0-numOf(l0.savedAt)<600000){var s0=cleanSegs(l0.segs);
+      contPrev={segs:s0,st0:numOf(l0.startedAt),words:words(s0.map(function(x){return x.x;}).join(" ")),early:true};contSt0=numOf(l0.startedAt);}}
   /* Sarvam AI: stop recording, release the microphone, wait for the last pieces, then make notes */
-  function stopStt(dur,wasCall){
+  function stopStt(dur,wasCall,st0){
     listening=false;want=false;clearInterval(timerInt);stopViz();
-    view("making");$("#makingH").textContent="Transcribing the last part";$("#makingSub").textContent="Sarvam AI is turning the last few seconds into text.";
+    view("making");$("#makingH").textContent="Vaani is finishing the last part";$("#makingSub").textContent="Sarvam AI is turning the last few seconds into text.";
     VaaniSTT.stop().then(function(){stopCall();return VaaniSTT.finish();}).then(function(r){
       sttOn=false;segs=sttPre.concat(r.segs);sttPre=[];interim="";cleanup();VaaniSTT.reset();
-      if(r.drop){view("idle");toast("Recording discarded");return;}
+      if(r.drop){if(handTo)return handDone(null);deskDone();return withCont(null,st0,function(m){if(m)upsert(m);view("idle");toast(m?"This part was discarded. Your earlier notes are kept.":"Recording discarded");});}
       var w=words(segs.map(function(s){return s.x;}).join(" "));
-      if(!w){view("idle");toast("Sarvam AI didn't catch any words. Check your microphone and try again.");return;}
-      var n={id:Date.now(),kind:mode,date:new Date().toISOString(),dur:dur,lang:r.lang||langSel.value,tmpl:tmplSel.value,segs:segs.slice(),title:titleFrom(segs[0].x),md:"",done:{},words:w,stt:"sarvam"};if(wasCall)n.call=true;if(r.gap)n.gap=r.gap;
-      if(window.VaaniHook)VaaniHook("beforeSave",n);upsert(n);currentId=n.id;
-      makeNotes(n);
-    },function(){sttOn=false;cleanup();VaaniSTT.reset();view("idle");toast("Something went wrong while transcribing. Please try again.");});
+      if(!w){if(handTo)return handDone(null);deskDone();
+        /* Q3: Stop in the window before Sarvam AI had words: the other tab's part is still the note, made as usual */
+        return withCont(null,st0,function(m){if(!m){view("idle");toast("Sarvam AI didn’t catch any words. Check your microphone and try again.");return;}if(wasCall)m.call=true;upsert(m);currentId=m.id;makeNotes(m);});}
+      var n={id:Date.now(),kind:mode,date:new Date().toISOString(),dur:dur,lang:r.lang||langSel.value,tmpl:tmplSel.value,segs:segs.slice(),title:titleOf(segs),md:"",done:{},words:w,stt:"sarvam"};if(wasCall)n.call=true;if(r.gap)n.gap=r.gap;if(DESK)n.src="desktop";
+      if(window.VaaniHook)VaaniHook("beforeSave",n);
+      if(handTo)return handDone(n,st0);
+      withCont(n,st0,function(n){upsert(n);currentId=n.id;deskDone();makeNotes(n);});
+    },function(){sttOn=false;contAsk=null;cleanup();VaaniSTT.reset();if(handTo){var h=handTo;handTo=null;save("vaani.handed",h);}view("idle");toast("Something went wrong while transcribing. Please try again.");});
   }
   $("#recBtn").addEventListener("click",startRec);
   $("#stopBtn").addEventListener("click",stopRec);
@@ -503,56 +1027,115 @@
   function strip(s){s=String(s||"").trim();var prev;do{prev=s;s=s.replace(FILLER,"");}while(s!==prev&&s.length);return s||String(prev||"");}
   function cap(s){s=strip(s);if(!s)return s;s=s.replace(/\bi\b/g,"I");s=s.charAt(0).toUpperCase()+s.slice(1);if(!/[.!?।]$/.test(s))s+=".";return s;}
   function titleFrom(t){t=strip(String(t||"").replace(/\s+/g," ").trim()).split(/[.!?।,]\s/)[0];var w=t.split(" ").slice(0,6).join(" ").replace(/[.,!?।]+$/,"").replace(/\s+(a|an|the|and|or|of|to|for|with|in|on|at)$/i,"");return w?w.charAt(0).toUpperCase()+w.slice(1):"Untitled";}
+  /* N3: greetings and small talk ("Let us get started", "How was your weekend") never name or sum up a meeting */
+  var SMALL=/^(?:(?:okay|ok|so|right|alright|hi|hello|hey|good (?:morning|afternoon|evening))[\s,]*)*(?:let['’]?s|let us|shall we)\s+(?:get started|begin|start|kick (?:it |this )?off|get going)\b|^(?:hi|hello|hey|good (?:morning|afternoon|evening))\b(?:[\s,]+(?:everyone|everybody|all|guys|team|folks))?[\s.!,]*$|^(?:so[\s,]+)?how (?:was|were) (?:your|everyone['’]s)\s+(?:weekend|week|holidays?|day|trip|vacation|diwali|break)\b|^how (?:are|is) (?:you|you all|everyone|everybody)(?: doing)?(?: today)?$|^(?:can|could) (?:everyone|everybody|you all|you) hear me\b|^(?:is )?(?:everyone|everybody) (?:here|there|joined|on)\b|^(?:welcome|thanks|thank you)(?: everyone| all| for joining)\b|^hope (?:you|everyone) (?:are|is|had)\b/i;
+  function smallTalk(s){s=String(s||"").trim().replace(/[.!?।]+$/,"");return SMALL.test(s)||SMALL.test(strip(s));}
+  /* the title comes from the first thing said that isn't small talk ("let us" dropped), else from the first words */
+  function titleOf(sg){sg=Array.isArray(sg)?sg:[];
+    for(var i=0;i<sg.length&&i<40;i++){var parts=String(sg[i]&&sg[i].x||"").split(/(?<=[.!?।])\s+/);
+      for(var j=0;j<parts.length;j++){var t=parts[j].trim();if(t.split(/\s+/).length<2||smallTalk(t))continue;return titleFrom(strip(t).replace(/^(?:let['’]?s|let us)\s+/i,""));}}
+    return titleFrom(sg[0]&&sg[0].x||"");}
   function basicClean(n){var t=n.segs.map(function(s){return s.x;}).join(" ").replace(/\s+/g," ").trim();
     t=t.replace(/(^|[.!?]\s+)([a-z])/g,function(m,p,c){return p+c.toUpperCase();});return "# "+titleFrom(t)+"\n"+cap(t);}
+  /* v2.4: the basic engine gives the same shape as the AI notes where words alone allow it: Summary, Notes, Open questions,
+     Tasks, Meeting conclusion and Follow-up meeting. An owner is written only when a name is said with the task
+     ("Meera, can you…", "Rohit will…"); otherwise the owner is "Not said". It never writes a plan or an email: Vaani
+     drafts the follow-up email from these notes when it is shown. */
+  var NOTNAME=/^(okay|ok|so|and|also|but|then|yes|yeah|no|haan|accha|achha|toh|the|we|i|you|he|she|they|it|this|that|these|those|team|everyone|all|let|lets|please|can|could|will|would|should|maybe|sure|right|great|thanks|thank|hi|hello|hey|monday|tuesday|wednesday|thursday|friday|saturday|sunday|today|tomorrow|someone|somebody|nobody|who|what|when|where|why|how)$/i;
+  var ASKED=/^\s*([A-Z][a-z]{1,20}(?:\s[A-Z][a-z]{1,20})?)\s*,\s*(?:please|kindly|(?:can|could|will|would)\s+you(?:\s+please)?)\s+(.+?)\??$/;
+  /* "Rohit will send…" names Rohit; a first word from this list never names anyone */
+  var WILLSTOP=/^(we|i|you|they|he|she|it|this|that|there|someone|everyone|somebody|nobody|one|each|all|both|next|then|so|also)$/i,SAYS=/^\s*[A-Z][a-z]{1,20}(?:\s[A-Z][a-z]{1,20})?(?:['’]ll|\s+will)\s/;
+  var WILL=/^\s*([A-Z][a-z]{1,20}(?:\s[A-Z][a-z]{1,20})?)(?:['’]ll|\s+will|\s+is going to|\s+needs? to|\s+has to|\s+should)\s+(.+)$/;
+  /* "Meera, can you…" names its owner. "Rohit will…" does only when Rohit is a known name: one said mid-sentence somewhere,
+     a calendar attendee or a Names and words entry, because the first word of every sentence is capitalised */
+  function basicTask(s,known){var m=s.match(ASKED),w=!m&&s.match(WILL),f=w&&w[1].split(" ")[0];if(w&&(known[f.toLowerCase()]||SAYS.test(s)&&!WILLSTOP.test(f)))m=w;if(m&&!NOTNAME.test(m[1].split(" ")[0]))return m[1]+": "+cap(m[2]);
+    /* the owner is still unknown: keep the sentence as said, dropping only a leading "I will" or "we will" */
+    return "Not said: "+cap(s.replace(/^\s*(?:i['’]ll|i will|we['’]ll|we will|let['’]?s|let us)\s+/i,""));}
+  var FUM=/\b(meet again|next meeting|follow.?up (?:call|meeting)|catch up again|regroup|sync again|let['’]?s meet|next call|next sync|reconnect)\b/i;
+  var WHEN=/\b(?:(?:next\s+)?(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|tomorrow|next week|\d{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*)(?:\s+(?:at\s+)?\d{1,2}(?::\d{2})?\s*(?:am|pm))?|\b\d{1,2}(?::\d{2})?\s*(?:am|pm)\b/i;
+  var LETS=/^(?:let['’]?s|let us)\s+/i,DUE=/\b(?:by|before|until|till)\s+\w+|\b(?:tomorrow|tonight|today|next week|monday|tuesday|wednesday|thursday|friday|saturday|sunday|eod|end of day)\b/i;
+  /* B6: the follow-up meeting's topic only ("…on Thursday at 3 pm to review the layout" gives "Review the layout") */
+  function fuAbout(s){var t=strip(s).replace(/^\s*(?:let['’]?s|let us|we will|we['’]ll|we should|we can)\s+/i,""),m=t.match(FUM),after=m?t.slice(m.index+m[0].length):t;
+    var top=after.match(/\b(?:to|for|about|on)\s+(?!(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|tomorrow|next week|\d))(.+)$/i);
+    if(top)return cap(top[1]);var rest=after.replace(WHEN,"").replace(/\b(?:on|at)\b/gi," ").replace(/\s+/g," ").replace(/^[\s,.]+|[\s,.]+$/g,"");return rest.split(" ").length>=2?cap(rest):"Not said";}
   function basicNotes(n){
     var lines=n.segs.map(function(s){return s.x;}).join(". ").split(/(?<=[.!?।])\s+|\.\s+/).map(function(s){return s.trim();}).filter(function(s){return s.length>2;});
     if(!lines.length)return "# "+n.title+"\n## Summary\nNothing captured yet.";
-    var actRe=/\b(i'?ll|we'?ll|will|need to|needs to|have to|should|must|let'?s|by (noon|tomorrow|today|tonight|monday|tuesday|wednesday|thursday|friday|saturday|sunday|eod|end of day|next week|\d)|send|share|fix|follow ?up|call|email|schedule|review|prepare|update|confirm|get|deliver|karega|karegi|karenge|bhej|kar dena|kar dunga)\b/i;
+    var actRe=/\b(i'?ll|we'?ll|will|need to|needs to|have to|should|must|let'?s|by (noon|tomorrow|today|tonight|monday|tuesday|wednesday|thursday|friday|saturday|sunday|eod|end of day|next week|\d)|send|share|fix|follow ?up|(?<!\b(?:the|this|that|a|an|our|your|my|on|after|before|during|in)\s)(?:call|email|review|update)|schedule|prepare|confirm|get|deliver|karega|karegi|karenge|bhej|kar dena|kar dunga)\b/i;
     var decRe=/\b(decided|agreed|final|confirmed|go with|let'?s go|done deal|fixed for|locked|tay)\b/i;
     var qRe=/\?|\b(not sure|unclear|open question|what about|kya|kaise|kab)\b/i;
-    var act=[],dec=[],qs=[],rest=[];
-    lines.forEach(function(s){if(qRe.test(s))qs.push(cap(s));else if(actRe.test(s))act.push(cap(s));else if(decRe.test(s))dec.push(cap(s));else rest.push(cap(s));});
-    var sum=(rest.length?rest:lines.map(cap)).slice(0,2).join(" ");
+    var act=[],dec=[],qs=[],rest=[],fu=[],known={};
+    lines.forEach(function(s){(s.match(/(?:^|[^.!?])\s([A-Z][a-z]{1,20})\b/g)||[]).forEach(function(x){known[x.trim().split(/\s+/).pop().toLowerCase()]=1;});});
+    ((n.cal&&n.cal.people)||[]).concat(loadJSON("vaani.dict",[]).map(function(d){return d&&d.word;})).forEach(function(x){if(typeof x==="string"&&x.trim())known[x.trim().split(/\s+/)[0].toLowerCase()]=1;});
+    /* B6: "let us review the plan" is what the meeting does now, not a task, unless it has a due date */
+    var agenda=[];
+    /* N3: "Can someone get the quotes by Friday?" asks for a task with a date: a task with no owner yet */
+    var REQ=/^(?:(?:can|could|would|will)\s+(?:someone|somebody|anyone|anybody|one of you)|who\s+(?:can|will|could))\s+(?:please\s+)?(.+?)\s*\??$/i;
+    var tasked={};
+    lines.forEach(function(s){var n0=act.length;sort1(s);if(act.length>n0)tasked[s]=1;});
+    function sort1(s){var t=strip(s),rq;if(smallTalk(s))return;if(FUM.test(s)){fu.push(s);return;}if(ASKED.test(t))act.push(basicTask(t,known));
+      else if((rq=t.match(REQ))&&DUE.test(t))act.push("Not said: "+cap(rq[1]));else if(qRe.test(s))qs.push(cap(s));else if(LETS.test(t)&&!DUE.test(t)){if(decRe.test(s))dec.push(cap(s));else agenda.push(cap(t.replace(LETS,"")));}else if(actRe.test(s))act.push(basicTask(t,known));else if(decRe.test(s))dec.push(cap(s));else rest.push(cap(s));}
+    /* the Summary never repeats a task: what was said that isn't a task, else the agenda, else the decisions */
+    var sumL=(rest.length?rest:agenda.length?agenda:dec.length?dec:lines.filter(function(s){return !smallTalk(s)&&!tasked[s];}).map(cap).filter(function(x){return !act.some(function(a){return a.indexOf(x.replace(/\.$/,""))>=0;});}));sumL=uniq(sumL).slice(0,2);
+    /* Q6: only tasks and small talk were said: no greeting becomes the Summary */
+    var sum=sumL.length?sumL.join(" "):act.length?"Vaani found only tasks in this one. They are listed below.":"Only greetings and small talk were said.";
+    var notesL=agenda.concat(rest).filter(function(x){return sumL.indexOf(x)<0;});
+    /* the same sentence said twice is listed once */
+    function uniq(a){var seen={};return a.filter(function(x){var k=String(x).toLowerCase().replace(/[^a-z0-9ऀ-෿]+/g," ").trim();if(seen[k])return false;seen[k]=1;return true;});}
+    act=uniq(act);qs=uniq(qs);dec=uniq(dec);notesL=uniq(notesL);
     function sec(h,a){return a.length?"\n## "+h+"\n"+a.slice(0,8).map(function(s){return "- "+s;}).join("\n"):"";}
-    return "# "+n.title+"\n## Summary\n"+sum+sec("Action items",act)+sec("Decided",dec)+sec("Open questions",qs);
+    var md="# "+n.title+"\n## Summary\n"+sum+sec("Notes",notesL)+sec("Open questions",qs)+sec("Tasks",act);
+    if(dec.length)md+="\n## Meeting conclusion\n"+dec.slice(0,3).join(" ");
+    if(fu.length){var w=fu[0].match(WHEN);md+="\n## Follow-up meeting\n- When: "+(w?w[0].trim():"Not said")+"\n- About: "+fuAbout(fu[0]);}
+    return md;
   }
   function summarizerNotes(n){
     return smAvail().then(function(a){if(a!=="available")throw new Error("no-sm");
       return Summarizer.create({type:"key-points",format:"markdown",length:"medium",sharedContext:"A transcript of a conversation. It may mix English with Indian languages."}).then(function(s){
         return s.summarize(stamped(n)).then(function(sum){try{s.destroy();}catch(e){}
-          var b=basicNotes(n).split("\n## ").slice(2).map(function(x){return "## "+x;}).join("\n");
+          var b=basicNotes(n).split("\n## ").slice(2).filter(function(x){return !/^Notes\n/.test(x);}).map(function(x){return "## "+x;}).join("\n");
           if(!sum||sum.indexOf(stamped(n).slice(0,40))>=0||/not available/i.test(String(sum).slice(0,80)))throw new Error("bad-sm");return "# "+n.title+"\n## Summary\n"+sum+(b?"\n"+b:"");});});});
   }
   /* v2.3: never invent notes. A recording over 3 minutes with under 25 words, or under 4 words a minute (40 per 10
      minutes), is too thin to summarise: no model is called, and the note says so plainly, with the likely reason. */
   function thinOf(n){var d=+n.dur||0;if(d<=180)return null;var w=+n.words||words(plain(n)),need=Math.max(25,Math.round(d/60*4));return w<need?{w:w,d:d}:null;}
-  function thinNote(n,th){
+  function thinNote(n,th,done){
+    if(typeof done==="function"){var cur=getNote(n.id);if(!cur){done(null);return;}if(cur.md){done(cur);return;}n=cur;}
     var lv0=lastVoice&&lastVoice.id===n.id?lastVoice:null;
     n.thin=n.stt==="sarvam"?"sarvam":lv0&&lv0.known&&lv0.secs<Math.max(20,th.d*0.1)?"quiet":"lang";
     n.title="Too few words to summarise";
     n.md="# "+n.title+"\n## What Vaani heard\nVaani heard only "+th.w+(th.w===1?" word":" words")+" in "+Math.round(th.d/60)+" minutes, so there’s nothing reliable to summarise. "+(th.w===1?"The word it caught is":"The words it caught are")+" in the Transcript tab.";
-    n.engine="";n.done={};if(window.VaaniHook)VaaniHook("made",n);upsert(n);showNote(n,true);
+    n.engine="";n.done={};if(window.VaaniHook)VaaniHook("made",n);upsert(n);if(typeof done==="function")done(n);else showNote(n,true);
   }
-  function makeNotes(n){
-    var th=thinOf(n);if(th){thinNote(n,th);return;}
-    view("making");$("#makingH").textContent="Writing your notes";
-    var ms=$("#makingSub");if(remoteReady())ms.textContent="Using "+PNAME[provider()]+".";else{ms.textContent="Using Vaani’s basic engine.";lmAvail().then(function(a){if(a==="available")ms.textContent="Using the AI built into this browser.";});}
+  /* done (Q-G7-1, gate 7): in the background (a leftover part Home finishes): no screen change, done(n) once the notes are saved */
+  function makeNotes(n,done){
+    var th=thinOf(n);if(th){thinNote(n,th,done);return;}
+    if(typeof done!=="function"){view("making");$("#makingH").textContent="Vaani is writing your notes";
+    var ms=$("#makingSub");if(remoteReady())ms.textContent="Using "+PNAME[provider()]+".";else{ms.textContent="Using Vaani’s basic engine.";lmAvail().then(function(a){if(a==="available")ms.textContent="Using the AI built into this browser.";});}}
     var sys,prompt,basic;
     if(n.kind==="meeting"){sys="You are an expert meeting note-taker. Write in "+outLang.value+". "+tmplOf(n.tmpl).sys+" "+FMT;prompt="Transcript:\n"+stamped(n);basic=function(){return tmo(summarizerNotes(n),12000).catch(function(){return basicNotes(n);});};}
     else{sys=NOTE_SYS+" Write in "+outLang.value+".";prompt=plain(n);basic=function(){return basicClean(n);};}
     if(window.VaaniHook){var hk=VaaniHook("prompt",{n:n,sys:sys,prompt:prompt});if(hk){sys=hk.sys;prompt=hk.prompt;}}var t0=Date.now();
-    generate(sys,prompt,basic).catch(function(err){toast((PNAME[provider()]||"AI")+" didn't respond. Used the basic engine.");return {text:n.kind==="meeting"?basicNotes(n):basicClean(n),engine:"Vaani's basic engine"};})
+    generate(sys,prompt,basic).catch(function(err){toast((PNAME[provider()]||"AI")+" didn’t respond. Used the basic engine.");return {text:n.kind==="meeting"?basicNotes(n):basicClean(n),engine:"Vaani's basic engine"};})
     .then(function(r){
-      var md=String(r.text||"").trim(),m=md.match(/^#\s+(.+)$/m);var ty=md.match(/^\W*type\W*:\s*(.+)$/im);if(ty){var lab=ty[1].replace(/[*_]/g,"").trim().toLowerCase();Object.keys(TMPL).forEach(function(k){if(k!=="auto"&&TMPL[k].label.toLowerCase()===lab)n.tmpl=k;});md=md.replace(ty[0],"").trim();}
-      if(m){n.title=m[1].replace(/\*\*/g,"").trim();}
+      /* Q-G8-2 + G8-1 (gate 8): in the background (the safety net), the note is looked up again first. Deleted meanwhile: it stays
+         deleted. Opened meanwhile (it has notes now, maybe a ticked to-do): those are kept. Otherwise the saved note gets the
+         notes, and a title the person changed stays theirs. */
+      var keepT=null;if(typeof done==="function"){var cur=getNote(n.id);if(!cur){done(null);return;}if(cur.md){done(cur);return;}if(cur.title!==n.title)keepT=cur.title;n=cur;}
+      var md=String(r.text||"").trim(),m=md.match(/^#[ \t]+(.+)$/m);var ty=md.match(/^\W*type\W*:\s*(.+)$/im);if(ty){var lab=ty[1].replace(/[*_]/g,"").trim().toLowerCase();Object.keys(TMPL).forEach(function(k){if(k!=="auto"&&TMPL[k].label.toLowerCase()===lab)n.tmpl=k;});md=md.replace(ty[0],"").trim();}
+      if(m){n.title=m[1].replace(/\*\*/g,"").trim();}if(keepT!==null)n.title=keepT;
       n.md=md;n.engine=r.engine;n.done=n.done||{};parseMd(md).forEach(function(s,si){s.checked.forEach(function(ii){n.done[si+"."+ii]=true;});});if(window.VaaniHook)VaaniHook("made",n);upsert(n);
+      if(typeof done==="function"){renderSaved(false);done(n);return;}
       setTimeout(function(){showNote(n,true);renderSaved(true);},Math.max(0,700-(Date.now()-t0)));
     });
   }
 
   /* ---------- note view ---------- */
   var tab="notes";
+  /* v2.4: "Tasks" and older "Action items" are tickable; a "Next action plan" is a list of steps, not to-dos */
+  function isActHead(h){return /action|to.?do|task|next step|kaam/i.test(h)&&!/\bplan\b/i.test(h);}
+  /* the drafted follow-up email lives in the notes text but is shown as a card, never as note lines */
+  function isMailHead(h){return /\be-?mail\b/i.test(h)&&/follow|draft/i.test(h);}
   function parseMd(md){
     var secs=[],cur=null;
     String(md||"").split(/\r?\n/).forEach(function(l){var m;
@@ -576,7 +1159,8 @@
     }
     var secs=parseMd(n.md),h="",k=0;
     secs.forEach(function(s,si){
-      var isAct=/action|to.?do|task|next step|kaam/i.test(s.h);if(isAct&&s.paras.length){s.items=s.items.concat(s.paras);s.paras=[];}
+      if(isMailHead(s.h))return;
+      var isAct=isActHead(s.h);if(isAct&&s.paras.length){s.items=s.items.concat(s.paras);s.paras=[];}
       if(s.h)h+='<span class="sec-h">'+il(s.h)+'</span>';
       h+='<div class="card">';
       s.paras.forEach(function(p){h+='<div class="row"><span>'+il(p)+'</span></div>';});
@@ -599,31 +1183,33 @@
     if(window.VaaniSTT&&VaaniSTT.busy()&&app.getAttribute("data-view")==="making"){toast("Vaani is still transcribing the last recording.");return;}
     currentId=n.id;var d=new Date(n.date);
     var saved=Math.max(1,Math.round((n.words||words(plain(n)))/40));
-    $("#noteKicker").textContent=n.thin?"":fresh?(n.kind==="meeting"?"Notes ready. You saved about "+saved+" min of typing.":"Note ready. You saved about "+saved+" min of typing."):dayLabel(d)+", "+timeLabel(d);
+    $("#noteKicker").textContent=n.thin?"":fresh?(n.kind==="meeting"?"Vaani wrote your notes. You saved about "+saved+" min of typing.":"Vaani wrote your note. You saved about "+saved+" min of typing."):dayLabel(d)+", "+timeLabel(d);
     $("#noteTitle").textContent=n.title||"Untitled";
     var langName=(LANGS.filter(function(l){return l[0]===n.lang;})[0]||[0,""])[1];
     $("#noteMeta").textContent=(n.kind==="meeting"?(hasTmpl(n.tmpl)&&n.tmpl!=="auto"?TMPL[n.tmpl].label:"Meeting"):"Quick note")+", "+(typeof n.dur==="number"?(n.dur<60?"under a minute":fmt(n.dur)):"")+(langName?", "+langName:"");
     if(!n.md){n.md=n.kind==="meeting"?basicNotes(n):basicClean(n);n.engine="Vaani's basic engine";upsert(n);}renderNoteBody(n);renderTranscript(n);setTab("notes");
     $("#askList").innerHTML="";$("#askRow").hidden=true;
-    $("#engineNote").innerHTML=n.engine?'Written by '+esc(n.engine)+'. '+(n.engine==="Vaani's basic engine"?'<button data-open="settings">Get smarter notes</button>':''):'';
+    $("#engineNote").innerHTML=n.engine?'Written by '+esc(String(n.engine).replace(/'/g,"’"))+'. '+(n.engine==="Vaani's basic engine"?'<button data-open="settings">Get smarter notes</button>':''):'';
     view("note");$("#noteScroll").scrollTop=0;if(window.VaaniHook)VaaniHook("note",{n:n,fresh:fresh});
   }
 
   /* ---------- share ---------- */
+  /* shared text says "Owner not said", the same as the note */
+  function ownerSaid(t){return String(t).replace(/^(\d+\.\s*)?not said\s*:/i,function(_,k){return (k||"")+"Owner not said:";});}
   function shareText(n){
     var body;
     if(n.kind==="note")body=String(n.md||"").replace(/^#\s+.*\n?/,"").trim();
-    else body=parseMd(n.md).map(function(s){return (s.h?s.h.toUpperCase()+"\n":"")+s.paras.join("\n")+(s.paras.length&&s.items.length?"\n":"")+s.items.map(function(i){return "- "+i.replace(/\*\*/g,"");}).join("\n");}).join("\n\n");
+    else body=parseMd(n.md).filter(function(s){return !isMailHead(s.h);}).map(function(s){return (s.h?s.h.toUpperCase()+"\n":"")+s.paras.map(ownerSaid).join("\n")+(s.paras.length&&s.items.length?"\n":"")+s.items.map(function(i){return "- "+ownerSaid(i.replace(/\*\*/g,""));}).join("\n");}).join("\n\n");
     return (n.title||"Notes")+"\n"+dayLabel(new Date(n.date))+"\n\n"+body.replace(/\*\*/g,"")+(load("vaani.noBrand","0")==="1"?"":String.fromCharCode(10,10)+"Made with Vaani: "+APP_URL);
   }
   function copyText(t,msg){function ok(){toast(msg||"Copied");}
     if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,function(){fb(t,ok);});else fb(t,ok);}
-  function fb(t,ok){var ta=document.createElement("textarea");ta.value=t;ta.setAttribute("readonly","");ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();try{document.execCommand("copy");ok();}catch(e){toast("Copy didn't work here");}document.body.removeChild(ta);}
+  function fb(t,ok){var ta=document.createElement("textarea");ta.value=t;ta.setAttribute("readonly","");ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();try{document.execCommand("copy");ok();}catch(e){toast("Copy didn’t work here");}document.body.removeChild(ta);}
   function cur(){return currentId&&getNote(currentId);}
   var opener=null;
   function sheetOpen(){return $$(".scrim:not(.ask-scrim)").some(function(s){return !s.hidden;});}
   function openSheet(id){if(!sheetOpen()){var a=document.activeElement;opener=a&&a!==document.body?a:null;}$$(".scrim").forEach(function(s){s.hidden=true;});$(id).hidden=false;app.inert=true;if(window.VaaniHook)VaaniHook("sheet",id);var f=$(id).querySelector("button,select,input");if(f)setTimeout(function(){f.focus();},60);}
-  function closeSheets(){var was=sheetOpen();$$(".scrim").forEach(function(s){s.hidden=true;});app.inert=false;var o=opener;opener=null;if(was&&o&&document.contains(o)&&o.getClientRects().length&&!o.closest(".scrim"))try{o.focus({preventScroll:true});}catch(e){}else if(was&&$("#listBtn")&&$("#listBtn").getClientRects().length)$("#listBtn").focus();else if(was&&document.activeElement&&document.activeElement.closest&&document.activeElement.closest(".scrim"))document.activeElement.blur();}
+  function closeSheets(){setTimeout(dropIdleCall,0);var was=sheetOpen();$$(".scrim").forEach(function(s){s.hidden=true;});app.inert=false;var o=opener;opener=null;if(was&&o&&document.contains(o)&&o.getClientRects().length&&!o.closest(".scrim"))try{o.focus({preventScroll:true});}catch(e){}else if(was&&$("#listBtn")&&$("#listBtn").getClientRects().length)$("#listBtn").focus();else if(was&&document.activeElement&&document.activeElement.closest&&document.activeElement.closest(".scrim"))document.activeElement.blur();}
   $$(".scrim").forEach(function(s){s.addEventListener("click",function(e){if(e.target===s||e.target.closest("[data-close]"))closeSheets();});});
   /* sheets opened or closed by other code (home.js, calendar.js) keep the app's inert state in step */
   /* sign-off S3: a sheet removed from the page (not just hidden) also releases the app */
@@ -650,7 +1236,7 @@
     var pr="Transcript:\n"+stamped(n)+"\n\nQuestion: "+q;
     var rr=remoteReady(),p=rr?tmo(callRemote(sys,pr),60000):tmo(onDevice(sys,pr),25000);
     p.then(function(a){$(".a",box).innerHTML=il(a).replace(/\n/g,"<br>");if(window.VaaniHook)VaaniHook("asked",{engine:rr?provider():"chrome"});}).catch(function(err){
-      $(".a",box).innerHTML=rr?esc(PNAME[provider()]+(err&&err.message==="timeout"?" didn't answer in time. Try again in a moment, or check your key in ":" didn't answer. Check your key in "))+'<button data-open="settings">Settings</button>.':'Asking questions needs the AI built into Chrome on a computer, or your own AI key. <button data-open="settings">Open Settings</button>';});
+      $(".a",box).innerHTML=rr?esc(PNAME[provider()]+(err&&err.message==="timeout"?" didn’t answer in time. Try again in a moment, or check your key in ":" didn’t answer. Check your key in "))+'<button data-open="settings">Settings</button>.':'Asking questions needs the AI built into Chrome on a computer, or your own AI key. <button data-open="settings">Open Settings</button>';});
   }
   $("#askSend").addEventListener("click",ask);
   $("#askInp").addEventListener("keydown",function(e){if(e.key==="Enter")ask();});
@@ -670,11 +1256,11 @@
   $("#trGo").addEventListener("click",function(){
     var n=cur(),to=trLang.value;if(!n)return;closeSheets();toast("Translating to "+to+"…");
     var src=n.md||stamped(n),from=n.kind==="meeting"?code(outLang.value):(n.lang||"en").slice(0,2);
-    var eng="Chrome's built-in translator",local=function(){return tmo(translateLines(src,from,code(to)),60000);};
+    var eng="Chrome’s built-in translator",local=function(){return tmo(translateLines(src,from,code(to)),60000);};
     var p=remoteReady()?tmo(callRemote("Translate this markdown into "+to+". Keep the markdown structure exactly. Return only the translation.",src),60000).then(function(t){eng=PNAME[provider()];return t;},local):local();
-    p.then(function(t){var x={id:Date.now(),kind:n.kind,date:new Date().toISOString(),dur:n.dur,lang:n.lang,tmpl:n.tmpl,segs:n.segs,md:t,title:((t.match(/^#\s+(.+)$/m)||[])[1]||n.title)+" ("+to+")",done:{},of:n.id,words:0,engine:eng};
-      upsert(x);showNote(x,false);toast("Translated. Saved as a new note.");if(window.VaaniHook)VaaniHook("translated",{to:code(to),engine:eng===PNAME[provider()]?provider():"chrome"});})
-    .catch(function(){toast(remoteReady()?PNAME[provider()]+" didn't translate it, and this browser has no translator. Try again later.":"Translation isn't available in this browser. Add an AI key in Settings.");});
+    p.then(function(t){var x={id:Date.now(),kind:n.kind,date:new Date().toISOString(),dur:n.dur,lang:n.lang,tmpl:n.tmpl,segs:n.segs,md:t,title:((t.match(/^#[ \t]+(.+)$/m)||[])[1]||n.title)+" ("+to+")",done:{},of:n.id,words:0,engine:eng};
+      upsert(x);showNote(x,false);toast("Vaani translated it and saved it as a new note.");if(window.VaaniHook)VaaniHook("translated",{to:code(to),engine:eng===PNAME[provider()]?provider():"chrome"});})
+    .catch(function(){toast(remoteReady()?PNAME[provider()]+" didn’t translate it, and this browser has no translator. Try again later.":"Translation isn’t available in this browser. Add an AI key in Settings.");});
   });
 
   /* ---------- settings ---------- */
@@ -696,7 +1282,9 @@
       :unset?"Not chosen yet. Vaani will ask the next time you record. With Sarvam AI, the meeting audio and your Names and words list go from this browser to Sarvam AI."
       :!on?"Your browser turns speech into text (Chrome sends the audio to Google). It listens for one language at a time."
       :!ok?langName(langSel.value)+" isn’t one of Sarvam AI’s languages, so this browser does speech to text for it."
-      :"Sarvam AI turns the meeting audio into text: Indian languages and English, mixed or not. The audio goes from this browser straight to Sarvam AI in pieces of about 25 seconds, with your Names and words list so names come out right. Nothing goes to Vaani.";}
+      :"Sarvam AI turns the meeting audio into text: Indian languages and English, mixed or not. The audio goes from this browser straight to Sarvam AI in pieces of about 25 seconds, with your Names and words list so names come out right. Nothing goes to Vaani.";
+    /* N14: its own line, only when a key is saved and the extension says "Hear the whole call" is off */
+    $("#sttCallHint").hidden=!(extPerm===false&&!!keyFor("sarvam")&&has&&on&&ok&&!unset);}
   $("#sttSeg").addEventListener("click",function(e){var b=e.target.closest("[data-stt]");if(!b)return;save("vaani.stt",b.getAttribute("data-stt"));syncStt();syncRecBtn();});
   keyInp.addEventListener("input",function(){if(provSel.value==="sarvam")syncStt();});
   $("#keyRm").addEventListener("click",function(e){var p=provSel.value,old=keyFor(p),H=window.VaaniHome;remove("vaani.key."+p);keyInp.value="";syncProv();var msg="Removed your "+PNAME[p]+" key";if(H&&H.actToast){H.actToast(msg,"Undo",function(){var typed=keyFor(p)||(provSel.value===p&&keyInp.value.trim());if(typed||!old){old="";return;}save("vaani.key."+p,old);old="";syncProv();$("#keyRm").focus();},function(){old="";if(!document.activeElement||document.activeElement===document.body)keyInp.focus();});var ub=document.querySelector(".vtoast button");if(ub&&e&&e.detail===0)ub.focus({preventScroll:true});else keyInp.focus();}else toast(msg+" from this browser");});
@@ -712,18 +1300,18 @@
   }
   /* S3: Settings opened to set up Sarvam AI's speech to text keeps the notes engine as it is, and says so */
   var sttSetup=null;
-  function openSettings(p){sttSetup=p==="sarvam"&&provider()!=="sarvam"?provider():null;provSel.value=p&&PNAME[p]?p:provider();syncProv();checkStatus();openSheet("#setSheet");if(p&&PNAME[p])setTimeout(function(){keyInp.focus();},80);}
+  function openSettings(p){sttSetup=p==="sarvam"&&provider()!=="sarvam"?provider():null;provSel.value=p&&PNAME[p]?p:provider();syncProv();checkStatus();extHello();openSheet("#setSheet");if(p&&PNAME[p])setTimeout(function(){keyInp.focus();},80);}
   provSel.addEventListener("change",syncProv);
-  $("#setDone").addEventListener("click",function(){var p=provSel.value,oldS=keyFor("sarvam"),keep=sttSetup&&p==="sarvam"?sttSetup:null;sttSetup=null;save("vaani.provider",keep||p);if(p!=="auto")save("vaani.key."+p,keyInp.value.trim());
+  $("#setDone").addEventListener("click",function(){setTimeout(extHello,0);setTimeout(deskRetry,0);var p=provSel.value,oldS=keyFor("sarvam"),keep=sttSetup&&p==="sarvam"?sttSetup:null;sttSetup=null;save("vaani.provider",keep||p);if(p!=="auto")save("vaani.key."+p,keyInp.value.trim());
     /* a new Sarvam key saved here, under the hint that says the audio goes to Sarvam AI: that is the choice, so it isn't asked again */
     if(p==="sarvam"&&keyInp.value.trim()&&keyInp.value.trim()!==oldS&&load("vaani.stt",null)===null)save("vaani.stt","sarvam");save("vaani.outLang",outLang.value);syncRecBtn();closeSheets();
     if(keep){toast(keyInp.value.trim()?"Sarvam AI does speech to text now. Notes are still written by "+(PNAME[keep]||"the free built-in engine")+".":"Add a key to use Sarvam AI");return;}
     toast(p==="auto"?"Using the free built-in engine":(keyInp.value.trim()?PNAME[p]+" is ready":"Add a key to use "+PNAME[p]));});
 
-  /* ---------- start ---------- */window.Vaani={notes:notes,getNote:getNote,upsert:upsert,setNotes:setNotes,showNote:showNote,view:view,startRec:startRec,stopRec:stopRec,setMode:setMode,getMode:function(){return mode;},generate:generate,toast:toast,esc:esc,il:il,parseMd:parseMd,dayLabel:dayLabel,timeLabel:timeLabel,words:words,load:load,save:save,loadJSON:loadJSON,saveJSON:saveJSON,TMPL:TMPL,PNAME:PNAME,remoteReady:remoteReady,provider:provider,openSheet:openSheet,closeSheets:closeSheets,shareText:shareText,copyText:copyText,APP_URL:APP_URL,makeNotes:makeNotes,titleFrom:titleFrom,plain:plain,stamped:stamped,fmt:fmt,basicNotes:basicNotes,elapsed:elapsed,isListening:function(){return listening;},getSegs:function(){return segs;},getInterim:function(){return interim;},getStartedAt:function(){return startedAt;},cur:cur,getCurrentId:function(){return currentId;},setCurrentId:function(i){currentId=i;},langSel:langSel,tmplSel:tmplSel,outLang:outLang,SRC:SRC,getCallOn:function(){return callOn;},renderSaved:renderSaved,isMac:isMac,LANGS:LANGS,openSettings:openSettings,lmAvail:lmAvail,canRecord:canRecord,openSttChoice:openSttChoice,syncRecBtn:syncRecBtn,sttActive:function(){return sttOn;},setRecLang:setRecLang,switchToSarvam:switchToSarvam,voicedSecs:voicedSecs,voiceKnown:function(){return vz.known;},hasSarvamKey:function(){return !!keyFor("sarvam");},langName:langName,setCallOn:function(v){callOn=!!v;syncCall();},hasCallTrack:function(){return !!callTrack;},isCallSrc:CALLSRC,ownerSplit:ownerSplit,hasTmpl:hasTmpl,hasSR:!!SR,remove:remove,storeFailing:storeFailing,basicClean:basicClean,savedWords:savedWords,sortNotes:function(a){return a.sort(function(x,y){return new Date(y.date)-new Date(x.date);});}};
+  /* ---------- start ---------- */window.Vaani={notes:notes,getNote:getNote,upsert:upsert,setNotes:setNotes,showNote:showNote,view:view,startRec:startRec,stopRec:stopRec,setMode:setMode,getMode:function(){return mode;},generate:generate,toast:toast,esc:esc,il:il,parseMd:parseMd,dayLabel:dayLabel,timeLabel:timeLabel,words:words,load:load,save:save,loadJSON:loadJSON,saveJSON:saveJSON,TMPL:TMPL,PNAME:PNAME,remoteReady:remoteReady,provider:provider,openSheet:openSheet,closeSheets:closeSheets,shareText:shareText,copyText:copyText,APP_URL:APP_URL,makeNotes:makeNotes,titleFrom:titleFrom,titleOf:titleOf,plain:plain,stamped:stamped,fmt:fmt,basicNotes:basicNotes,elapsed:elapsed,isListening:function(){return listening;},handPend:function(){return !!((joinHid&&!joinIn&&!contNone)||stopHeld||stopWant||contBusy);},contInfo:contInfo,mergeCont:mergeCont,otherRec:otherRec,prevWords:function(){return prevOn()?(+contPrev.words||0):0;},getSegs:function(){return segs;},getInterim:function(){return interim;},getStartedAt:function(){return startedAt;},cur:cur,getCurrentId:function(){return currentId;},setCurrentId:function(i){currentId=i;},langSel:langSel,tmplSel:tmplSel,outLang:outLang,SRC:SRC,callInfo:function(){return {heard:callHeard,note:callNote};},extWaiting:function(){return !extDone;},extFailed:function(){return extFailed;},EXTFAIL:EXTFAIL,extFailMsg:function(){return EXTFAIL;},deskReady:function(){return deskOn&&!DESK;},extPerm:function(){return extPerm;},extHello:extHello,deskLine:function(){return deskLine();},desktopActive:function(){return !!DESK;},renderSaved:renderSaved,isMac:isMac,LANGS:LANGS,openSettings:openSettings,lmAvail:lmAvail,canRecord:canRecord,openSttChoice:openSttChoice,syncRecBtn:syncRecBtn,sttActive:function(){return sttOn;},setRecLang:setRecLang,switchToSarvam:switchToSarvam,voicedSecs:voicedSecs,voiceKnown:function(){return vz.known;},hasSarvamKey:function(){return !!keyFor("sarvam");},langName:langName,hasCallTrack:function(){return !!callTrack;},isCallSrc:CALLSRC,ownerSplit:ownerSplit,isActHead:isActHead,isMailHead:isMailHead,hasTmpl:hasTmpl,hasSR:!!SR,remove:remove,storeFailing:storeFailing,liveUsed:liveUsed,liveDone:liveDone,basicClean:basicClean,savedWords:savedWords,sortNotes:function(a){return a.sort(function(x,y){return dTime(y)-dTime(x);});}};
   view("idle");
   if("serviceWorker" in navigator&&location.protocol==="https:"){navigator.serviceWorker.register("sw.js").catch(function(){});}
 })();
 </script>
-<script src="stt.js"></script><script src="home.js"></script><script src="insights.js"></script><script src="calendar.js"></script></body>
+<script src="stt.js"></script><script src="home.js"></script><script src="insights.js"></script><script src="agent.js"></script><script src="calendar.js"></script></body>
 </html>
