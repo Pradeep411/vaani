@@ -1,18 +1,78 @@
 {
   "manifest_version": 3,
-  "name": "Vaani: AI Meeting Notes for Google Meet, Teams and Zoom",
+  "name": "Vaani: AI Note Taker Agent for Google Meet, Zoom and Teams",
   "short_name": "Vaani",
-  "version": "1.0.0",
-  "description": "Free AI meeting notes, transcripts and action items for Google Meet, Teams and Zoom. 22 languages incl. Hindi. No sign-up, no bot.",
+  "version": "1.1.0",
+  "minimum_chrome_version": "116",
+  "description": "Vaani, your AI meeting agent, hears your call and writes the summary, tasks with owners and follow-up email. 22 languages. No bot.",
   "homepage_url": "https://pradeep411.github.io/vaani/",
-  "icons": { "16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png" },
-  "action": {
-    "default_title": "Vaani meeting notes",
-    "default_popup": "popup.html",
-    "default_icon": { "16": "icons/16.png", "32": "icons/32.png" }
+  "icons": {
+    "16": "icons/16.png",
+    "32": "icons/32.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
   },
-  "background": { "service_worker": "background.js" },
-  "permissions": ["storage"],
+  "action": {
+    "default_title": "Vaani: AI Note Taker Agent",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/16.png",
+      "32": "icons/32.png"
+    }
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+Shift+V"
+      },
+      "description": "Take notes on this call"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "storage",
+    "scripting"
+  ],
+  "optional_permissions": [
+    "tabCapture"
+  ],
+  "optional_host_permissions": [
+    "https://web.whatsapp.com/*",
+    "https://app.slack.com/*",
+    "https://*.webex.com/*",
+    "https://meet.jit.si/*",
+    "https://whereby.com/*",
+    "https://discord.com/*"
+  ],
+  "externally_connectable": {
+    "matches": [
+      "https://pradeep411.github.io/vaani/*"
+    ]
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "icons/32.png"
+      ],
+      "matches": [
+        "https://meet.google.com/*",
+        "https://teams.microsoft.com/*",
+        "https://teams.live.com/*",
+        "https://teams.cloud.microsoft/*",
+        "https://app.zoom.us/*",
+        "https://*.zoom.us/*",
+        "https://web.whatsapp.com/*",
+        "https://app.slack.com/*",
+        "https://*.webex.com/*",
+        "https://meet.jit.si/*",
+        "https://whereby.com/*",
+        "https://discord.com/*"
+      ],
+      "use_dynamic_url": true
+    }
+  ],
   "content_scripts": [
     {
       "matches": [
@@ -23,7 +83,9 @@
         "https://app.zoom.us/*",
         "https://*.zoom.us/wc/*"
       ],
-      "js": ["content.js"],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
   ]
