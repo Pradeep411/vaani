@@ -1,11 +1,12 @@
-/* Vaani: AI Note Taker Agent, offline cache: the app opens even without internet. Speech-to-text still needs the browser's speech service.
+/* Vaani: AI Note Taker Agent, offline cache: the app opens even without internet. Speech to text still needs the browser's speech service or Sarvam AI.
    Only same-origin GET responses for the files below and the page itself are cached. Network first, so online users
    always get the newest version. Every path is relative to this worker, so it works at /vaani/ and at / alike. */
-const CACHE = "vaani-v17";
-const FILES = ["./", "index.html", "app.css", "stt.js", "home.js", "insights.js", "agent.js", "calendar.js", "accounts.js"];
+const CACHE = "vaani-v31";
+const FILES = ["./", "index.html", "app.css", "stt.js", "home.js", "insights.js", "agent.js", "calendar.js", "accounts.js", "speakers.js", "templates.js", "upload.js"];
 /* v2.2 accounts: cached so a signed-in person can open Vaani offline and usage events can wait in the queue.
    The admin page (admin.*) is never cached. */
 const ACCOUNTS = ["accounts.css", "analytics-client.js", "firebase-config.js"];
+/* every file above must exist (one 404 stops the whole worker from installing); these may be missing without harm */
 const OPTIONAL = ["manifest.webmanifest", "icons/icon.svg"].concat(ACCOUNTS);
 const BASE = new URL("./", self.location).href;
 const ALLOW = new Set(FILES.concat(OPTIONAL).map(f => new URL(f, BASE).href));

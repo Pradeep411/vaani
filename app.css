@@ -127,6 +127,9 @@ kbd,.kbd{font-family:var(--font);font-size:12px;font-weight:400;padding:2px var(
 .bar{display:flex;align-items:center;gap:var(--space-2);padding:calc(env(safe-area-inset-top,0px) + var(--space-2)) var(--space-2) var(--space-1);min-height:52px}
 .brand{font-family:var(--font-d);font-size:17px;font-weight:600;letter-spacing:-0.02em}
 .bar .brand{margin-right:auto}
+/* fix r3 (creative): the phone bar says "AI Note Taker Agent" like the desktop where it fits (375 px and wider), "AI agent" on narrower phones */
+.brand-tag .bt-long{display:none}
+@media (min-width:375px){.brand-tag .bt-long{display:inline}.brand-tag .bt-short{display:none}}
 /* round 9: the name says what Vaani is, an AI agent: a small second line in the sidebar, a short tag in the phone bar */
 .brand-tag{display:block;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:0;color:var(--label2)}
 .brand-tag.in{display:inline;font-size:13px;margin-left:2px}
@@ -426,7 +429,7 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
 .consent .ico{width:15px;height:15px;color:var(--label2)}
 .consent .c-short{display:none}
 .rec-meta{margin-top:var(--space-5);font-size:13px;font-weight:600;color:var(--label2);align-self:stretch;max-width:760px;margin-inline:auto;width:100%}
-.lyrics{flex:1;min-height:0;width:100%;max-width:760px;display:flex;flex-direction:column;justify-content:flex-end;gap:var(--space-5);overflow:hidden;padding-bottom:var(--space-3);-webkit-mask-image:linear-gradient(to bottom,transparent 0,var(--mask) 24%,var(--mask) 100%);mask-image:linear-gradient(to bottom,transparent 0,var(--mask) 24%,var(--mask) 100%)}
+.lyrics{flex:1;min-height:0;width:100%;max-width:760px;display:flex;flex-direction:column;justify-content:flex-end;gap:var(--space-5);overflow:hidden;margin-top:var(--space-2);padding-bottom:var(--space-3);-webkit-mask-image:linear-gradient(to bottom,transparent 0,var(--mask) max(24%,40px),var(--mask) 100%);mask-image:linear-gradient(to bottom,transparent 0,var(--mask) max(24%,40px),var(--mask) 100%)}
 .ly{margin:0;font-family:var(--font-d);font-size:27px;line-height:1.22;font-weight:700;letter-spacing:-0.02em;color:var(--past);transition:color .45s var(--spring);animation:rise .45s var(--spring) backwards}
 .ly.now{color:var(--label)}
 .ly.interim{color:var(--label2);animation:none}
@@ -466,6 +469,8 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
 #sttChoice h2:focus{outline:none}
 .stt-ask .btn-f{min-height:44px;border-radius:12px;padding:0 var(--space-5)}
 .stt-ask{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:var(--space-2);max-width:420px}
+/* fix r3 (creative): the typed-notes sentence on its own line above the buttons */
+.v-making .stt-ask .stt-keep{flex:0 0 100%;margin:0 0 var(--space-2);font-size:14px;line-height:1.45;color:var(--label);text-align:center;max-width:none}
 
 /* ================= note view ================= */
 .v-note{background:var(--bg);align-items:stretch;position:relative;animation:sheet .45s var(--spring) backwards}
@@ -491,7 +496,27 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
 .rcpt{grid-column:3 / -1;margin:0 var(--space-2) var(--space-3) var(--space-1);padding:var(--space-3) var(--space-4);border-radius:12px;background:var(--fill);font-size:14px;line-height:1.5;color:var(--label2);animation:rise .3s var(--spring) backwards}
 .rcpt div + div{margin-top:var(--space-1)}
 .rcpt time{font-weight:600;color:var(--label);margin-right:var(--space-2);font-variant-numeric:tabular-nums}
-.flag{display:inline-flex;align-items:center;height:20px;margin-left:var(--space-2);padding:0 var(--space-2);border-radius:6px;font-size:12px;font-weight:600;background:var(--amber-soft);color:var(--amber);vertical-align:2px;white-space:nowrap}
+/* fix r1: the amber mark is a button. 20 px high to sit in the text line, 44 px hit area like the source chip. A chip and a
+   mark on one line travel together (.marks), so they never end up on two lines one above the other. */
+.flag{position:relative;display:inline-flex;align-items:center;height:20px;padding:0 var(--space-2);border-radius:6px;font-size:12px;line-height:16px;font-weight:600;background:var(--amber-soft);color:var(--amber);white-space:nowrap;text-decoration:none}
+.flag::after{content:"";position:absolute;left:-4px;right:-4px;top:-12px;bottom:-12px}
+@media (hover:hover){.flag:hover{box-shadow:inset 0 0 0 1px var(--amber)}}
+.flag:focus-visible{outline-color:var(--amber)}
+/* fix r2 (testing R2-E2): on a phone the mark is as tall as the source chip beside it (24 px); the hit area stays 44 px */
+@media (max-width:899px){.flag{height:24px}.flag::after{top:-10px;bottom:-10px}}
+/* fix r3 (creative P1-1): a table in a note. It scrolls sideways in its own box; the page never does. */
+.nt-tbl-w{margin:var(--space-2) 0 var(--space-3) calc(var(--gut) + var(--axis) + var(--space-1));max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;box-shadow:inset 0 0 0 .5px var(--sep)}
+.nt-tbl-w:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
+.nt-tbl{border-collapse:collapse;min-width:100%;font-size:15px;line-height:20px;color:var(--label)}
+.nt-tbl th,.nt-tbl td{padding:var(--space-2) var(--space-3);text-align:left;vertical-align:top;min-width:72px;max-width:320px;overflow-wrap:break-word}
+.nt-tbl th{font-size:13px;line-height:18px;font-weight:600;color:var(--label2);white-space:nowrap}
+.nt-tbl tr+tr td,.nt-tbl thead+tbody tr:first-child td{box-shadow:inset 0 .5px 0 var(--sep)}
+.en-l{display:block}
+.en-l:only-of-type{display:inline}
+.marks{display:inline-flex;flex-wrap:wrap;align-items:center;gap:24px var(--space-2);max-width:100%;vertical-align:1px}
+.marks .src-chip{margin-left:0;vertical-align:baseline}
+.has-marks .nb-row .ln-c{padding-top:10px;padding-bottom:10px}
+.has-marks .nb-row .ln-n,.has-marks .nb-row .ln-g{padding-top:10px}
 .chk-line{display:flex;align-items:center;gap:var(--space-3);margin-top:var(--space-4);padding-left:calc(var(--gut) + var(--axis) + var(--space-1));font-size:14px;color:var(--label2)}
 /* v2.4: a "Next action plan" step carries its number on the line, not a tick box */
 .ln-num{position:relative;display:grid;place-items:center;min-width:22px;height:22px;padding:0 var(--space-1);border-radius:11px;background:var(--bg);box-shadow:inset 0 0 0 1.5px var(--label3);font-size:12px;line-height:22px;font-weight:600;color:var(--label2);font-variant-numeric:tabular-nums}
@@ -563,7 +588,7 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
 .opt small{display:block;font-size:13px;color:var(--label2)}
 .opt.danger,.opt.danger .oi{color:var(--red-ink)}
 .cancel{display:block;width:100%;min-height:48px;margin-top:var(--space-2);border-radius:12px;font-size:17px;font-weight:400;color:var(--tint)}
-.cancel:hover{background:var(--fill)}
+.cancel:hover{background:var(--fill-card)}
 .btn-wide{display:block;width:100%;min-height:52px;margin-top:var(--space-2);border-radius:14px;background:var(--fill);font-size:17px;font-weight:600;color:var(--tint)}
 .btn-wide:hover{background:var(--fill2)}
 /* G8-3 (gate 8): on the start sheet the second button sits on an opaque fill (4.5:1 in both themes); hover shows an edge, not a darker fill */
@@ -586,6 +611,8 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
 .set-more{margin-top:var(--space-2)}
 .set-row{display:flex;align-items:center;gap:var(--space-3);min-height:52px;padding:0 var(--space-1);font-size:16px}
 .set-row + .set-row{box-shadow:inset 0 .5px 0 var(--sep)}
+.set-row[hidden]{display:none}
+#calNamesRow{padding-top:var(--space-2);padding-bottom:var(--space-2)}
 .set-row>span{flex:1;min-width:0}
 .set-row button{min-height:44px;font-size:16px;font-weight:400;color:var(--tint)}
 .switch{display:grid;place-items:center;min-width:51px}
@@ -605,7 +632,7 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
 .keys kbd{justify-self:start}
 
 /* ================= toast ================= */
-.toast,.vtoast{position:fixed;top:calc(env(safe-area-inset-top,0px) + var(--space-3));left:50%;z-index:80;transform:translate(-50%,-30px) scale(.9);opacity:0;pointer-events:none;display:flex;align-items:center;gap:var(--space-3);max-width:calc(100% - 32px);padding:var(--space-2) var(--space-5);min-height:40px;border-radius:999px;background:var(--island);color:var(--on-island);font-size:14px;font-weight:600;box-shadow:0 0 0 1px var(--island-edge),var(--shadow-toast);transition:transform .45s var(--spring),opacity .3s var(--spring)}
+.toast,.vtoast{position:fixed;top:calc(env(safe-area-inset-top,0px) + var(--space-3));left:50%;z-index:80;transform:translate(-50%,-30px) scale(.9);opacity:0;pointer-events:none;display:flex;align-items:center;gap:var(--space-3);max-width:calc(100% - 32px);padding:var(--space-2) var(--space-5);min-height:40px;border-radius:22px;background:var(--island);color:var(--on-island);font-size:14px;font-weight:600;box-shadow:0 0 0 1px var(--island-edge),var(--shadow-toast);transition:transform .45s var(--spring),opacity .3s var(--spring)}
 /* the toast sizes to its text (one line on a phone); max-width still caps it */
 .toast,.vtoast{width:max-content}
 .toast.show,.vtoast.show{opacity:1;transform:translate(-50%,0) scale(1);pointer-events:auto}
@@ -892,6 +919,8 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
    the waiting line never shrinks, and the other tab's earlier lines give way first (only the newest one shows) */
 .lyrics:has(>.empty-ly){flex:1 0 auto;-webkit-mask-image:none;mask-image:none}
 @media (max-height:640px){
+  /* fix r1 (creative P2-4): a short screen shows the newest live line only */
+  .lyrics>.ly:not(:last-child){display:none}
   .empty-ly{font-size:17px;line-height:24px;color:var(--label3)}
   .rec-meta{margin-top:var(--space-3)}
   .rec-foot{padding-top:var(--space-2)}
@@ -910,3 +939,126 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
   .ly-prev .lyp time{display:inline;margin-right:var(--space-2)}
 }
 @media (max-height:430px){.ly-prev{display:none}}
+/* fix r2 (creative P2-3): a phone with its keyboard up has no room for a whole live line: the half-cut sliver is hidden
+   (the space stays, so nothing jumps); the waiting line and a small desktop window are not touched */
+@media (max-height:480px) and (max-width:899px) and (pointer:coarse){.lyrics:not(:has(>.empty-ly)){visibility:hidden}}
+
+/* ================= v2.6: speaker names ================= */
+.sp-chip{display:inline-block;max-width:100%;min-height:24px;margin:0 var(--space-2) var(--space-1) 0;padding:0 var(--space-2);border-radius:6px;background:var(--tint-soft);font-size:13px;font-weight:600;line-height:24px;color:var(--tint);vertical-align:bottom;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;user-select:none;-webkit-user-select:none}
+.sp-chip.sp-add{background:transparent;font-weight:400;color:var(--label2);padding-left:0}
+@media (hover:hover){.sp-chip:hover{background:var(--fill2)}.sp-add{opacity:0;transition:opacity .15s var(--spring)}.tr-row:hover .sp-add,.sp-add:focus-visible{opacity:1}}
+@media (pointer:coarse){.sp-chip{min-height:32px;line-height:32px;padding:0 var(--space-3)}.sp-chip.sp-add{padding-left:0}}
+.sp-tip{margin:0 0 var(--space-3);padding-left:calc(var(--gut) + var(--axis) + var(--space-1));font-size:13px;line-height:1.5;color:var(--label2)}
+.sp-sugs{display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:var(--space-3)}
+.sp-sug{min-height:36px;max-width:100%;padding:0 var(--space-3);border-radius:999px;background:var(--fill);font-size:14px;font-weight:600;color:var(--label);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-sug:hover{background:var(--fill2)}
+.sp-clear{display:block;margin:var(--space-2) auto 0;color:var(--red-ink)}
+#spSheet .btn-wide{background:var(--fill-card)}
+
+/* ================= v2.6: note templates ================= */
+.tpl-list{margin-top:var(--space-2)}
+.tpl-row{display:flex;align-items:center;gap:var(--space-2);min-height:56px;padding:var(--space-2) var(--space-1)}
+.tpl-row + .tpl-row{box-shadow:inset 0 .5px 0 var(--sep)}
+.tpl-t{flex:1;min-width:0}
+.tpl-t b{display:block;font-size:17px;font-weight:600;overflow-wrap:anywhere}
+.tpl-t small{font-size:13px;color:var(--label2)}
+.tpl-row .btn-t{color:var(--tint)}
+.tpl-del,.tpl-row .tpl-del{color:var(--red-ink)}
+.tpl-empty{text-align:center}
+.tpl-secs{display:flex;flex-direction:column;gap:var(--space-3);margin-bottom:var(--space-3)}
+.tpl-sec{display:flex;flex-direction:column;gap:var(--space-2);padding:var(--space-3);border-radius:14px;background:var(--fill)}
+.tpl-sec .field{background:var(--card)}
+.tpl-bar{display:flex;justify-content:flex-end;gap:var(--space-1)}
+.tpl-bar .btn-t{color:var(--tint)}
+.tpl-bar .tpl-del{color:var(--red-ink)}
+.tpl-bar .btn-t:disabled{color:var(--label3);opacity:.6}
+.tpl-err{color:var(--red-ink)}
+#tplSheet .btn-wide,#setSheet #tplOpen{background:var(--fill-card)}
+@media (pointer:coarse){.tpl-row .btn-t,.tpl-bar .btn-t{min-height:44px}}
+
+/* ================= v2.6: upload a recording ================= */
+.up-btn{min-height:36px}
+.up-facts{margin:var(--space-2) 0 var(--space-3);box-shadow:inset 0 .5px 0 var(--sep),inset 0 -.5px 0 var(--sep)}
+.up-row{display:flex;justify-content:space-between;gap:var(--space-4);padding:var(--space-3) var(--space-1);font-size:15px}
+.up-row + .up-row{box-shadow:inset 0 .5px 0 var(--sep)}
+.up-k{color:var(--label2);flex:none}
+.up-v{text-align:right;font-weight:600;overflow-wrap:anywhere}
+.up-file{overflow-wrap:anywhere}
+.up-stage{margin:var(--space-4) 0 var(--space-3);font-size:17px;font-weight:600;text-align:center}
+.up-bar{display:block;width:100%;height:6px;border:0;border-radius:3px;background:var(--fill);appearance:none;-webkit-appearance:none;overflow:hidden}
+.up-bar::-webkit-progress-bar{background:var(--fill)}
+.up-bar::-webkit-progress-value{background:var(--tint-fill);border-radius:3px}
+.up-bar::-moz-progress-bar{background:var(--tint-fill);border-radius:3px}
+.up-note{min-height:3em;text-align:center}
+.up-err{color:var(--red-ink)}
+.up-cancel{margin-top:var(--space-4)}
+#upSheet .btn-wide{background:var(--fill-card)}
+
+/* ---------- v2.7 gate fixes ---------- */
+/* Upload a recording: the same outlined pill as the pickers beside it (ink text passes 4.5:1 in both themes) */
+.up-pill{display:inline-flex;align-items:center;gap:var(--space-2);min-height:36px;max-width:100%;padding:0 var(--space-4) 0 var(--space-3);border-radius:999px;background:var(--fill);box-shadow:inset 0 0 0 1px var(--field-edge);font-size:14px;font-weight:400;color:var(--label)}
+.up-pill svg{width:15px;height:15px;flex:none;color:var(--label2)}
+@media (hover:hover){.up-pill:hover{background:var(--fill2)}}
+@media (pointer:coarse){.up-pill{min-height:44px}}
+/* the kept-audio card's buttons wrap on a small phone instead of running off the screen */
+.keep-card .btn-f,.thin-fix .btn-f{white-space:normal;text-align:left;height:auto;min-height:44px;padding-block:var(--space-2);max-width:100%}
+/* the sticky Done stays above the segmented controls that scroll under it */
+.panel>.done-btn:last-child{z-index:2}
+/* Chrome's on-device AI download: a status line and a thin tint bar (transform, not width) */
+.dl-st{margin-top:var(--space-2);font-size:14px;line-height:20px;color:var(--label2);white-space:normal}
+.dl-bar{position:relative;height:4px;margin-top:var(--space-2);border-radius:2px;background:var(--fill);overflow:hidden}
+.dl-bar i{position:absolute;inset:0;background:var(--tint);transform-origin:left center;transform:scaleX(0);transition:transform .3s var(--spring)}
+.ai-dl{display:block;width:100%;min-height:44px;margin-top:var(--space-3);border-radius:12px;background:var(--fill);color:var(--label);font-size:15px;font-weight:600}
+.engine-note .dl-st,.engine-note .dl-bar{max-width:420px}
+/* record screen: what Vaani hears, with a glyph; a problem reads as a problem */
+.rec-src{display:flex;gap:var(--space-2);align-items:flex-start;text-align:left}
+.rec-src svg{width:16px;height:16px;flex:none;margin-top:1px;color:var(--label2)}
+.rec-src.warn{color:var(--label)}
+.rec-src.warn svg{color:var(--amber)}
+.rec-fix{display:block;align-self:stretch;max-width:760px;width:100%;margin-inline:auto;text-align:left;white-space:normal}
+#agBox{scroll-margin-top:72px}
+@media (prefers-reduced-motion:reduce){.dl-bar i{transition:none}}
+
+/* v2.8: My notes. On the record screen: a quiet pane under the live words, a one-line box and the lines typed so far (each
+   is a button that puts the line back in the box to change it). In the note: the person's own lines read darker, what
+   Vaani added under each sits in and is quieter. */
+.memo{width:100%;max-width:760px;margin:var(--space-3) auto 0;display:flex;flex-direction:column;gap:var(--space-2);flex:none}
+.memo[hidden]{display:none}
+.memo-h{font-size:13px;line-height:18px;font-weight:600;color:var(--label2)}
+.memo-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;max-height:136px;overflow-y:auto;overscroll-behavior:contain;border-radius:12px}
+.memo-list[hidden]{display:none}
+.memo-li{display:flex;align-items:baseline;gap:var(--space-3);width:100%;min-height:44px;padding:var(--space-3);border-radius:10px;background:var(--fill);text-align:left;font-size:15px;line-height:20px;color:var(--label);white-space:normal;transition:background-color .15s var(--spring)}
+.memo-li time{flex:none;font-size:13px;font-weight:600;color:var(--label2);font-variant-numeric:tabular-nums}
+.memo-li span{flex:1;min-width:0;overflow-wrap:anywhere}
+.memo-pen{flex:none;align-self:center;width:16px;height:16px;color:var(--label2)}
+@media (hover:hover){.memo-li:hover{background:var(--fill2)}.memo-li:hover time,.memo-li:hover .memo-pen{color:var(--label)}}
+.memo-row{display:flex;align-items:center;gap:var(--space-2)}
+.memo-inp{flex:1;min-width:0}
+.memo-inp::placeholder{color:var(--label2)}
+.memo-add{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:var(--tint-fill);color:var(--on-tint);transition:opacity .15s var(--spring)}
+.memo-add svg{width:20px;height:20px}
+.memo-add:disabled{opacity:1;background:var(--fill2);color:var(--label3);cursor:default}
+@media (max-height:640px){.memo{margin-top:var(--space-2)}.memo-h{display:none}.memo-list{max-height:46px}}
+.memo-sec .nb-row.mine .l1{font-weight:600}
+.memo-sec .nb-row.fill .l1{padding-left:var(--space-4);color:var(--label2)}
+.memo-t{display:block;font-size:13px;line-height:18px;font-weight:400;color:var(--label2);font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){.memo-li,.memo-add{transition:none}}
+
+/* v2.8: sources. A chip after a note line opens the transcript at the line it came from; that line lights up briefly.
+   The chip is 24 px high to sit in the text line; its hit area is 44 px. */
+.src-chip{position:relative;display:inline-flex;align-items:center;min-height:24px;margin-left:var(--space-2);padding:0 var(--space-2);border-radius:6px;background:var(--tint-soft);color:var(--tint);font-size:13px;line-height:18px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;vertical-align:1px;text-decoration:none}
+.src-chip::after{content:"";position:absolute;left:-4px;right:-4px;top:-10px;bottom:-10px}
+@media (hover:hover){.src-chip:hover{box-shadow:inset 0 0 0 1px var(--tint)}}
+.row-r.is-done .src-chip{text-decoration:none}
+.tr-row.src-hit{background:var(--tint-soft);border-radius:10px}
+.tr-row.src-hit .ln-g{color:var(--label)}
+/* fix r1 (creative P2-8): on a lit row or section (after a source chip, or an Ask source) tinted chips drop their own
+   fill, so tint text is not tint on tint on tint, and the small grey labels go to --label. Every text stays >= 4.5:1. */
+.src-hit .sp-chip,.cite-hit .sp-chip,.cite-hit .src-chip{background:transparent;color:var(--tint-strong)}
+.cite-hit .src-chip{box-shadow:inset 0 0 0 1px var(--tint-strong)}
+.src-hit .sp-chip.sp-add,.cite-hit .sp-chip.sp-add,.cite-hit .ln-g,.cite-hit .rc-t,.cite-hit .memo-t,.cite-hit .memo-sec .nb-row.fill .l1,.cite-hit .is-done .l1,.cite-hit.is-done .l1{color:var(--label)}
+.cite-hit .flag{background:transparent;box-shadow:inset 0 0 0 1px var(--amber)}
+.tr-row{transition:background-color .3s var(--spring)}
+.tr-row:focus{outline:none}
+.tr-row:focus-visible{outline:2px solid var(--tint);outline-offset:-2px;border-radius:10px}
+@media (prefers-reduced-motion:reduce){.tr-row{transition:none}}

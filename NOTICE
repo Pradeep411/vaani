@@ -1,0 +1,84 @@
+Vaani is MIT licensed (see LICENSE). Vaani's code is written for Vaani in plain JavaScript. Where an idea, a prompt wording or an
+algorithm was studied from another open-source project, that project is named here with its licence. Nothing from a GPL, AGPL or
+unlicensed project was used.
+
+v2.6 speaker names (speakers.js, stamped() in index.html)
+  - Vibe, thewh1teagle/vibe, MIT, Copyright (c) thewh1teagle: names kept apart from the transcript lines; "[Name] text" in exports.
+  - Hyprnote, fastrepl/hyprnote, MIT (outside its enterprise/ folder, which was not used): "Speaker N" labels, "You" for the
+    person's own voice, one rename for a whole speaker.
+  - Scriberr, rishikanthc/Scriberr, MIT, Copyright (c) rishikanthc: a speaker-name map per recording; "[Name] text" prompt lines.
+
+v2.6 note templates (templates.js, the prompt and long-meeting code in index.html)
+  - Hyprnote, fastrepl/hyprnote, MIT (outside enterprise/): a template is a name plus sections of title and description; "use every
+    section in order with its exact title".
+  - Meetily, Zackriya-Solutions/meeting-minutes, MIT, Copyright (c) Zackriya Solutions: fill-in-the-template rules, ignoring
+    instructions inside the transcript, "None noted" for an empty section, removing <think> blocks and code fences from the
+    answer, and reading a long transcript in overlapping parts and then writing it up once.
+  The prompt wording and the example templates are Vaani's own.
+
+v2.6 upload a recording (upload.js, sendFile in stt.js)
+  - Meetily, Zackriya-Solutions/meeting-minutes, MIT: the stages with progress and cancel, one run at a time, and cutting long speech
+    at the quietest moment (Vaani looks only before the limit, because the Sarvam AI request limit is hard).
+  - transformers.js-examples, huggingface/transformers.js-examples, Hugging Face, Apache-2.0: decoding a file in the browser
+    with decodeAudioData at 16 kHz and mixing it to mono (whisper-word-timestamps, MediaInput).
+  - Vibe, thewh1teagle/vibe, MIT: the job states (running, done, error, cancelled) and that one failed piece never loses the rest.
+
+v2.7 call detection and the Chrome extension 1.2.0 (extension/content.js, extension/background.js)
+  - anarlog (ex-Hyprnote), fastrepl/anarlog, MIT, Copyright (c) 2023-present Fastrepl, Inc. (outside its enterprise/ folder,
+    which was not used): crates/detect and plugins/detect. Ideas only, rewritten in plain JavaScript for a browser page: a call
+    counts as live only when the signal holds for a while (mic_usage_tracker.rs threshold), ask once and then keep quiet for 10
+    minutes (its cooldown), the hang-up / "leave call" / "end meeting" labels and "a leave control plus a meeting surface" for
+    Teams (meeting_ax.rs, node.rs). apps/desktop/src/stt/meeting-disclosure.ts: telling the others on the call that notes are
+    being taken, as a line the person copies into the meeting chat (Vaani never posts it itself; the wording is Vaani's own).
+
+v2.7 the kept copy of the audio (index.html keep*, upload.js fromBlob)
+  - Meetily, Zackriya-Solutions/meeting-minutes, MIT, and Vibe, thewh1teagle/vibe, MIT: record the audio first and transcribe
+    from it, so a failed live transcription loses nothing. Idea only; the code is Vaani's own.
+
+v2.8 notes output and the basic engine (cleanMd, tidyMd, okNotes, keepItems in index.html; templates.js)
+  - minutes, silverstein/minutes, MIT, Copyright (c) 2026 Mat Silverstein: a line that only says "none" is not an item
+    (summary_semantics.rs); tasks and decisions found while reading a long meeting are put back if the write-up drops them
+    (summarize.rs). Ideas only, no code copied; the code is Vaani's own.
+  - Meetily, Zackriya-Solutions/meeting-minutes, MIT, Copyright (c) Zackriya Solutions: cleaning an LLM's markdown answer (code
+    fences anywhere, reasoning blocks). Idea only, no code copied.
+
+v2.8 context-first prompt, length by meeting, "My notes" (ctxFor, lenFor, memo* in index.html)
+  - Hyprnote / anarlog, fastrepl/anarlog, MIT, Copyright (c) 2023-present Fastrepl, Inc. (outside its enterprise/ folder, which
+    was not used): the date, the event and the participants come before the rules; notes typed during the meeting are kept and
+    filled in; a length policy that follows the meeting. Ideas only, no code copied; the prompt wording is Vaani's own.
+
+v2.8 dictation clean-up (cleanText, basicClean, dictFix in index.html)
+  - minutes, silverstein/minutes, MIT, Copyright (c) 2026 Mat Silverstein: dictation_cleanup.rs and dictation_disfluency.rs
+    (fillers, same-kind self-corrections, spoken punctuation). Rules adapted and rewritten in JavaScript; no code copied.
+
+v2.8 sources on note lines (citeTake, citeDecor in index.html)
+  - minutes, silverstein/minutes, MIT, Copyright (c) 2026 Mat Silverstein: evidence.rs (every claim carries a source that is
+    checked against the transcript). Idea only, no code copied.
+
+v2.8 due dates (home.js dateIn/parseDue)
+  - chrono, wanasit/chrono, MIT, Copyright (c) 2014, Wanasit Tanakitrungruang: src/locales/en/parsers (casual dates, "in/within N
+    days", end of month, weekday, slash and little-endian dates). Ideas only, rewritten as Vaani's own stricter regular
+    expressions; no code copied.
+
+v2.8 Ask across meetings (home.js "Ask index")
+  - MiniSearch, lucaong/minisearch, MIT, Copyright 2022 Luca Ongaro: the BM25+ scoring formula and its k/b/d values, and prefix
+    matches at a lower weight (src/MiniSearch.ts). The formula is re-implemented; no MiniSearch code is included.
+  - minutes, silverstein/minutes, MIT, Copyright (c) 2026 Mat Silverstein: crates/core/src/retrieval.rs (whole-word matching on
+    letters and digits, accent folding, prefix on the last word only). Idea only, no code copied.
+
+v2.8 task hygiene and grounding (home.js absent(), grounding block)
+  - minutes, silverstein/minutes, MIT, Copyright (c) 2026 Mat Silverstein: summary_semantics.rs (a line that only says "none" is
+    not an item) and evidence.rs (what the model wrote is checked against the transcript). Ideas only; the code is Vaani's own.
+
+v2.8 speech pieces and quiet uploads (stt.js, upload.js)
+  - minutes, silverstein/minutes, MIT, Copyright (c) 2026 Mat Silverstein: crates/whisper-guard audio.rs strip_silence (noise
+    floor = mean of the quietest fifth, clamped) and normalize_audio (one gentle gain for a quiet file). Ideas and constants,
+    rewritten in JavaScript; no code copied.
+  - anarlog, fastrepl/anarlog, MIT, Copyright (c) 2023-present Fastrepl, Inc. (outside enterprise/): crates/audio-chunking
+    vad/session.rs neg_threshold_for_speech_samples (the pause bar grows more lenient as a piece nears its limit). Idea only.
+  - OpenWhisper, Knuckles92/OpenWhisper, MIT, Copyright (c) 2025 Knuckles92: services/streaming_transcriber.py
+    append_preview_text (a seam match needs two words, bounded by the overlap, and leaves a new word). Idea only, no code copied.
+
+v2.8 call detection, Chrome extension 1.3.0 (extension/content.js)
+  - Vexa, Vexa-ai/vexa, Apache-2.0: core/meetings/modules/join/src/googlemeet/selectors.ts, the two attribute selectors that
+    exist only after admission to a Google Meet call. Idea only; no code copied.
