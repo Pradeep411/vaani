@@ -6,8 +6,8 @@
 
 ### Just talk. Vaani takes the notes.
 
-**Free, open-source meeting notes and dictation in 22 languages, including Hindi, Hinglish, Kannada and Tamil.**<br>
-Runs in your browser. Nothing to install. No bot joins your call.
+**Your free AI note taker agent for Google Meet, Teams and Zoom. It spots the call, writes the notes and drafts the follow-up, in 22 languages.**<br>
+Open source. Hindi, Hinglish, Kannada, Tamil and more. Runs in your browser, and no bot joins your call.
 
 ### [▶ Try Vaani now, free](https://pradeep411.github.io/vaani/)
 
@@ -17,7 +17,7 @@ Runs in your browser. Nothing to install. No bot joins your call.
 [![Notes stay in your browser](https://img.shields.io/badge/notes-stay%20in%20your%20browser-34C759?style=flat-square)](#privacy-what-runs-where)
 [![GitHub stars](https://img.shields.io/github/stars/Pradeep411/vaani?style=flat-square)](https://github.com/Pradeep411/vaani/stargazers)
 
-<img src="docs/laptop-notes.png" alt="Vaani on a laptop: notes with summary, action items you can tick off, and decisions" width="860">
+<img src="docs/laptop-notes.png" alt="Vaani on a laptop: a meeting note with a tappable time on each point, a line you typed under My notes, and action items you can tick off" width="860">
 
 </div>
 
@@ -41,7 +41,7 @@ A free, open-source alternative to paid note-takers and dictation apps like Gran
 | Press the red button (or <kbd>⌘J</kbd> / <kbd>Ctrl J</kbd>) | Talk normally. Your words appear line by line | Summary, action items, decisions | WhatsApp, email, copy or download |
 
 <div align="center">
-<img src="docs/phone-screens.png" alt="Vaani on a phone: tap the red button, your words appear as you talk, then notes arrive with action items you can tick off" width="860">
+<img src="docs/phone-screens.png" alt="Vaani on a phone: Home with the red record button, your words appearing as you talk with a line you typed under My notes, then the note with a tappable time on each point" width="860">
 </div>
 
 <sub>Screens show a sample meeting. The notes were written by an AI engine; the free basic engine gives simpler notes (see below).</sub>
@@ -51,11 +51,19 @@ A free, open-source alternative to paid note-takers and dictation apps like Gran
 - 🎙️ **Meeting mode**: live transcript, then notes with a summary, action items, decisions and open questions
 - ✍️ **Quick note mode**: speak a thought, get clean, ready-to-send text you can edit
 - ✅ **Tickable action items**: tick them off as they get done
-- 💬 **Ask your meeting**: "What did Meera promise?"
+- 📝 **My notes**: type your own lines while Vaani listens. Your lines stay word for word, and Vaani adds what was said around them
+- 🔎 **Sources you can tap**: points, decisions and tasks show the time they were said, once Vaani has checked it against the transcript. Tap it to read that line
+- 💬 **Ask across all your meetings**: "What did Meera promise?", in any language Vaani transcribes. With an AI engine the answer carries numbered sources that open the note at the minute it was said; with none, Vaani shows the closest passages (a basic search, no AI)
+- 📆 **Due dates as they were said**: "EOD Friday", "end of the month", "in three days", "by the 25th", *kal*, *parso*, counted from the meeting's date. No date is made up from "last Friday" or "every Monday"
+- 🧾 **"Not in transcript" marks**: in AI-written notes, a task owner or due date that Vaani cannot find in the transcript is marked on the line, and that detail is left out of your to-dos, the follow-up email and the calendar link
+- ⏳ **Long meetings in one pass**: a long meeting is read whole when your AI provider can take it. When it can't, Vaani reads it in parts and says so on the note
 - 🌐 **Translate notes** into 18 languages
 - 📤 **Share anywhere**: WhatsApp, email, your phone's share sheet, copy, or download
 - 🗂️ **Your notes, searchable**, grouped by day
 - 🧠 **Knows what kind of meeting it was**: management, sales, client, developer, founders, customer support and more. Each gets its own format, with owners on every action item
+- 🏷️ **Speaker names**: tap a speaker in the transcript and call them "Priya". The name applies to the whole meeting and shows up in exports and in what Ask reads
+- 🧩 **Your own note templates**: name a layout and its sections ("Risks: what could go wrong"), pick it before you record or upload. Works with an AI notes engine
+- 📁 **Make notes from a recording**: choose an audio or video file (MP3, M4A, WAV, OGG, WebM, MP4; up to 150 MB and 2 hours) and Vaani writes the notes. With a Sarvam AI key the sound goes from your browser straight to Sarvam AI in pieces of under 25 seconds; the file is never saved. A quiet recording is made louder before it is sent; a very long one may be refused on a phone with little memory, with a plain message
 - 🌙 **Light and dark mode**, phone and laptop layouts
 - 📲 **Install it like an app** on your phone or computer (Add to Home Screen / Install)
 - ⏱️ **Time saved counter**: see how much typing you skipped
@@ -65,13 +73,15 @@ A free, open-source alternative to paid note-takers and dictation apps like Gran
 
 ## Chrome extension
 
-**Vaani pops up when your call starts.** Join a Google Meet, Microsoft Teams or Zoom call in Chrome, and Vaani offers to take notes. One click opens Vaani beside the call.
+**Vaani, your AI note taker agent, spots your call.** Join a Google Meet, Microsoft Teams or Zoom call in Chrome and you get a Chrome notification, *Meeting detected. Take notes?*, and a small prompt on the call page. **Start notes** opens Vaani in a slim window beside the call.
 
-- **Hears everyone, even with headphones.** Turn on *Hear everyone on a call*, pick the call's tab and switch on *Share tab audio*. Vaani mixes the call's sound with your mic.
+- **Hears everyone, with no screen-sharing picker.** Click the Vaani icon on the call tab (or press **Alt+Shift+V**) and Chrome hands the call tab's sound to Vaani, which mixes it with your mic. Chrome allows that only after a click on the icon or the shortcut, so when you start from the notification or the prompt, Vaani begins with your mic and one click on the icon adds everyone to the same notes. The first time, Chrome asks for its OK ("Hear the whole call").
+- **Everyone's words in the notes need a Sarvam AI key.** With a key, Sarvam AI turns the whole call into text. Without one, your browser's speech engine can only hear your mic: Vaani says so plainly, keeps the call's audio in the tab until you close it, and offers to make notes from the whole recording once you add a key (or to save it as a file).
+- **Knows when the call ends.** It offers to stop the notes, in a notification and in Vaani.
 - **Notes in the right format.** Vaani works out whether it was a sales call, a management review, a tech sync or a founders' meeting, and writes the notes to match.
 - **No bot joins your call.** Nobody sees a "Vaani is recording" guest.
 
-**Install:** Chrome Web Store listing is in review. Until then, [download the latest extension](https://github.com/Pradeep411/vaani/releases?q=extension), unzip it, open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked** and pick the folder.
+**Install:** [Vaani on the Chrome Web Store](https://chromewebstore.google.com/detail/fhgpebnbfjmldplhfnlmclkcplbiheof). Version 1.2.0 added the notification, the call hand-over and the call-end prompt. Version 1.3.0 no longer asks while you wait in Google Meet's lobby: it asks once you are in the call. Until the store serves 1.3.0, you can [download the latest extension](https://github.com/Pradeep411/vaani/releases?q=extension), unzip it, open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked** and pick the folder.
 
 The extension is a thin shell around the live app, so app improvements reach you instantly. Read the [privacy page](https://pradeep411.github.io/vaani/privacy.html).
 
@@ -92,11 +102,11 @@ All of it is worked out in your browser from the notes you saved. Nothing is sen
 
 **Your next meetings, right on Home.** Connect Google Calendar in **Settings → Calendar** and a *Coming up* list shows your next 36 hours: time (or "In 12 min"), title, who's invited, and whether it's on Meet, Zoom or Teams.
 
-- **Join and take notes** opens the call in a new tab and starts Vaani in meeting mode, hearing everyone, with the note already titled.
-- Attendee names help Vaani spell people right and work out who owns each to-do.
+- **Join and take notes** opens the call. For a Google Meet call with the Chrome extension, Vaani offers to take notes beside the call when it starts, already titled. Otherwise Vaani starts recording your mic in meeting mode, with the note already titled.
+- Attendee names help Vaani work out who owns each to-do, on your device. They are not sent to your AI provider unless you turn on **Use attendee first names to write better notes** in Settings → Calendar. It is off until you turn it on; with it on, what Vaani reads as the first name of each person invited goes to your own AI provider with the transcript (never an email address; a name Vaani is unsure of is skipped).
 - A quiet reminder appears 5 minutes before a meeting starts.
 
-Vaani reads your next 36 hours of events straight from Google into this browser. None of it goes to your Vaani account or any Vaani database. Disconnect any time: it deletes the saved events and asks Google to remove Vaani's access. If Google can't do that without a fresh sign-in, Vaani says so, and you can remove it under Google Account → Security → Third-party connections (myaccount.google.com/connections). A note you take for an event keeps its attendee names and event id; backups leave them out unless you turn on "Include attendee names in backups" in Settings. The access is read-only, the sign-in token lives only in memory, and running your own copy works with your own Google client ID: open the app with `?gcid=1` and use Settings → Calendar → Advanced. Saved events are kept for 36 hours and removed the next time you open Vaani after that.
+Vaani reads your next 36 hours of events straight from Google into this browser. None of it goes to your Vaani account or any Vaani database. Disconnect any time: it deletes the saved events and asks Google to remove Vaani's access. If Google can't do that without a fresh sign-in, Vaani says so, and you can remove it under Google Account → Security → Third-party connections (myaccount.google.com/connections). A note you take for an event keeps its attendee names and event id; backups leave them out unless you turn on "Include names and email addresses in backups" in Settings. The access is read-only, the sign-in token lives only in memory, and running your own copy works with your own Google client ID: open the app with `?gcid=1` and use Settings → Calendar → Advanced. Saved events are kept for 36 hours and removed the next time you open Vaani after that.
 
 ## The notes engine: free by default, smarter with a key
 
@@ -105,8 +115,8 @@ Vaani never needs an API key. It picks the best engine available, in this order:
 | Engine | Cost | Where it runs | What you get |
 |---|---|---|---|
 | **Your own AI key** (Sarvam AI, OpenAI, Claude or Gemini) | Your key | The provider you choose (text; a Sarvam AI key also gets the audio, for speech to text) | The best notes, any language, Ask and Translate everywhere |
-| **On-device AI built into Chrome** | Free | Your computer | Smart notes, Ask and Translate with no key (Chrome on a laptop or desktop that supports it) |
-| **Vaani's basic engine** | Free | Your device, works offline | Summary, action items and decisions picked out of your words |
+| **On-device AI built into Chrome** | Free | Your computer | Smart notes, Ask and Translate with no key (Chrome on a laptop or desktop that supports it). Chrome downloads it once, when you tap *Download Chrome's on-device AI* in Settings or *Set up Chrome's free on-device AI* under a note. |
+| **Vaani's basic engine** | Free | Your device, works offline | Summary, action items and decisions picked out of your words by keywords (no AI) |
 
 Add a key in **Settings → Notes engine**. It is saved only in your browser and sent only to that provider.
 
@@ -119,11 +129,11 @@ Add a key in **Settings → Notes engine**. It is saved only in your browser and
 
 By default your browser turns speech into text. It listens for one language at a time, so a meeting in Kannada, Hindi or Tamil mixed with English can come out almost empty when it is set to English.
 
-Save a **Sarvam AI** key and Vaani uses Sarvam AI's speech to text instead (`saaras:v4`, code-mixed output, the language detected automatically when you pick English). Vaani records the audio in your browser and sends it straight to Sarvam AI in pieces of about 25 seconds; the words appear as each piece comes back. The audio is kept only in memory, never saved, and dropped once it is transcribed. Your "Names and words" list (up to 50 names and terms) is sent to Sarvam AI with the audio as key terms, so names come out right; it also goes to your notes provider with the text. You can switch back in **Settings → Speech to text → This browser**.
+Save a **Sarvam AI** key and Vaani uses Sarvam AI's speech to text instead (`saaras:v4`, which handles Indian languages mixed with English; the language is detected automatically when you pick English). Vaani records the audio in your browser and sends it straight to Sarvam AI in pieces of about 25 seconds; the words appear as each piece comes back. A piece with no sound in it is not sent, and the note says how much that was. The audio is kept only in memory, never saved, and dropped once it is transcribed. Your "Names and words" list (up to 50 names and terms) is sent to Sarvam AI with the audio as key terms, so names come out right; it also goes to your notes provider with the text. You can switch back in **Settings → Speech to text → This browser**.
 
 Speaker labels are not offered yet: Sarvam AI does them only in its Batch API, which uploads files to cloud storage on another host, and Vaani stays a single page that talks to nothing but the services you choose.
 
-If a recording longer than 3 minutes has almost no words (under 25 words, or under 4 a minute), Vaani does not ask an AI to write notes from it. It tells you how little it heard, the likely reason, and how to fix it.
+If a recording longer than 3 minutes has very few words (under 25 words, or under 4 a minute), Vaani still writes short notes from what was said, nothing invented, then tells you the likely reason (often: only your mic was heard) and how to fix it.
 
 ## Privacy: what runs where
 
@@ -131,12 +141,12 @@ We'd rather be precise than make big promises.
 
 | Step | Where it happens |
 |---|---|
-| Speech to text | **Your browser's speech engine**, unless you set a Sarvam AI key. Chrome and Edge send the audio to Google or Microsoft to do this. Safari uses Apple's engine. **With a Sarvam AI key set, the meeting audio is sent from your browser to Sarvam AI for transcription, with your Names and words list, and nothing goes to Vaani.** Vaani asks once before it starts sending audio to Sarvam AI for a key saved before v2.3. With *Hear everyone on a call* on, the other people's voices go there too. Vaani itself never receives your audio. |
+| Speech to text | **Your browser's speech engine**, unless you set a Sarvam AI key. Chrome and Edge send the audio to Google or Microsoft to do this. Safari uses Apple's engine. **With a Sarvam AI key set, the meeting audio is sent from your browser to Sarvam AI for transcription, with your Names and words list, and nothing goes to Vaani.** A piece with no sound in it is not sent, and the note says how much that was. Vaani asks once before it starts sending audio to Sarvam AI for a key saved before v2.3. When Vaani hears a call through its Chrome extension, the other people's voices go there too. Without a key, Vaani keeps the meeting's audio only in the tab's memory until you close it, so a failed or mic-only transcript can be redone. Vaani itself never receives your audio. |
 | Notes (free engines) | **On your device.** |
-| AI (your own key) | **Text goes to the provider you picked** whenever Vaani writes notes, answers a question, recaps your week, translates or drafts a follow-up. Ask and Recap send the notes they search. OpenAI, Claude and Gemini never get the audio; a Sarvam AI key also does speech to text (above). |
+| AI (your own key) | **Text goes to the provider you picked** whenever Vaani writes notes, answers a question, recaps your week, translates or drafts a follow-up. With the transcript go the meeting's date and length, the notes you typed while recording, the times you marked and your first name from Settings. If you picked an earlier meeting under "Follow-up to", that meeting's title and its open tasks go along too. Ask sends your question with the few passages of your notes and transcripts that match it (at most 8); Recap sends that week's notes. OpenAI, Claude and Gemini never get the audio; a Sarvam AI key also does speech to text (above). |
 | Saved notes | **Only in this browser** (local storage, or IndexedDB when that is full). Clearing browser data deletes them. |
 | Insights | **On your device**, from your saved notes. |
-| Google Calendar (only if you connect it) | **Straight from Google into this browser.** Read-only. The token stays in memory; event titles, times and links are kept for 36 hours, and removed the next time you open Vaani after that. Attendee names stay on this device, and stay out of backups unless you turn them on. |
+| Google Calendar (only if you connect it) | **Straight from Google into this browser.** Read-only. The token stays in memory; event titles, times and links are kept for 36 hours, and removed the next time you open Vaani after that. Attendee names stay on this device unless you turn on "Use attendee first names to write better notes" in Settings (off until you turn it on): then what Vaani reads as the first name of each person invited goes to your own AI provider with the transcript (a name Vaani is unsure of is skipped). They stay out of backups unless you turn that on. |
 | Your account (where sign-in is switched on, 18 or older) | **Google Firebase.** Email, name, sign-up date and sign-in times. Sign-in is held in the US, the rest in Mumbai, India. Download or delete it in Settings. |
 | Usage stats (only if you say yes) | **Google Firebase, Mumbai.** Meeting type, length, language, device type and features used. Never what was said. Kept 12 months. |
 | Under 18 | **No account.** Nothing about you is kept; only an anonymous daily count of opens and notes, with no name or device attached. |
@@ -163,7 +173,7 @@ Speech recognition comes from your browser. **Chrome supports all 22**; support 
 | Safari (Mac and iPhone) | ✅ |
 | Firefox | ❌ No built-in speech engine yet. Your saved notes still open. |
 
-**Online calls:** turn on **Hear everyone on a call** (or use the [Chrome extension](#chrome-extension)), then pick the call's tab and switch on *Share tab audio*. Vaani hears both sides, even with headphones. For the Zoom or Teams desktop apps, keep the call on your speakers for now.
+**Online calls:** use the [Chrome extension](#chrome-extension) and click its icon on the call tab, so Vaani hears both sides, even with headphones. With a Sarvam AI key both sides become text; without one only your mic does. For the Zoom or Teams desktop apps, Vaani hears only your mic: keep the call on your speakers.
 
 ## Run it yourself
 
@@ -178,7 +188,7 @@ Vaani is one HTML file. No build step, no dependencies.
 
 - [x] Chrome extension that pops up when a Meet, Teams or Zoom call starts
 - [ ] Mac and Windows app for the Zoom and Teams desktop apps
-- [ ] Speaker names ("Priya", "Arjun") in the transcript
+- [x] Speaker names ("Priya", "Arjun") in the transcript: you name them yourself. Automatic speaker separation (diarization) is not in yet, see CHANGES.md
 - [x] Sarvam speech-to-text for higher accuracy in Indian languages (with your key)
 - [ ] Export to Notion, Google Docs and Slack
 - [ ] More languages: Odia, Assamese and more

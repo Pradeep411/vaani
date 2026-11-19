@@ -23,7 +23,7 @@ const VAANI_GOOGLE_CLIENT_ID = "507377687621-5dsuj5hj0cvfoe4hibdn7qtfidtdaaov.ap
   var client = null, clientFor = "", gisP = null;
   var mem = null, memAt = 0;  /* the last fetch, with attendee names: memory only */
   var state = "idle";        /* idle | connecting | ok | stale | reconnect */
-  var pending = null, armed = null, forcedCall = false, showAll = false, dismissed = Object.create(null), lastFetch = 0;
+  var pending = null, armed = null, showAll = false, dismissed = Object.create(null), lastFetch = 0;
   var attempts = [];         /* pending Disconnect attempts {id, timer, done, abandoned}: quiet token requests made only to revoke */
   var owed = "";             /* the client ID whose pending revoke a Connect for that same ID replaced: if Connect fails, access may remain */
   var busy = Object.create(null); /* client IDs with a revoke still running in this tab (their saved "may remain" mark is not shown yet) */
@@ -255,8 +255,18 @@ const VAANI_GOOGLE_CLIENT_ID = "507377687621-5dsuj5hj0cvfoe4hibdn7qtfidtdaaov.ap
     pending = { id: ev.id, title: ev.t, people: (ev.people || []).slice(), k: link ? link.k : "", at: Date.now() };
     $("#calBan").hidden = true;
     V.setMode("meeting");
-    if (link) { forcedCall = true; V.setCallOn(true); }
-    /* the click is the gesture: start first, so the call-tab picker gets it, then open the meeting */
+    /* v2.7: with the Vaani Chrome extension, the notes are taken in Vaani's window beside the call, where Vaani can hear
+       everyone: the call opens, the extension offers to take notes when it starts, and that window picks up this event's
+       title and attendee names (kept for 15 minutes in this browser only). Only for Google Meet, which always runs in
+       the browser; a Zoom or Teams link may open the desktop app, where the extension can't see the call. Otherwise
+       Vaani records the mic here, as before. */
+    if (link && link.k === "meet" && V.extKnown && V.extKnown()) {
+      V.saveJSON("vaani.calNext", { id: pending.id, title: pending.title, people: pending.people, k: pending.k, at: pending.at });
+      pending = null; openLink(link.u);
+      /* audit L9: true whether or not "Ask me when a call starts" is on */
+      V.toast("Your call is opening. Start Vaani from the call: its prompt, or the Vaani icon.");
+      return;
+    }
     V.startRec();
     if (link) openLink(link.u);
   }
@@ -360,7 +370,14 @@ const VAANI_GOOGLE_CLIENT_ID = "507377687621-5dsuj5hj0cvfoe4hibdn7qtfidtdaaov.ap
     var own = String(V.load("vaani.gcid", "") || ""); var inp = $("#gcidInp"); if (inp && document.activeElement !== inp) inp.value = own;
     $("#gcidClear").hidden = !own;
     $("#calLeft").hidden = !leftVisible();
+    var on = V.load("vaani.calNames", "0") === "1", sw = $("#calNames");
+    if (sw) { sw.setAttribute("aria-checked", String(on)); $("#calNamesState").textContent = on ? "On" : "Off"; }
+    /* fix r1 (creative P2-12): the switch is shown once it can do something: Calendar is connected, or it is already on
+       (so it can always be turned off). Once shown it stays while Settings is open, so it never vanishes under a finger. */
+    namesShown = namesShown || connected() || on;
+    var nr = $("#calNamesRow"); if (nr) nr.hidden = !namesShown;
   }
+  var namesShown = false;
   /* Settings shows Calendar only when it can be used: a client ID is set, an own ID was saved, a disconnect left a step
      to do, or a tester opened the page with ?gcid=1. Checked when the sheet opens, so Clear never hides the focused button. */
   /* the own-client-ID field is for testers and forks: shown only with ?gcid=1 or once an own ID is saved (N-18) */
@@ -372,6 +389,8 @@ const VAANI_GOOGLE_CLIENT_ID = "507377687621-5dsuj5hj0cvfoe4hibdn7qtfidtdaaov.ap
     var box = H.el("div"); box.id = "calSet";
     box.innerHTML = '<span class="form-l">Calendar</span><div class="opts set-more">' +
       '<div class="set-row" id="calRow"><span id="calLbl"></span><button type="button" id="calBtn"></button><button type="button" id="calBtn2" hidden>Disconnect</button></div>' +
+      /* v2.8 (CTO): attendee first names go to the person's AI provider only with this on; off by default (index.html ctxFor reads vaani.calNames) */
+      '<div class="set-row" id="calNamesRow"><span id="calNamesLbl">Use attendee first names to write better notes<small>Sent to your AI provider with the transcript, only when your own AI key writes the notes. Off unless you turn it on.</small></span><button type="button" class="switch" id="calNames" role="switch" aria-checked="false" aria-labelledby="calNamesLbl"><i aria-hidden="true"></i><span class="sr" id="calNamesState">Off</span></button></div>' +
       '<details class="set-adv" id="calAdv"><summary>Advanced: use your own Google client ID</summary><div id="calAdvBody" hidden>' +
       '<label class="form-l" for="gcidInp">Google OAuth client ID</label><input class="field" id="gcidInp" autocomplete="off" spellcheck="false" inputmode="url" aria-describedby="gcidHint" placeholder="123456789-abc123.apps.googleusercontent.com">' +
       '<div class="adv-act"><button type="button" class="adv-save" id="gcidSave">Save</button><button type="button" class="btn-t" id="gcidClear">Clear</button></div>' +
@@ -382,6 +401,7 @@ const VAANI_GOOGLE_CLIENT_ID = "507377687621-5dsuj5hj0cvfoe4hibdn7qtfidtdaaov.ap
     anchor.parentNode.insertBefore(box, anchor);
     $("#calBtn").addEventListener("click", function () { var d = this.getAttribute("data-do"); if (d === "connect") request(false); else if (d === "reconnect") request(false); else if (d === "disconnect") disconnect(); });
     $("#calBtn2").addEventListener("click", disconnect);
+    $("#calNames").addEventListener("click", function () { V.save("vaani.calNames", V.load("vaani.calNames", "0") === "1" ? "0" : "1"); paintSettings(); });
     /* closed means display:none, so nothing hidden inside stays focusable or hit-testable */
     $("#calAdv").addEventListener("toggle", function () { $("#calAdvBody").hidden = !this.open; });
     $("#gcidSave").addEventListener("click", function () {
@@ -419,15 +439,19 @@ const VAANI_GOOGLE_CLIENT_ID = "507377687621-5dsuj5hj0cvfoe4hibdn7qtfidtdaaov.ap
     if (!c || typeof c !== "object") return null;
     return { id: /^[\w-]{1,200}$/.test(String(c.id || "")) ? String(c.id) : "", title: plainText(c.title).slice(0, 200), people: Array.isArray(c.people) ? c.people.filter(function (x) { return typeof x === "string" && plainText(x); }).map(function (x) { return plainText(x).slice(0, 80); }).slice(0, 40) : [] };
   }
+  /* audit L8: the event handed to the extension's window is forgotten after 15 minutes even if no recording started */
+  (function () { var nx = V.loadJSON("vaani.calNext", null); if (nx && !(typeof nx === "object" && typeof nx.at === "number" && Date.now() - nx.at < 900000 && Date.now() >= nx.at)) V.remove("vaani.calNext"); setTimeout(function () { var x = V.loadJSON("vaani.calNext", null); if (x && typeof x.at === "number" && Date.now() - x.at >= 900000) V.remove("vaani.calNext"); }, 900000); })();
   H.ext.hooks.push(function (ev, d, r) {
     if (ev === "home") paintHome();
     else if (ev === "view") paintBanner();
     else if (ev === "start") {
       armed = pending && Date.now() - pending.at < 120000 ? pending : null; pending = null;
+      /* v2.7: the event chosen in another Vaani tab with "Join and take notes", for the window the extension opened */
+      var nx = V.loadJSON("vaani.calNext", null); if (nx) V.remove("vaani.calNext");
+      /* audit L8: only for a call of the same kind (Meet), within 15 minutes */
+      if (!armed && V.SRC && nx && typeof nx === "object" && typeof nx.at === "number" && Date.now() - nx.at < 900000 && Date.now() >= nx.at && nx.k === V.SRC) armed = { id: String(nx.id || ""), title: plainText(nx.title).slice(0, 200), people: Array.isArray(nx.people) ? nx.people.filter(function (x) { return typeof x === "string"; }).slice(0, 40) : [], k: typeof nx.k === "string" ? nx.k : "", at: nx.at };
       if (armed && armed.title) { var m = $("#recMeta"); if (m) m.textContent = armed.title + ". " + m.textContent; }
       ban.hidden = true;
-    } else if (ev === "cleanup") {
-      if (forcedCall) { forcedCall = false; V.setCallOn(V.load("vaani.call", "0") === "1"); }
     } else if (ev === "beforeSave") {
       if (armed) { d.cal = cleanCal(armed); if (armed.title) d.title = armed.title; if (H.callSrc(armed.k) && !d.src) d.src = armed.k; }
       armed = null;
