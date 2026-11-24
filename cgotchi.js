@@ -174,7 +174,8 @@
       if (V.getMode() === "note") V.setMode("meeting");
       V.startRec();
       /* Vaani may need a choice first (speech engine, another tab already recording): CGotchi shows "didn't answer" and the reason is on screen here */
-      setTimeout(function () { if (!V.isListening()) V.toast("CGotchi asked Vaani to start. Finish the step on screen, then try again."); }, 1500);
+      /* if Vaani already said why (no speech engine, another tab recording), that reason stays on screen */
+      setTimeout(function () { if (!V.isListening() && !document.querySelector("#toast.show") && !document.querySelector(".scrim:not([hidden])")) V.toast("CGotchi asked Vaani to start. Finish the step on screen, then try again."); }, 1500);
     } else if (verb === "STOP") {
       if (now - lastCmd.STOP < 1500) return; lastCmd.STOP = now;
       if (V.isListening()) { wantNotes = true; V.stopRec(); }
