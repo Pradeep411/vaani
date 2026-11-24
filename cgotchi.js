@@ -17,7 +17,7 @@
   var APP_ID = "local.vaani.remote";
   var ESPRESSIF_VID = 0x303a;
   /* the CGotchi app Vaani ships (cgotchi-app.js, loaded only when needed); a CGotchi with any other build is offered an update */
-  var APP_SHA = "28e2b67377a802fd4fdfbc9b56c61fd06b49713f9f56a73be14a10fade37a1c4", APP_KB = 256; /* set by vaani-cgotchi/tools/ship_to_vaani.py from the built bundle */
+  var APP_SHA = "7fb9b00fbe9d5fb93c414a4ccb3a9e4975b7d07f951081af7ee6b3f0862d4dad", APP_KB = 256; /* set by vaani-cgotchi/tools/ship_to_vaani.py from the built bundle */
   var TYPES = { auto: 1, general: 1, management: 1, sales: 1, developer: 1, founder: 1 };
   var POLL_MS = 250, BEAT_MS = 2000, FRONT_MS = 6000, REQ_MS = 3000, QUEUE_MAX = 64;
   var KNOWN = "vaani.cgotchi.known", UNLINKED = "vaani.cgotchi.unlinked";
@@ -345,15 +345,18 @@
     var ok = document.createElement("button"); ok.type = "button"; ok.className = "done-btn"; ok.id = "cgSheetOk";
     var no = document.createElement("button"); no.type = "button"; no.className = "cancel"; no.id = "cgSheetNo";
     pn.appendChild(h); pn.appendChild(p); pn.appendChild(ok); pn.appendChild(no); s.appendChild(pn); document.body.appendChild(s);
-    ok.addEventListener("click", function () { var f = sheetDone; sheetDone = null; V.closeSheets(); if (f) f(true); });
-    no.addEventListener("click", function () { V.closeSheets(); });
+    /* the big button is the safe choice when the action is destructive: then the small red one is the action */
+    ok.addEventListener("click", function () { var f = sheetDone, yes = !sheetEl.danger; sheetDone = null; V.closeSheets(); if (f) f(yes); });
+    no.addEventListener("click", function () { var f = sheetDone, yes = !!sheetEl.danger; sheetDone = null; V.closeSheets(); if (f) f(yes); });
     s.addEventListener("click", function (e) { if (e.target === s) V.closeSheets(); });
     /* closed any other way (Escape, another sheet) counts as "no" */
     try { new MutationObserver(function () { if (s.hidden && sheetDone) { var f = sheetDone; sheetDone = null; f(false); } }).observe(s, { attributes: true, attributeFilter: ["hidden"] }); } catch (e) {}
     sheetEl = s; return s;
   }
-  function sheet(title, body, okText, noText) {
+  function sheet(title, body, okText, noText, danger) {
     buildSheet();
+    sheetEl.danger = !!danger;
+    document.getElementById("cgSheetNo").classList.toggle("cg-danger", !!danger);
     document.getElementById("cgSheetH").textContent = title;
     document.getElementById("cgSheetP").textContent = body;
     document.getElementById("cgSheetOk").textContent = okText;
@@ -366,7 +369,7 @@
       : sheet("Put the Vaani app on your CGotchi?", "About " + APP_KB + " KB. It takes about 20 seconds. Keep CGotchi plugged in.", "Install", "Not now");
   }
   function sheetUnlink() {
-    sheet("CGotchi is linked", "Its red button starts and stops Vaani on this computer. Unlink to use CGotchi for other apps.", "Unlink", "Done")
+    sheet("CGotchi is linked", "Its red button starts and stops Vaani on this computer. Unlink to use CGotchi for other apps.", "Done", "Unlink", true)
       .then(function (yes) { if (yes) unlink(); });
   }
 
