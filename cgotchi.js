@@ -17,7 +17,7 @@
   var APP_ID = "local.vaani.remote";
   var ESPRESSIF_VID = 0x303a;
   /* the CGotchi app Vaani ships (cgotchi-app.js, loaded only when needed); a CGotchi with any other build is offered an update */
-  var APP_SHA = "7fb9b00fbe9d5fb93c414a4ccb3a9e4975b7d07f951081af7ee6b3f0862d4dad", APP_KB = 256; /* set by vaani-cgotchi/tools/ship_to_vaani.py from the built bundle */
+  var APP_SHA = "50f41ad77c76080df08924b96db93f0029cfd8cfee925df717366b8b3b3f24d1", APP_KB = 256; /* set by vaani-cgotchi/tools/ship_to_vaani.py from the built bundle */
   var TYPES = { auto: 1, general: 1, management: 1, sales: 1, developer: 1, founder: 1 };
   var POLL_MS = 250, BEAT_MS = 2000, FRONT_MS = 6000, REQ_MS = 3000, QUEUE_MAX = 64;
   var KNOWN = "vaani.cgotchi.known", UNLINKED = "vaani.cgotchi.unlinked";
@@ -211,7 +211,8 @@
     else if (ev === "view") {
       if (d === "making") { stateKey = "east"; key("east"); }
       else if (d === "idle" && (stateKey === "east" || stateKey === "north")) { stateKey = "back"; key("up"); wantNotes = false; }
-    } else if (ev === "note" && d && d.fresh && (stateKey === "east" || wantNotes)) { stateKey = "back"; wantNotes = false; key("down"); }
+    /* a note that only keeps the audio or your typed notes opens with fresh=false; it is still this recording's result */
+    } else if (ev === "note" && d && (stateKey === "east" || wantNotes)) { stateKey = "back"; wantNotes = false; key("down"); }
   });
 
   /* ---------------- the clock: a worker, so a background tab keeps CGotchi in step ----------------
@@ -365,11 +366,11 @@
   }
   function ask(kind) {
     return kind === "update"
-      ? sheet("Update the Vaani app on your CGotchi?", "A newer version comes with this Vaani. It takes about 20 seconds. Keep CGotchi plugged in.", "Update", "Not now")
+      ? sheet("Update the Vaani app on your CGotchi?", "Your CGotchi has a different version from the one this Vaani works with. It takes about 20 seconds. Keep CGotchi plugged in.", "Update", "Not now")
       : sheet("Put the Vaani app on your CGotchi?", "About " + APP_KB + " KB. It takes about 20 seconds. Keep CGotchi plugged in.", "Install", "Not now");
   }
   function sheetUnlink() {
-    sheet("CGotchi is linked", "Its red button starts and stops Vaani on this computer. Unlink to use CGotchi for other apps.", "Done", "Unlink", true)
+    sheet("CGotchi is linked", "Its buttons start, stop and mark Vaani notes on this computer. Unlink to use CGotchi for other apps.", "Done", "Unlink", true)
       .then(function (yes) { if (yes) unlink(); });
   }
 
@@ -388,7 +389,7 @@
       if (live) home.ico.setAttribute("hidden", ""); else home.ico.removeAttribute("hidden");
       home.dot.hidden = !live;
       home.txt.textContent = busy || (live ? (front ? "CGotchi linked" : "CGotchi in another app") : "Connect CGotchi");
-      home.btn.setAttribute("aria-label", live ? "CGotchi linked. Click to unlink" : "Connect CGotchi");
+      home.btn.title = live ? "CGotchi linked. Click to unlink" : "Use your CGotchi as Vaani's start and stop button";
     }
     if (row) {
       row.btn.textContent = busy || (live ? "Unlink" : "Connect");

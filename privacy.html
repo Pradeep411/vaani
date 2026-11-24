@@ -31,7 +31,7 @@ footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);color:v
 <body>
 <main>
 <h1>Privacy, in plain words</h1>
-<p class="sub">Vaani, the AI note taker agent: the web app and the Chrome extension (1.3.0). Last updated 19 November 2026.</p>
+<p class="sub">Vaani, the AI note taker agent: the web app and the Chrome extension (1.3.0). Last updated 24 November 2026.</p>
 
 <p><b>Short version:</b> Vaani has no account, no server and no tracking. Your notes stay in your browser.</p>
 
@@ -58,11 +58,13 @@ footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--line);color:v
 <li><b>Saved notes</b> live only in this browser’s storage (local storage, or IndexedDB when that is full). Clearing your browser data deletes them.</li>
 <li><b>Insights</b> are worked out in your browser from the notes you saved. Nothing is sent anywhere to make them.</li>
 <li><b>Google Calendar, only if you connect it:</b> Vaani reads your next 36 hours of events straight from Google into this browser. Nothing goes to any Vaani server. Disconnect any time. Access is read-only and the token is kept in memory only. Titles, times and call links are kept here for 36 hours, and removed the next time you open Vaani after that. Vaani reads attendee names, never their email addresses. The names stay on this device unless you turn on “Use attendee first names to write better notes” in Settings, Calendar. It is off until you turn it on. With it on, when your own AI key writes the notes, what Vaani reads as the first name of each person invited goes to that provider with the transcript (never an email address; a name Vaani is unsure of is skipped), so each task gets the right owner. A note you take for an event keeps its title, which goes to your AI provider like any note title if you use your own key. That note also keeps the event’s attendee names and the event id; backups leave them out unless you turn on “Include names and email addresses in backups” in Settings. If you use “Join and take notes” with the Chrome extension, the event’s title and attendee names are kept in this browser for up to 15 minutes so the Vaani window beside the call can use them. Disconnecting deletes the saved events and asks Google to remove Vaani’s access. If the sign-in has expired, Vaani asks Google for a short-lived token only to revoke it. If Google can’t do that without your sign-in, Vaani tells you, and you can remove access yourself in your Google Account under Security, Third-party connections (myaccount.google.com/connections).</li>
+<li><b>CGotchi desk remote, only if you link one:</b> Vaani talks to your CGotchi over the USB cable on this computer, using Chrome’s or Edge’s Web Serial, and only after you pick it in the browser’s own list. Vaani reads only the button presses from the Vaani app on CGotchi (start, stop, mark, note type) and sends it only what Vaani is doing (linked, recording, saving, notes ready). No audio, transcript or note is sent to CGotchi, CGotchi’s microphones are not used, and nothing about the device leaves your computer. If you install or update the Vaani app on CGotchi, the app file comes from this site and is checked (SHA-256) before it is written to the device. Unlink in Settings, or remove the device in your browser’s site settings, at any time.</li>
 <li>No accounts, cookies for tracking, analytics or ads.</li>
 </ul>
 
 <h2>Your choices</h2>
 <ul>
+<li>Unlink your CGotchi in Vaani’s Settings, or remove its access in your browser’s site settings (Serial ports).</li>
 <li>Turn off the call prompt in the extension’s menu, or remove the extension at any time.</li>
 <li>Delete any note from inside Vaani.</li>
 <li>Disconnect Google Calendar in Settings at any time. You can also remove Vaani in your Google Account under Security, Third-party connections (myaccount.google.com/connections).</li>

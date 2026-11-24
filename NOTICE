@@ -82,3 +82,11 @@ v2.8 speech pieces and quiet uploads (stt.js, upload.js)
 v2.8 call detection, Chrome extension 1.3.0 (extension/content.js)
   - Vexa, Vexa-ai/vexa, Apache-2.0: core/meetings/modules/join/src/googlemeet/selectors.ts, the two attribute selectors that
     exist only after admission to a Google Meet call. Idea only; no code copied.
+
+v2.9 CGotchi desk remote (cgotchi.js, cgotchi-tick.js, cgotchi-app.js)
+  - CGotchi / MicroPixel firmware and app SDK (guest/sdk, guest/runtime), Apache-2.0: the MPX1 USB line protocol that cgotchi.js
+    speaks is written from its public protocol description and its command-line client (tools/micropixel); no code was copied.
+  - cgotchi-app.js carries the Vaani app for CGotchi (vaani-cgotchi, Apache-2.0) as a built bundle. The bundle contains the
+    CGotchi app SDK and Guest runtime (Apache-2.0), LLVM libc++ objects from wasi-sdk (Apache-2.0 WITH LLVM-exception) and the
+    WebAssembly Micro Runtime AOT output (Apache-2.0 WITH LLVM-exception), compiled in. The Apache-2.0 licence text in
+    licenses/Apache-2.0.txt applies to that file; Vaani's own code stays MIT.
