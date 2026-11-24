@@ -13,20 +13,22 @@
   if (!V || !H || !H.ext || !navigator.serial || !window.isSecureContext) return;
 
   var APP_ID = "local.vaani.remote";
+  /* the CGotchi app Vaani ships (cgotchi-app.js, loaded only when needed); a CGotchi with any other build is updated on Connect */
+  var APP_SHA = "", APP_KB = 0; /* set by vaani-cgotchi/tools/ship_to_vaani.py from the built bundle */
   var ESPRESSIF_VID = 0x303a;
   var TYPES = { auto: 1, general: 1, management: 1, sales: 1, developer: 1, founder: 1 };
   var POLL_MS = 250, BEAT_MS = 2000, REQ_MS = 3000;
 
   var port = null, reader = null, writer = null, buf = "", reqId = 1 + Math.floor(Math.random() * 0x3fffffff);
   var pending = {}, queue = Promise.resolve(), live = false, cursor = null, pollT = 0, beatT = 0;
-  var lastCmd = { START: 0, STOP: 0 }, stateKey = "", wantNotes = false, ui = null;
+  var chunk = 3072, lastCmd = { START: 0, STOP: 0 }, stateKey = "", wantNotes = false, ui = null;
 
   /* ---------------- MPX1 line protocol ---------------- */
-  function send(op, args, timeoutMs) {
+  function send(op, args, timeoutMs, fixedId) {
     /* one request at a time, like the CGotchi command-line tool: answers are matched by request id */
     var run = function () {
       if (!writer) return Promise.reject(new Error("CGotchi is not connected"));
-      var id = reqId = reqId >= 0x7fffffff ? 1 : reqId + 1;
+      var id = fixedId || (reqId = reqId >= 0x7fffffff ? 1 : reqId + 1);
       var line = "MPX1 " + id + " " + op + (args ? " " + args : "") + "\n";
       return new Promise(function (resolve, reject) {
         var t = setTimeout(function () { delete pending[id]; reject(new Error("CGotchi did not answer")); }, timeoutMs || REQ_MS);
@@ -72,7 +74,7 @@
         var f = d.split(" ");
         if (f[0] !== "APP_LIST") throw new Error("bad list");
         var next = +f[1], count = +f[2];
-        f.slice(6).forEach(function (e) { var p = e.split(","); out.push({ id: p[0], active: p[3] === "1" }); });
+        f.slice(6).forEach(function (e) { var p = e.split(","); out.push({ id: p[0], active: p[3] === "1", sha: (p[5] || "").toLowerCase() }); });
         if (next > off && next < count) { off = next; return page(); }
         return out;
       });
@@ -101,6 +103,52 @@
       return gallop();
     });
   }
+
+  /* ---------------- install / update the CGotchi app ---------------- */
+  function loadPackage() {
+    if (window.VaaniCGotchiApp) return Promise.resolve(window.VaaniCGotchiApp);
+    return new Promise(function (resolve, reject) {
+      var sc = document.createElement("script"); sc.src = "cgotchi-app.js"; sc.async = true;
+      sc.onload = function () { window.VaaniCGotchiApp ? resolve(window.VaaniCGotchiApp) : reject(new Error("The CGotchi app file is missing")); };
+      sc.onerror = function () { reject(new Error("Couldn't load the CGotchi app. Check your internet and try again.")); };
+      document.head.appendChild(sc);
+    });
+  }
+  function bytesOf(pkg) {
+    var b = atob(pkg.b64), a = new Uint8Array(b.length);
+    for (var i = 0; i < b.length; i++) a[i] = b.charCodeAt(i);
+    return crypto.subtle.digest("SHA-256", a).then(function (h) {
+      var hex = Array.prototype.map.call(new Uint8Array(h), function (x) { return ("0" + x.toString(16)).slice(-2); }).join("");
+      if (hex !== APP_SHA || pkg.sha256 !== APP_SHA || pkg.appId !== APP_ID || a.length !== pkg.size) throw new Error("The CGotchi app file didn't pass its check");
+      return a;
+    });
+  }
+  function chunkB64(a, from, to) { var s = ""; for (var i = from; i < to; i++) s += String.fromCharCode(a[i]); return btoa(s); }
+  function install(apps, chunkMax) {
+    var other = apps.filter(function (a) { return a.active; })[0];
+    progress("Getting the app ready");
+    return loadPackage().then(bytesOf).then(function (data) {
+      return (other ? send("APP_STOP", "", 8000) : Promise.resolve()).then(function () {
+        var id = reqId = reqId >= 0x7fffffff ? 1 : reqId + 1;
+        return send("APP_INSTALL_BEGIN", APP_ID + " " + data.length + " " + APP_SHA, 15000, id).then(function (r) {
+          var f = r.split(" ");
+          if (f[0] !== "INSTALL_READY") throw new Error("CGotchi didn't accept the app");
+          var size = Math.max(256, Math.min(chunkMax || 3072, +f[1] || 3072, 3072)), off = 0;
+          function next() {
+            if (off >= data.length) return send("APP_INSTALL_COMMIT", "", 60000, id);
+            var end = Math.min(off + size, data.length);
+            return send("APP_INSTALL_CHUNK", off + " " + chunkB64(data, off, end), 15000, id).then(function (ack) {
+              if (ack !== "INSTALL_CHUNK " + end) throw new Error("CGotchi lost part of the app");
+              off = end; progress("Installing on CGotchi " + Math.floor(off * 100 / data.length) + "%");
+              return next();
+            });
+          }
+          return next().catch(function (e) { send("APP_INSTALL_ABORT", "", 3000, id).catch(function () {}); throw e; });
+        });
+      });
+    }).then(function (r) { if (!/^RESULT /.test(r)) throw new Error("CGotchi couldn't finish installing"); });
+  }
+  function progress(t) { if (ui) ui.txt.textContent = t; }
 
   /* ---------------- commands from CGotchi ---------------- */
   function onDevice(msg) {
@@ -175,10 +223,21 @@
     }).then(function (d) {
       var f = d.split(" ");
       if (f[0] !== "HELLO" || f[1] !== "1") throw new Error("This doesn't look like a CGotchi");
+      chunk = +f[2] || 3072;
       return listApps();
     }).then(function (apps) {
       var me = apps.filter(function (a) { return a.id === APP_ID; })[0];
-      if (!me) throw new Error("Install the Vaani app on CGotchi first");
+      if (!me || me.sha !== APP_SHA) {
+        /* installing software on the device is never silent: only after a click on Connect, and only once the person says yes */
+        if (quiet) throw new Error(me ? "Tap Connect CGotchi to update its Vaani app" : "Tap Connect CGotchi to put the Vaani app on it");
+        var ask = me ? "Update the Vaani app on your CGotchi? It takes about 20 seconds." : "Put the Vaani app on your CGotchi? It's about " + APP_KB + " KB and takes about 20 seconds.";
+        if (!window.confirm(ask)) throw new Error("cancelled");
+        return install(apps, chunk).then(listApps);
+      }
+      return apps;
+    }).then(function (apps) {
+      var me = apps.filter(function (a) { return a.id === APP_ID; })[0];
+      if (!me) throw new Error("The Vaani app isn't on CGotchi");
       if (me.active) return;
       var other = apps.filter(function (a) { return a.active; })[0];
       return (other ? send("APP_STOP", "", 8000).catch(function () {}) : Promise.resolve())
@@ -190,7 +249,8 @@
     }).catch(function (e) {
       var msg = e && e.message ? e.message : "Couldn't link CGotchi";
       close();
-      if (!quiet || /Install/.test(msg)) V.toast(/busy|in use|open/i.test(msg) ? "CGotchi is open in another app or tab. Close it there and try again." : msg);
+      if (msg === "cancelled") return;
+      if (!quiet || /^Tap Connect/.test(msg)) V.toast(/busy|in use|open/i.test(msg) ? "CGotchi is open in another app or tab. Close it there and try again." : msg);
     });
   }
   /* the device can be mid-boot: HELLO is retried for a few seconds */
