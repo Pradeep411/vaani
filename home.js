@@ -2664,6 +2664,8 @@
         /* fix r2: a typed line is written to the crash copy at once (d.force), not up to 1.5 s later */
         paintMarks(); paintHealth(); saveLive(!!d.fin || d.force === true);
       } else if (ev === "beforeStart") {
+        /* nothing records behind the sign-in and consent screen, whoever asks (a tap here or the CGotchi remote) */
+        if (document.documentElement.classList.contains("acct-gated")) return false;
         if (hasLive()) { askAboutLive(); return false; }
       } else if (ev === "sheet") {
         if (onSheet[d]) onSheet[d]();
@@ -2720,7 +2722,7 @@
     }
   }
 
-  window.VaaniHome = { ext: EXT, S: S, go: go, cleanLive: cleanLive, keepLive: keepLive, refresh: refresh, renderHome: renderHome, renderSidebar: renderSidebar, appView: appView,
+  window.VaaniHome = { ext: EXT, S: S, mark: function (how) { addMark(how === "voice" ? "voice" : "tap"); }, go: go, cleanLive: cleanLive, keepLive: keepLive, refresh: refresh, renderHome: renderHome, renderSidebar: renderSidebar, appView: appView,
     allNotes: allNotes, realNotes: realNotes, realMeetings: realMeetings, todosOf: todosOf, openTodos: openTodos, isMine: isMine, isTeamOwner: isTeamOwner,
     typeOf: typeOf, TYPE: TYPE, hueOf: hueOf, plural: plural, durLabel: durLabel, ic: ic, el: el, startOfDay: startOfDay, daysBetween: daysBetween,
     shortDate: shortDate, weekdayLong: weekdayLong, relDay: relDay, meName: meName, dict: dict, actToast: actToast, onSheet: onSheet, callSrc: callSrc, mqPhone: mqPhone, DAY: DAY,
