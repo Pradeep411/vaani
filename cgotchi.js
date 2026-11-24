@@ -264,11 +264,8 @@
   function open(p, manual) {
     if (live || port || opening) return Promise.resolve();
     opening = true; port = p;
+    /* DTR/RTS are left as Chrome opens them: changing them resets the ESP32-S3 (seen on a real CGotchi, macOS) */
     return p.open({ baudRate: 115200 }).then(function () {
-      /* release RTS, then DTR, like the CGotchi tool, so opening the port never resets the board */
-      return Promise.resolve().then(function () { return p.setSignals({ requestToSend: false }); })
-        .then(function () { return p.setSignals({ dataTerminalReady: false }); }).catch(function () {});
-    }).then(function () {
       writer = p.writable.getWriter(); reader = p.readable.getReader(); buf = ""; readLoop();
       return hello(8);
     }).then(function (d) {
