@@ -310,6 +310,7 @@
   function friendly(msg) {
     if (/busy|in use|Failed to open|already open/i.test(msg)) return "CGotchi is open in another app or tab. Close it there and try again.";
     if (/did not answer|not answering/i.test(msg)) return "CGotchi didn't answer. Unplug it, plug it back in and try again.";
+    if (/device_not_linked|not_linked|setup/i.test(msg)) return "Finish setting up CGotchi first. Follow the steps on its screen, then try again.";
     if (/^device:/.test(msg)) return "CGotchi said no to that. Unplug it, plug it back in and try again.";
     return msg || "Couldn't link CGotchi.";
   }
