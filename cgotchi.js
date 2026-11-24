@@ -17,7 +17,7 @@
   var APP_ID = "local.vaani.remote";
   var ESPRESSIF_VID = 0x303a;
   /* the CGotchi app Vaani ships (cgotchi-app.js, loaded only when needed); a CGotchi with any other build is offered an update */
-  var APP_SHA = "", APP_KB = 0; /* set by vaani-cgotchi/tools/ship_to_vaani.py from the built bundle */
+  var APP_SHA = "28e2b67377a802fd4fdfbc9b56c61fd06b49713f9f56a73be14a10fade37a1c4", APP_KB = 256; /* set by vaani-cgotchi/tools/ship_to_vaani.py from the built bundle */
   var TYPES = { auto: 1, general: 1, management: 1, sales: 1, developer: 1, founder: 1 };
   var POLL_MS = 250, BEAT_MS = 2000, FRONT_MS = 6000, REQ_MS = 3000, QUEUE_MAX = 64;
   var KNOWN = "vaani.cgotchi.known", UNLINKED = "vaani.cgotchi.unlinked";
