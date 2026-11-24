@@ -2664,6 +2664,8 @@
         /* fix r2: a typed line is written to the crash copy at once (d.force), not up to 1.5 s later */
         paintMarks(); paintHealth(); saveLive(!!d.fin || d.force === true);
       } else if (ev === "beforeStart") {
+        /* nothing records behind the sign-in and consent screen, whoever asks (a tap here or the CGotchi remote) */
+        if (document.documentElement.classList.contains("acct-gated")) return false;
         if (hasLive()) { askAboutLive(); return false; }
       } else if (ev === "sheet") {
         if (onSheet[d]) onSheet[d]();
