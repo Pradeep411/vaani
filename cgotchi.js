@@ -188,7 +188,7 @@
   function setType(t) {
     var sel = V.tmplSel;
     /* a template the person made here (u:...) is theirs: CGotchi's built-in types never replace it */
-    if (!TYPES[t] || V.isListening() || !sel || /^u:/.test(sel.value)) return;
+    if (!Object.prototype.hasOwnProperty.call(TYPES, t) || V.isListening() || !sel || /^u:/.test(sel.value)) return;
     if (sel.value !== t && Array.prototype.some.call(sel.options, function (o) { return o.value === t; })) {
       sel.value = t; sel.dispatchEvent(new Event("change", { bubbles: true }));
     }
@@ -309,6 +309,7 @@
     });
   }
   function friendly(msg) {
+    if (/^device:.*busy/i.test(msg)) return "CGotchi is busy for a moment. Try again in a few seconds.";
     if (/busy|in use|Failed to open|already open/i.test(msg)) return "CGotchi is open in another app or tab. Close it there and try again.";
     if (/did not answer|not answering/i.test(msg)) return "CGotchi didn't answer. Unplug it, plug it back in and try again.";
     if (/device_not_linked|not_linked|setup/i.test(msg)) return "Finish setting up CGotchi first. Follow the steps on its screen, then try again.";
