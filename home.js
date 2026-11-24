@@ -2720,7 +2720,7 @@
     }
   }
 
-  window.VaaniHome = { ext: EXT, S: S, go: go, cleanLive: cleanLive, keepLive: keepLive, refresh: refresh, renderHome: renderHome, renderSidebar: renderSidebar, appView: appView,
+  window.VaaniHome = { ext: EXT, S: S, mark: function (how) { addMark(how === "voice" ? "voice" : "tap"); }, go: go, cleanLive: cleanLive, keepLive: keepLive, refresh: refresh, renderHome: renderHome, renderSidebar: renderSidebar, appView: appView,
     allNotes: allNotes, realNotes: realNotes, realMeetings: realMeetings, todosOf: todosOf, openTodos: openTodos, isMine: isMine, isTeamOwner: isTeamOwner,
     typeOf: typeOf, TYPE: TYPE, hueOf: hueOf, plural: plural, durLabel: durLabel, ic: ic, el: el, startOfDay: startOfDay, daysBetween: daysBetween,
     shortDate: shortDate, weekdayLong: weekdayLong, relDay: relDay, meName: meName, dict: dict, actToast: actToast, onSheet: onSheet, callSrc: callSrc, mqPhone: mqPhone, DAY: DAY,

@@ -1062,3 +1062,11 @@ select.field{background-image:linear-gradient(45deg,transparent 50%,var(--label2
 .tr-row:focus{outline:none}
 .tr-row:focus-visible{outline:2px solid var(--tint);outline-offset:-2px;border-radius:10px}
 @media (prefers-reduced-motion:reduce){.tr-row{transition:none}}
+
+/* ================= CGotchi: Vaani's desk remote (cgotchi.js) ================= */
+.cg-link{flex:none;display:inline-flex;align-items:center;gap:var(--space-2);min-height:28px;padding:0 var(--space-3);border:0;border-radius:999px;background:var(--fill);box-shadow:inset 0 0 0 1px var(--field-edge);font:inherit;font-size:13px;font-weight:500;color:var(--label);cursor:pointer;transition:background-color .15s var(--spring)}
+.cg-link:hover{background:var(--fill2)}
+.cg-link:focus-visible{outline:2px solid var(--tint);outline-offset:2px}
+.cg-dot{width:8px;height:8px;border-radius:50%;background:var(--ring)}
+.cg-link.on{background:var(--tint-soft);box-shadow:none;color:var(--tint)}
+.cg-link.on .cg-dot{background:var(--switch-on)}
